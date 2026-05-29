@@ -70,11 +70,26 @@ CREATE TABLE IF NOT EXISTS hw_tipos (
 -- Se a tabela já existia sem a coluna fabricantes:
 ALTER TABLE hw_tipos ADD COLUMN IF NOT EXISTS fabricantes JSONB DEFAULT '[]';
 
-ALTER TABLE hw_tipos DISABLE ROW LEVEL SECURITY;
-GRANT SELECT, INSERT, UPDATE, DELETE ON maquinas  TO anon;
-GRANT SELECT, INSERT, UPDATE, DELETE ON hardwares TO anon;
-GRANT SELECT, INSERT, UPDATE, DELETE ON registros TO anon;
-GRANT SELECT, INSERT, UPDATE, DELETE ON hw_tipos  TO anon;
+CREATE TABLE IF NOT EXISTS maq_tipos (
+  id    TEXT PRIMARY KEY,
+  label TEXT NOT NULL,
+  emoji TEXT DEFAULT '🚛',
+  cor   TEXT DEFAULT '#888888'
+);
+ALTER TABLE maq_tipos DISABLE ROW LEVEL SECURITY;
+
+ALTER TABLE hw_tipos  DISABLE ROW LEVEL SECURITY;
+GRANT SELECT, INSERT, UPDATE, DELETE ON maquinas   TO anon;
+GRANT SELECT, INSERT, UPDATE, DELETE ON hardwares  TO anon;
+GRANT SELECT, INSERT, UPDATE, DELETE ON registros  TO anon;
+GRANT SELECT, INSERT, UPDATE, DELETE ON hw_tipos   TO anon;
+GRANT SELECT, INSERT, UPDATE, DELETE ON maq_tipos  TO anon;
+
+INSERT INTO maq_tipos (id, label, emoji, cor) VALUES
+('trator',         'TRATOR',         '🚜', '#f5a623'),
+('motoniveladora', 'MOTONIVELADORA', '🚧', '#4a9eff'),
+('colhedora',      'COLHEDORA',      '🌾', '#2ecc8a')
+ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO hw_tipos (id, label, emoji, cor, modelos, fabricantes) VALUES
 ('monitor',  'MONITOR',  '🖥️', '#f97316', '["RAVEN","CFX 750","EZ GUIDE","OMNI","PRO 700","GS3","GS4","XCN 1050","XCN 1060"]', '["John Deere","Reven"]'),

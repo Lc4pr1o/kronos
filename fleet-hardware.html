@@ -1120,16 +1120,10 @@
         <input type="text" id="searchInput" placeholder="Máquina, hardware, S/N, ID..." autocomplete="off">
         <span id="clearSearch" style="cursor:pointer;color:var(--text3);font-size:12px;display:none;">✕</span>
       </div>
-      <div class="search-filters">
+      <div class="search-filters" id="filterChipsBar">
         <div class="filter-chip active" data-filter="all">Tudo</div>
-        <div class="filter-chip" data-filter="trator">Tratores</div>
-        <div class="filter-chip" data-filter="motoniveladora">Motoniv.</div>
-        <div class="filter-chip" data-filter="colhedora">Colhed.</div>
-        <div class="filter-chip hw-chip" data-filter="monitor">Monitor</div>
-        <div class="filter-chip hw-chip" data-filter="receptor">Receptor</div>
-        <div class="filter-chip hw-chip" data-filter="radio">Rádio</div>
-        <div class="filter-chip hw-chip" data-filter="tela">Tela</div>
-        <div class="filter-chip hw-chip" data-filter="bordo">Bordo</div>
+        <span id="machineTypeChips"></span>
+        <span id="hwTypeChips"></span>
       </div>
     </div>
 
@@ -1238,10 +1232,43 @@
         </div>
       </div>
     </div>
+      <!-- ── TIPOS DE MÁQUINA ── -->
+      <div style="border-top:1px solid var(--border);padding-top:20px;margin-top:20px">
+        <div style="font-size:12px;font-weight:700;letter-spacing:1px;color:var(--text3);margin-bottom:12px" id="maqSettingsFormTitle">TIPOS DE MÁQUINA</div>
+        <div id="maqTiposListSettings" style="margin-bottom:16px"></div>
+        <div style="border-top:1px solid var(--border);padding-top:14px">
+          <div style="font-size:11px;font-weight:700;letter-spacing:1px;color:var(--text3);margin-bottom:10px" id="maqFormSubTitle">ADICIONAR NOVO TIPO</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">ID <span style="font-size:9px;color:var(--text3)">(único, sem espaços)</span></label>
+              <input type="text" class="form-input" id="maqTipoId" placeholder="ex: pulverizador">
+            </div>
+            <div class="form-group">
+              <label class="form-label">NOME</label>
+              <input type="text" class="form-input" id="maqTipoLabel" placeholder="ex: PULVERIZADOR">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">EMOJI</label>
+              <input type="text" class="form-input" id="maqTipoEmoji" placeholder="🚜" style="font-size:18px">
+            </div>
+            <div class="form-group">
+              <label class="form-label">COR</label>
+              <input type="color" class="form-input" id="maqTipoCor" value="#888888" style="height:42px;padding:4px 8px;cursor:pointer">
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px">
+            <button class="btn btn-ghost" onclick="clearMaqTipoForm()">Limpar</button>
+            <button class="btn btn-primary" onclick="saveMaqTipo()">Salvar Tipo</button>
+          </div>
+        </div>
+      </div>
+    </div>
     <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="clearSettingsForm()">Limpar</button>
+      <button class="btn btn-ghost" onclick="clearSettingsForm()">Limpar HW</button>
       <button class="btn btn-ghost" onclick="closeModal('settingsModal')">Fechar</button>
-      <button class="btn btn-primary" onclick="saveTipo()">Salvar</button>
+      <button class="btn btn-primary" onclick="saveTipo()">Salvar HW</button>
     </div>
   </div>
 </div>
@@ -1261,9 +1288,7 @@
         <div class="form-group">
           <label class="form-label">TIPO</label>
           <select class="form-select" id="newMachineType">
-            <option value="trator">Trator</option>
-            <option value="motoniveladora">Motoniveladora</option>
-            <option value="colhedora">Colhedora</option>
+            <option value="">— Selecione —</option>
           </select>
         </div>
         <div class="form-group">
@@ -1529,14 +1554,18 @@ async function loadFromSheets() {
   isLoadingData = true;
   setConnectionStatus('loading');
   try {
-    const [resMaq, resHw, resTipos] = await Promise.all([
+    const [resMaq, resHw, resHwTipos, resMaqTipos] = await Promise.all([
       fetch(`${SUPABASE_URL}/rest/v1/maquinas?select=*&order=nome`, { headers: sbHeaders }),
       fetch(`${SUPABASE_URL}/rest/v1/hardwares?select=*`, { headers: sbHeaders }),
       fetch(`${SUPABASE_URL}/rest/v1/hw_tipos?select=*&order=id`, { headers: sbHeaders }),
+      fetch(`${SUPABASE_URL}/rest/v1/maq_tipos?select=*&order=id`, { headers: sbHeaders }),
     ]);
     if (!resMaq.ok || !resHw.ok) throw new Error('Erro na resposta do Supabase');
-    const [rawMachines, rawHardwares, rawTipos] = await Promise.all([resMaq.json(), resHw.json(), resTipos.json()]);
-    if (Array.isArray(rawTipos) && rawTipos.length) buildHwConfig(rawTipos);
+    const [rawMachines, rawHardwares, rawHwTipos, rawMaqTipos] = await Promise.all([
+      resMaq.json(), resHw.json(), resHwTipos.json(), resMaqTipos.json()
+    ]);
+    if (Array.isArray(rawHwTipos) && rawHwTipos.length) buildHwConfig(rawHwTipos);
+    if (Array.isArray(rawMaqTipos) && rawMaqTipos.length) buildMachineConfig(rawMaqTipos);
     machines = sheetsToMachines(rawMachines, rawHardwares);
     setConnectionStatus('online');
     showToast('success', '☁️', 'Dados atualizados', `${machines.length} máquinas carregadas`);
@@ -1671,6 +1700,7 @@ function buildHwConfig(rawTipos) {
     };
   });
   populateHwTypeSelects();
+  rebuildFilterChips();
 }
 
 function populateHwTypeSelects() {
@@ -1692,8 +1722,11 @@ let editingTipoId = null;
 
 function openSettings() {
   editingTipoId = null;
+  editingMaqTipoId = null;
   clearSettingsForm();
+  clearMaqTipoForm();
   renderTiposSettings();
+  renderMaqTiposSettings();
   openModal('settingsModal');
 }
 
@@ -1790,17 +1823,170 @@ async function reloadTipos() {
   renderAll();
 }
 
-const machineConfig = {
+const VIRTUAL_CONFIG = {
+  estoque:    { emoji: '📦', label: 'ESTOQUE',    color: 'var(--blue)' },
+  manutencao: { emoji: '🔧', label: 'MANUTENÇÃO', color: 'var(--red)' },
+  inativo:    { emoji: '⛔', label: 'INATIVO',    color: 'var(--text3)' },
+};
+
+let machineConfig = {
   trator:        { emoji: '🚜', label: 'TRATOR',        color: 'var(--trator)' },
   motoniveladora:{ emoji: '🚧', label: 'MOTONIVELADORA', color: 'var(--motoniveladora)' },
   colhedora:     { emoji: '🌾', label: 'COLHEDORA',     color: 'var(--colhedora)' },
-  estoque:       { emoji: '📦', label: 'ESTOQUE',       color: 'var(--blue)' },
-  manutencao:    { emoji: '🔧', label: 'MANUTENÇÃO',    color: 'var(--red)' },
-  inativo:       { emoji: '⛔', label: 'INATIVO',       color: 'var(--text3)' },
+  ...VIRTUAL_CONFIG,
 };
 
-const REAL_TYPES = new Set(['trator', 'colhedora', 'motoniveladora']);
+let REAL_TYPES = new Set(['trator', 'colhedora', 'motoniveladora']);
 const DEST_TYPES = ['estoque', 'manutencao', 'inativo'];
+
+function buildMachineConfig(rawTipos) {
+  machineConfig = { ...VIRTUAL_CONFIG };
+  REAL_TYPES = new Set();
+  rawTipos.forEach(t => {
+    machineConfig[t.id] = {
+      emoji: t.emoji || '🚛',
+      label: t.label || t.id.toUpperCase(),
+      color: t.cor || '#888888',
+    };
+    REAL_TYPES.add(t.id);
+  });
+  rebuildFilterChips();
+  // Atualiza select de nova máquina
+  const sel = document.getElementById('newMachineType');
+  if (sel) {
+    const cur = sel.value;
+    sel.innerHTML = '';
+    rawTipos.forEach(t => {
+      const opt = document.createElement('option');
+      opt.value = t.id;
+      opt.textContent = `${t.emoji || ''} ${t.label}`.trim();
+      if (t.id === cur) opt.selected = true;
+      sel.appendChild(opt);
+    });
+  }
+}
+
+function rebuildFilterChips() {
+  const maqEl = document.getElementById('machineTypeChips');
+  const hwEl  = document.getElementById('hwTypeChips');
+  if (maqEl) {
+    maqEl.innerHTML = '';
+    REAL_TYPES.forEach(id => {
+      const cfg = machineConfig[id];
+      if (!cfg) return;
+      const raw = cfg.label;
+      const text = raw.length > 9 ? raw.slice(0,8)+'.' : raw.charAt(0)+raw.slice(1).toLowerCase();
+      const chip = document.createElement('div');
+      chip.className = `filter-chip${activeFilter===id?' active':''}`;
+      chip.dataset.filter = id;
+      chip.textContent = text;
+      maqEl.appendChild(chip);
+    });
+  }
+  if (hwEl) {
+    hwEl.innerHTML = '';
+    Object.entries(hwConfig).forEach(([id, cfg]) => {
+      const raw = cfg.label;
+      const text = raw.length > 9 ? raw.slice(0,8)+'.' : raw.charAt(0)+raw.slice(1).toLowerCase();
+      const chip = document.createElement('div');
+      chip.className = `filter-chip hw-chip${activeFilter===id?' active':''}`;
+      chip.dataset.filter = id;
+      chip.textContent = text;
+      hwEl.appendChild(chip);
+    });
+  }
+}
+
+// ── SETTINGS: TIPOS DE MÁQUINA ─────────────────
+let editingMaqTipoId = null;
+
+function renderMaqTiposSettings() {
+  const container = document.getElementById('maqTiposListSettings');
+  if (!container) return;
+  container.innerHTML = '';
+  REAL_TYPES.forEach(id => {
+    const cfg = machineConfig[id];
+    if (!cfg) return;
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;margin-bottom:6px';
+    row.innerHTML = `
+      <span style="width:26px;text-align:center;font-size:16px">${cfg.emoji}</span>
+      <span style="flex:1;font-weight:600;font-size:13px;letter-spacing:.5px">${cfg.label}</span>
+      <div style="width:14px;height:14px;border-radius:50%;background:${cfg.color};flex-shrink:0"></div>
+      <button class="btn btn-ghost" style="padding:4px 10px;font-size:11px" onclick="editMaqTipo('${id}')">Editar</button>
+      <button class="hw-mini-btn remove-btn" onclick="deleteMaqTipo('${id}')" title="Excluir tipo">🗑</button>
+    `;
+    container.appendChild(row);
+  });
+}
+
+function editMaqTipo(id) {
+  editingMaqTipoId = id;
+  const cfg = machineConfig[id];
+  document.getElementById('maqTipoId').value = id;
+  document.getElementById('maqTipoId').disabled = true;
+  document.getElementById('maqTipoLabel').value = cfg.label;
+  document.getElementById('maqTipoEmoji').value = cfg.emoji;
+  document.getElementById('maqTipoCor').value = cfg.color?.startsWith('#') ? cfg.color : '#888888';
+  document.getElementById('maqFormSubTitle').textContent = `EDITAR: ${cfg.label}`;
+}
+
+function clearMaqTipoForm() {
+  editingMaqTipoId = null;
+  document.getElementById('maqTipoId').value = '';
+  document.getElementById('maqTipoId').disabled = false;
+  document.getElementById('maqTipoLabel').value = '';
+  document.getElementById('maqTipoEmoji').value = '';
+  document.getElementById('maqTipoCor').value = '#888888';
+  document.getElementById('maqFormSubTitle').textContent = 'ADICIONAR NOVO TIPO';
+}
+
+async function saveMaqTipo() {
+  const id = editingMaqTipoId || document.getElementById('maqTipoId').value.trim().toLowerCase().replace(/[\s\W]+/g,'_');
+  const label = document.getElementById('maqTipoLabel').value.trim().toUpperCase();
+  const emoji = document.getElementById('maqTipoEmoji').value.trim();
+  const cor   = document.getElementById('maqTipoCor').value;
+  if (!id || !label) { showToast('warning','⚠️','Campos obrigatórios','Preencha ID e Nome'); return; }
+  try {
+    if (editingMaqTipoId) {
+      await fetch(`${SUPABASE_URL}/rest/v1/maq_tipos?id=eq.${encodeURIComponent(editingMaqTipoId)}`, {
+        method: 'PATCH', headers: { ...sbHeaders, 'Prefer':'return=minimal' },
+        body: JSON.stringify({ label, emoji, cor }),
+      });
+    } else {
+      await fetch(`${SUPABASE_URL}/rest/v1/maq_tipos`, {
+        method: 'POST', headers: { ...sbHeaders, 'Prefer':'return=minimal' },
+        body: JSON.stringify({ id, label, emoji, cor }),
+      });
+    }
+    await reloadMaqTipos();
+    clearMaqTipoForm();
+    showToast('success','✅','Tipo de máquina salvo', label);
+  } catch(e) {
+    showToast('warning','⚠️','Erro','Não foi possível salvar');
+  }
+}
+
+async function deleteMaqTipo(id) {
+  if (!confirm(`Excluir tipo de máquina "${machineConfig[id]?.label}"?\nAs máquinas já cadastradas não serão afetadas.`)) return;
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/maq_tipos?id=eq.${encodeURIComponent(id)}`, {
+      method: 'DELETE', headers: sbHeaders,
+    });
+    await reloadMaqTipos();
+    showToast('success','✅','Tipo excluído','');
+  } catch(e) {
+    showToast('warning','⚠️','Erro','Não foi possível excluir');
+  }
+}
+
+async function reloadMaqTipos() {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/maq_tipos?select=*&order=id`, { headers: sbHeaders });
+  const rawTipos = await res.json();
+  buildMachineConfig(rawTipos);
+  renderMaqTiposSettings();
+  renderAll();
+}
 let campoExpanded = false;
 
 // =========================================
@@ -2055,15 +2241,15 @@ document.getElementById('clearSearch').addEventListener('click', function() {
   renderMachineList('', activeFilter);
 });
 
-document.querySelectorAll('.filter-chip').forEach(chip => {
-  chip.addEventListener('click', function() {
-    document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
-    this.classList.add('active');
-    activeFilter = this.dataset.filter;
-    const val = document.getElementById('searchInput').value.trim();
-    if (val.length >= 2) showSearchResults(val);
-    else renderMachineList(val, activeFilter);
-  });
+document.getElementById('filterChipsBar').addEventListener('click', function(e) {
+  const chip = e.target.closest('.filter-chip');
+  if (!chip) return;
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  chip.classList.add('active');
+  activeFilter = chip.dataset.filter;
+  const val = document.getElementById('searchInput').value.trim();
+  if (val.length >= 2) showSearchResults(val);
+  else renderMachineList(val, activeFilter);
 });
 
 function showSearchResults(term) {
