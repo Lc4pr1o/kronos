@@ -1854,12 +1854,13 @@ async function addHardware() {
       machineName: '',
       machineDestId: selectedMachineId,
       machineDestName: m.name,
-      hwId: pat,
+      hwId: hwUniqueId,
       hwSn: sn,
       hwName: model,
       hwType: type,
       hwModelo: model,
       hwPatrimonio: pat,
+      hwManuf: manuf,
       gpsLat: '', gpsLng: '', gpsAcc: '',
       dateTime: new Date().toISOString().slice(0,16),
       notes: '',
@@ -1926,7 +1927,7 @@ function openTransfer(machineId, hwId) {
   openModal('transferModal');
 }
 
-function confirmTransfer() {
+async function confirmTransfer() {
   if (!transferTargetMachineId) { showToast('warning', '⚠️', 'Selecione um destino', 'Escolha a máquina de destino'); return; }
 
   const source = machines.find(x => x.id === transferSourceMachineId);
@@ -1940,6 +1941,38 @@ function confirmTransfer() {
   closeModal('transferModal');
   renderAll();
   showToast('success', '🔄', 'Transferência concluída', `${hw.name} movido para ${target.name}`);
+
+  if (APPS_SCRIPT_URL !== 'COLE_SUA_URL_AQUI') {
+    const record = {
+      id: `REG-${Date.now()}`,
+      action: 'transferir',
+      techName: 'Analista',
+      machineId: transferSourceMachineId,
+      machineName: source.name,
+      machineDestId: transferTargetMachineId,
+      machineDestName: target.name,
+      hwId: hw.id,
+      hwSn: hw.sn,
+      hwName: hw.name,
+      hwType: hw.type,
+      hwModelo: hw.name,
+      hwPatrimonio: hw.patrimony,
+      hwManuf: hw.manufacturer,
+      gpsLat: '', gpsLng: '', gpsAcc: '',
+      dateTime: new Date().toISOString().slice(0,16),
+      notes: '',
+    };
+    try {
+      const res = await fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'addRecord', record }),
+      });
+      const data = await res.json();
+      if (!data.success) showToast('warning', '⚠️', 'Não salvo na planilha', 'Verifique a conexão');
+    } catch(e) {
+      showToast('warning', '⚠️', 'Sem conexão', 'Transferência salva localmente apenas');
+    }
+  }
 }
 
 // =========================================
