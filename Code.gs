@@ -216,32 +216,47 @@ function doPost(e) {
   }
 }
 
+const HW_HEADERS = ['id','nome','tipo','modelo','numeroDeSerie','patrimonio','fabricante','firmware','maquinaAtual','instaladoEm'];
+
+function getOrCreateSheet(ss, name, headers) {
+  let sh = ss.getSheetByName(name);
+  if (!sh) {
+    sh = ss.insertSheet(name);
+    sh.appendRow(headers);
+  }
+  return sh;
+}
+
 function addRecord(record) {
   const ss = SpreadsheetApp.openById(SHEET_ID);
 
-  // 1. Grava na aba REGISTROS
-  const shReg = ss.getSheetByName(ABA_REGISTROS);
+  // 1. Grava na aba REGISTROS (cria se não existir)
+  const shReg = getOrCreateSheet(ss, ABA_REGISTROS, [
+    'id','acao','tecnico','maquinaId','maquinaNome',
+    'maquinaDestinoId','maquinaDestinoNome',
+    'hardwareId','hardwareSN','hardwareNome','hardwareTipo','hardwareModelo','hardwarePatrimonio',
+    'gpsLat','gpsLng','gpsAcc','dataHora','observacoes','sincronizadoEm'
+  ]);
   shReg.appendRow([
     record.id, record.action, record.techName,
-    record.machineId,     record.machineName,
-    record.machineDestId  || '', record.machineDestName || '',
-    record.hwId, record.hwSn, record.hwName, record.hwType,
+    record.machineId     || '', record.machineName    || '',
+    record.machineDestId || '', record.machineDestName || '',
+    record.hwId || '', record.hwSn || '', record.hwName || '', record.hwType || '',
     record.hwModelo || '', record.hwPatrimonio || '',
     record.gpsLat  || '', record.gpsLng || '', record.gpsAcc || '',
-    record.dateTime, record.notes || '',
+    record.dateTime || '', record.notes || '',
     new Date().toISOString(),
   ]);
 
-  // 2. Atualiza maquinaAtual na aba HARDWARES
-  // Regra única: maquinaAtual = machineDestId (pode ser ESTOQUE, MANUTENCAO, INATIVO ou ID real)
-  const shHw   = ss.getSheetByName(ABA_HARDWARES);
+  // 2. Atualiza maquinaAtual na aba HARDWARES (cria se não existir)
+  const shHw = getOrCreateSheet(ss, ABA_HARDWARES, HW_HEADERS);
   const hwRows = shHw.getDataRange().getValues();
-  const hdrs   = hwRows[0];
-  const cId    = hdrs.indexOf('id');
-  const cSN    = hdrs.indexOf('numeroDeSerie');
-  const cPat   = hdrs.indexOf('patrimonio');
-  const cMaq   = hdrs.indexOf('maquinaAtual');
-  const cInst  = hdrs.indexOf('instaladoEm');
+  const hdrs  = hwRows[0];
+  const cId   = hdrs.indexOf('id');
+  const cSN   = hdrs.indexOf('numeroDeSerie');
+  const cPat  = hdrs.indexOf('patrimonio');
+  const cMaq  = hdrs.indexOf('maquinaAtual');
+  const cInst = hdrs.indexOf('instaladoEm');
 
   const match = (row) =>
     (record.hwId         && String(row[cId])  === String(record.hwId))  ||
@@ -254,7 +269,7 @@ function addRecord(record) {
   for (let i = 1; i < hwRows.length; i++) {
     if (match(hwRows[i])) {
       shHw.getRange(i+1, cMaq+1).setValue(destId);
-      if (destId) shHw.getRange(i+1, cInst+1).setValue(record.dateTime);
+      if (destId) shHw.getRange(i+1, cInst+1).setValue(record.dateTime || new Date().toISOString());
       found = true;
       break;
     }
@@ -267,7 +282,7 @@ function addRecord(record) {
     shHw.appendRow([
       newId, record.hwName || '', record.hwType || '', record.hwModelo || '',
       record.hwSn || '', record.hwPatrimonio || '', record.hwManuf || '', '',
-      destId, record.dateTime
+      destId, record.dateTime || new Date().toISOString()
     ]);
   }
 
