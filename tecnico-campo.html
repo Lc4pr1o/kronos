@@ -764,7 +764,7 @@
       <div class="field-group">
         <div class="field">
           <label class="field-label">TIPO DE HARDWARE</label>
-          <select class="field-select" id="hwType" onchange="selectedHwId=null;setHwDropdownLabel(null);renderHwPicker()">
+          <select class="field-select" id="hwType" onchange="selectedHwId=null;setHwDropdownLabel(null);renderHwPicker();checkDisplacement()">
             <option value="">— Selecione —</option>
           </select>
         </div>
@@ -784,6 +784,42 @@
           </div>
         </div>
       </div>
+
+      <!-- Campos manuais — visível apenas para origem "novo equipamento" -->
+      <div id="novoHwFields" style="display:none;margin-top:14px">
+        <div class="field-group">
+          <div class="field">
+            <label class="field-label">TIPO DE HARDWARE</label>
+            <select class="field-select" id="novoHwType" onchange="onNovoHwTypeChange()">
+              <option value="">— Selecione —</option>
+            </select>
+          </div>
+        </div>
+        <div class="field-group">
+          <div class="field">
+            <label class="field-label">MODELO</label>
+            <select class="field-select" id="novoHwModelo">
+              <option value="">— Selecione o tipo primeiro —</option>
+            </select>
+          </div>
+        </div>
+        <div class="field-group">
+          <div class="field">
+            <input type="text" class="field-input" id="novoHwSn" placeholder="Número de série (S/N)" oninput="this.value=this.value.toUpperCase()">
+          </div>
+          <div class="field">
+            <input type="text" class="field-input" id="novoHwPat" placeholder="Patrimônio" oninput="this.value=this.value.toUpperCase()">
+          </div>
+        </div>
+        <div class="field-group">
+          <div class="field">
+            <label class="field-label">FABRICANTE</label>
+            <select class="field-select" id="novoHwFab">
+              <option value="">— Selecione —</option>
+            </select>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- DESTINO (só para transferência) -->
@@ -799,6 +835,23 @@
           <div class="machine-picker-scroll">
             <div class="machine-picker" id="machinePickerDest"></div>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Deslocamento — visível quando máquina destino já tem hw do mesmo tipo -->
+    <div id="displacementSection" style="display:none;margin-top:16px;background:rgba(224,82,82,.06);border:1px solid rgba(224,82,82,.25);border-radius:10px;padding:14px">
+      <div style="font-size:10px;font-weight:800;letter-spacing:1.5px;color:var(--red);margin-bottom:8px">⚠️ EQUIPAMENTO JÁ INSTALADO</div>
+      <div id="displacementInfo" style="font-size:12px;color:var(--text2);margin-bottom:12px"></div>
+      <div style="font-size:10px;font-weight:700;letter-spacing:1px;color:var(--text3);margin-bottom:8px">PARA ONDE VAI O EQUIPAMENTO ATUAL?</div>
+      <div style="display:flex;gap:8px">
+        <div class="action-btn" id="displaceStockBtn" onclick="setDisplacementDest('ESTOQUE')" style="flex:1;padding:10px;border-radius:8px">
+          <div class="action-icon">📦</div>
+          <div class="action-label" style="font-size:10px">ESTOQUE</div>
+        </div>
+        <div class="action-btn" id="displaceMainBtn" onclick="setDisplacementDest('MANUTENCAO')" style="flex:1;padding:10px;border-radius:8px">
+          <div class="action-icon">🔧</div>
+          <div class="action-label" style="font-size:10px">MANUTENÇÃO</div>
         </div>
       </div>
     </div>
@@ -865,6 +918,8 @@ let selectedMachineId = null;
 let selectedMachineDestId = null;
 let selectedHwId = null;
 let gpsCoords = null;
+let displacementDest = null;
+let existingHwToDisplace = [];
 
 // Origens possíveis por ação
 const ORIGEM_POR_ACAO = {
@@ -1071,21 +1126,67 @@ function buildHwConfig(rawTipos) {
   hwColors = {};
   rawTipos.forEach(t => {
     const mods = Array.isArray(t.modelos) ? t.modelos : [];
-    hwConfig[t.id] = { color: t.cor || '#888', modelos: mods, label: t.label, emoji: t.emoji };
+    const fabs = Array.isArray(t.fabricantes) ? t.fabricantes : [];
+    hwConfig[t.id] = { color: t.cor || '#888', modelos: mods, fabricantes: fabs, label: t.label, emoji: t.emoji };
     hwColors[t.id] = t.cor || '#888';
   });
-  // Repopula o select de tipo
-  const sel = document.getElementById('hwType');
-  if (!sel) return;
-  const current = sel.value;
-  sel.innerHTML = '<option value="">— Selecione —</option>';
-  Object.entries(hwConfig).forEach(([id, cfg]) => {
-    const opt = document.createElement('option');
-    opt.value = id;
-    opt.textContent = cfg.label || id.toUpperCase();
-    if (id === current) opt.selected = true;
-    sel.appendChild(opt);
+  // Repopula selects de tipo (picker principal e novo equipamento)
+  ['hwType','novoHwType'].forEach(selId => {
+    const sel = document.getElementById(selId);
+    if (!sel) return;
+    const current = sel.value;
+    sel.innerHTML = '<option value="">— Selecione —</option>';
+    Object.entries(hwConfig).forEach(([id, cfg]) => {
+      const opt = document.createElement('option');
+      opt.value = id;
+      opt.textContent = cfg.label || id.toUpperCase();
+      if (id === current) opt.selected = true;
+      sel.appendChild(opt);
+    });
   });
+}
+
+function onNovoHwTypeChange() {
+  const type = document.getElementById('novoHwType').value;
+  const cfg = hwConfig[type];
+  const modelSel = document.getElementById('novoHwModelo');
+  const fabSel = document.getElementById('novoHwFab');
+  modelSel.innerHTML = '<option value="">— Selecione o modelo —</option>';
+  fabSel.innerHTML = '<option value="">— Selecione —</option>';
+  if (!cfg) return;
+  (cfg.modelos || []).forEach(m => { const o=document.createElement('option'); o.value=m; o.textContent=m; modelSel.appendChild(o); });
+  const fabs = cfg.fabricantes?.length ? cfg.fabricantes : ['John Deere','Timple','Solinftec','Reven'];
+  fabs.forEach(f => { const o=document.createElement('option'); o.value=f; o.textContent=f; fabSel.appendChild(o); });
+}
+
+function checkDisplacement() {
+  const section = document.getElementById('displacementSection');
+  existingHwToDisplace = [];
+  displacementDest = null;
+  document.getElementById('displaceStockBtn')?.classList.remove('selected-estoque');
+  document.getElementById('displaceMainBtn')?.classList.remove('selected-transfer');
+  if (!section) return;
+
+  if (currentAction !== 'instalar' || !selectedMachineDestId) { section.style.display = 'none'; return; }
+
+  const hwType = currentOrigin === 'novo'
+    ? document.getElementById('novoHwType').value
+    : document.getElementById('hwType').value;
+  if (!hwType) { section.style.display = 'none'; return; }
+
+  existingHwToDisplace = hardwares.filter(h => h.machine === selectedMachineDestId && h.type === hwType);
+  if (existingHwToDisplace.length === 0) { section.style.display = 'none'; return; }
+
+  const machineName = getMachineName(selectedMachineDestId);
+  const names = existingHwToDisplace.map(h => `${h.name}${h.sn ? ' ('+h.sn+')' : ''}`).join(', ');
+  document.getElementById('displacementInfo').textContent = `${machineName} já possui: ${names}`;
+  section.style.display = 'block';
+}
+
+function setDisplacementDest(dest) {
+  displacementDest = dest;
+  document.getElementById('displaceStockBtn').className = `action-btn${dest==='ESTOQUE'?' selected-estoque':''}`;
+  document.getElementById('displaceMainBtn').className = `action-btn${dest==='MANUTENCAO'?' selected-transfer':''}`;
 }
 
 window.addEventListener('DOMContentLoaded', () => {
@@ -1288,6 +1389,15 @@ function selectOrigin(origin) {
   // Destino só aparece para INSTALAR
   document.getElementById('transferDestSection').classList.toggle('visible', currentAction === 'instalar');
 
+  // "Novo equipamento": oculta picker, mostra campos manuais
+  const isNovo = origin.id === 'novo';
+  document.getElementById('hwPickerWrap').style.display = isNovo ? 'none' : '';
+  document.getElementById('novoHwFields').style.display  = isNovo ? 'block' : 'none';
+  if (isNovo) { selectedHwId = null; setHwDropdownLabel(null); }
+  // Reset deslocamento ao mudar origem
+  document.getElementById('displacementSection').style.display = 'none';
+  displacementDest = null; existingHwToDisplace = [];
+
   document.getElementById('formBody').style.display = 'block';
   document.getElementById('formBody').classList.add('fade-in');
   document.getElementById('submitArea').style.display = 'block';
@@ -1406,6 +1516,7 @@ function renderMachinePickerDest() {
       setMachineDropdownLabel('dest', m);
       closeMachineDropdown('dest');
       renderMachinePickerDest();
+      checkDisplacement();
     };
     container.appendChild(div);
   });
@@ -1539,19 +1650,34 @@ function submitRecord() {
     showToast('err','⚠️','Selecione a máquina destino'); return;
   }
 
-  if (!selectedHwId) { showToast('err','⚠️','Selecione um equipamento na lista'); return; }
-  const selectedHw = hardwares.find(h => h.id === selectedHwId);
-  if (!selectedHw) { showToast('err','⚠️','Equipamento não encontrado'); return; }
+  // Resolve dados do hardware (picker OU campos manuais)
+  let hwId, hwSn, hwName, hwType, hwModelo, hwPatrimonio;
+  if (currentOrigin === 'novo') {
+    hwType       = document.getElementById('novoHwType').value;
+    hwName       = document.getElementById('novoHwModelo').value;
+    hwSn         = document.getElementById('novoHwSn').value.trim().toUpperCase();
+    hwPatrimonio = document.getElementById('novoHwPat').value.trim().toUpperCase();
+    hwId         = hwPatrimonio || `HW-${Date.now()}`;
+    hwModelo     = hwName;
+    if (!hwType || !hwName) { showToast('err','⚠️','Preencha tipo e modelo do equipamento'); return; }
+    if (!hwSn && !hwPatrimonio) { showToast('err','⚠️','Informe S/N ou Patrimônio'); return; }
+  } else {
+    if (!selectedHwId) { showToast('err','⚠️','Selecione um equipamento na lista'); return; }
+    const selectedHw = hardwares.find(h => h.id === selectedHwId);
+    if (!selectedHw) { showToast('err','⚠️','Equipamento não encontrado'); return; }
+    hwId = selectedHw.id; hwSn = selectedHw.sn || ''; hwName = selectedHw.name || '';
+    hwType = selectedHw.type || ''; hwModelo = selectedHw.name || ''; hwPatrimonio = selectedHw.patrimonio || '';
+  }
 
-  const hwId = selectedHw.id;
-  const hwSn = selectedHw.sn || '';
-  const hwName = selectedHw.name || '';
-  const hwType = selectedHw.type || '';
-  const hwModelo = selectedHw.name || '';
-  const hwPatrimonio = selectedHw.patrimonio || '';
+  // Valida deslocamento quando necessário
+  if (existingHwToDisplace.length > 0 && !displacementDest) {
+    showToast('err','⚠️','Informe o destino do equipamento atual na máquina'); return;
+  }
 
   const techName = document.getElementById('techName').value.trim() || 'Técnico';
   localStorage.setItem('techName', techName);
+  const dateTime = document.getElementById('serviceDateTime').value;
+  const notes = document.getElementById('notes').value.trim();
 
   const record = {
     id: `REG-${Date.now()}`,
@@ -1562,28 +1688,41 @@ function submitRecord() {
     machineName:     getMachineName(finalMachineId),
     machineDestId:   finalMachineDestId,
     machineDestName: getMachineName(finalMachineDestId),
-    hwId,
-    hwSn,
-    hwName,
-    hwType,
-    hwModelo,
-    hwPatrimonio,
+    hwId, hwSn, hwName, hwType, hwModelo, hwPatrimonio,
     gpsLat: gpsCoords?.lat || '',
     gpsLng: gpsCoords?.lng || '',
     gpsAcc: gpsCoords?.acc || '',
-    dateTime: document.getElementById('serviceDateTime').value,
-    notes: document.getElementById('notes').value.trim(),
+    dateTime,
+    notes,
     synced: false,
     createdAt: new Date().toISOString(),
   };
 
-  // Salva local
   saveRecordLocal(record);
+  if (navigator.onLine) syncRecord(record);
 
-  // Tenta sincronizar imediatamente se online
-  if (navigator.onLine) {
-    syncRecord(record);
-  }
+  // Registros de deslocamento do equipamento que já estava na máquina
+  existingHwToDisplace.forEach((hw, i) => {
+    const dispRecord = {
+      id: `REG-${Date.now() + i + 1}`,
+      action: displacementDest === 'ESTOQUE' ? 'estoque' : 'manutencao',
+      origem: 'maquina',
+      techName,
+      machineId: finalMachineDestId,
+      machineName: getMachineName(finalMachineDestId),
+      machineDestId: displacementDest,
+      machineDestName: getMachineName(displacementDest),
+      hwId: hw.id, hwSn: hw.sn || '', hwName: hw.name || '',
+      hwType: hw.type || '', hwModelo: hw.name || '', hwPatrimonio: hw.patrimonio || '',
+      gpsLat: '', gpsLng: '', gpsAcc: '',
+      dateTime,
+      notes: `Realocação automática — instalação de ${hwName}`,
+      synced: false,
+      createdAt: new Date().toISOString(),
+    };
+    saveRecordLocal(dispRecord);
+    if (navigator.onLine) syncRecord(dispRecord);
+  });
 
   showSuccess(record);
 }
@@ -1762,6 +1901,11 @@ function resetForm() {
   setMachineDropdownLabel('dest', null);
   document.getElementById('hwType').value = '';
   document.getElementById('hwPickerWrap').style.display = 'none';
+  document.getElementById('novoHwFields').style.display = 'none';
+  document.getElementById('displacementSection').style.display = 'none';
+  displacementDest = null; existingHwToDisplace = [];
+  ['novoHwType','novoHwModelo','novoHwFab'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+  ['novoHwSn','novoHwPat'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
   setHwDropdownLabel(null);
   closeHwDropdown();
   if (document.getElementById('hwSearchInput')) document.getElementById('hwSearchInput').value = '';

@@ -1178,6 +1178,9 @@
         </div>
       </div>
 
+      <div id="machineEditBtnRow" style="display:none;justify-content:flex-end;margin-bottom:4px">
+        <button class="btn btn-ghost" style="font-size:12px" id="machineEditBtn">✏️ Editar Máquina</button>
+      </div>
       <div class="hw-grid" id="hwGrid"></div>
     </div>
   </main>
@@ -1276,6 +1279,56 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('settingsModal')">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MACHINE EDIT -->
+<div class="modal-overlay" id="machineEditModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">✏️ Editar Máquina</div>
+        <div class="modal-sub" id="machineEditSub">—</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('machineEditModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">NOME / MODELO</label>
+        <input type="text" class="form-input" id="editMachName">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">ANO</label>
+          <input type="text" class="form-input" id="editMachYear" placeholder="2023">
+        </div>
+        <div class="form-group">
+          <label class="form-label">UNIDADE</label>
+          <select class="form-select" id="editMachUnidade">
+            <option value="">— Selecione —</option>
+            <option value="PEDRA">PEDRA</option>
+            <option value="CEDRO">CEDRO</option>
+            <option value="BURITI">BURITI</option>
+            <option value="IPÊ">IPÊ</option>
+            <option value="PEDRA/LOCAÇÃO">PEDRA/LOCAÇÃO</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">CHASSI</label>
+          <input type="text" class="form-input" id="editMachChassi" style="font-family:'JetBrains Mono',monospace;font-size:12px">
+        </div>
+        <div class="form-group">
+          <label class="form-label">PATRIMÔNIO</label>
+          <input type="text" class="form-input" id="editMachPat">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('machineEditModal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveMachineEdit()">Salvar</button>
     </div>
   </div>
 </div>
@@ -2138,6 +2191,14 @@ function renderDetail(id) {
   document.getElementById('heroEmoji').textContent = cfg.emoji;
   document.getElementById('heroIcon').className = `hero-icon-wrap ${m.type}`;
   document.getElementById('heroCard').setAttribute('data-emoji', cfg.emoji);
+
+  // Botão de edição — só para máquinas reais
+  const editRow = document.getElementById('machineEditBtnRow');
+  const editBtn = document.getElementById('machineEditBtn');
+  if (editRow && editBtn) {
+    editRow.style.display = REAL_TYPES.has(m.type) ? 'flex' : 'none';
+    editBtn.onclick = () => openMachineEdit(m.id);
+  }
   document.getElementById('heroType').textContent = cfg.label;
   document.getElementById('heroName').textContent = m.name;
   document.getElementById('heroId').textContent = `${m.id} · ${m.unidade || '—'} · ${m.year || '—'}`;
@@ -2750,6 +2811,55 @@ function showToast(type, icon, title, sub) {
 
 // =========================================
 // INIT
+// =========================================
+// MACHINE EDIT
+// =========================================
+let editingMachineEditId = null;
+
+function openMachineEdit(machineId) {
+  editingMachineEditId = machineId;
+  const m = machines.find(x => x.id === machineId);
+  if (!m) return;
+  const cfg = machineConfig[m.type] || {};
+  document.getElementById('machineEditSub').textContent = `${cfg.emoji || ''} ${m.type?.toUpperCase()} · ${m.id}`;
+  document.getElementById('editMachName').value    = m.name || '';
+  document.getElementById('editMachYear').value    = m.year || '';
+  document.getElementById('editMachUnidade').value = m.unidade || '';
+  document.getElementById('editMachChassi').value  = m.chassi || '';
+  document.getElementById('editMachPat').value     = m.patrimony || '';
+  openModal('machineEditModal');
+}
+
+async function saveMachineEdit() {
+  const m = machines.find(x => x.id === editingMachineEditId);
+  if (!m) return;
+  const name    = document.getElementById('editMachName').value.trim();
+  const year    = document.getElementById('editMachYear').value.trim();
+  const unidade = document.getElementById('editMachUnidade').value;
+  const chassi  = document.getElementById('editMachChassi').value.trim();
+  const pat     = document.getElementById('editMachPat').value.trim();
+  if (!name) { showToast('warning','⚠️','Campos obrigatórios','Preencha o nome'); return; }
+
+  m.name = name; m.year = year; m.unidade = unidade; m.chassi = chassi; m.patrimony = pat;
+  closeModal('machineEditModal');
+  renderAll();
+  showToast('success','✅','Máquina atualizada', name);
+
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/maquinas?id=eq.${encodeURIComponent(editingMachineEditId)}`, {
+      method: 'PATCH',
+      headers: { ...sbHeaders, 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ nome: name, ano: year, unidade, chassi, patrimonio: pat }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(()=>({}));
+      showToast('warning','⚠️','Erro ao salvar', err.message || `HTTP ${res.status}`);
+    }
+  } catch(e) {
+    showToast('warning','⚠️','Sem conexão','Alteração salva localmente apenas');
+  }
+}
+
 // =========================================
 // =========================================
 // INIT
