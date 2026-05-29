@@ -1178,7 +1178,6 @@
         </div>
       </div>
 
-      <div class="hw-section-title">HARDWARES INSTALADOS</div>
       <div class="hw-grid" id="hwGrid"></div>
     </div>
   </main>
@@ -1891,6 +1890,11 @@ function buildMachineConfig(rawTipos) {
   }
 }
 
+function chipLabel(raw) {
+  const s = raw.length > 9 ? raw.slice(0, 8) + '.' : raw;
+  return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+}
+
 function rebuildFilterChips() {
   const maqEl = document.getElementById('machineTypeChips');
   const hwEl  = document.getElementById('hwTypeChips');
@@ -1899,24 +1903,20 @@ function rebuildFilterChips() {
     REAL_TYPES.forEach(id => {
       const cfg = machineConfig[id];
       if (!cfg) return;
-      const raw = cfg.label;
-      const text = raw.length > 9 ? raw.slice(0,8)+'.' : raw.charAt(0)+raw.slice(1).toLowerCase();
       const chip = document.createElement('div');
       chip.className = `filter-chip${activeFilter===id?' active':''}`;
       chip.dataset.filter = id;
-      chip.textContent = text;
+      chip.textContent = chipLabel(cfg.label);
       maqEl.appendChild(chip);
     });
   }
   if (hwEl) {
     hwEl.innerHTML = '';
     Object.entries(hwConfig).forEach(([id, cfg]) => {
-      const raw = cfg.label;
-      const text = raw.length > 9 ? raw.slice(0,8)+'.' : raw.charAt(0)+raw.slice(1).toLowerCase();
       const chip = document.createElement('div');
       chip.className = `filter-chip hw-chip${activeFilter===id?' active':''}`;
       chip.dataset.filter = id;
-      chip.textContent = text;
+      chip.textContent = chipLabel(cfg.label);
       hwEl.appendChild(chip);
     });
   }
@@ -2202,24 +2202,46 @@ function renderDetail(id) {
       return card;
     }
 
-    sortedTypes.forEach(type => {
-      const hwList = groups[type];
-      const hcfgSec = hwConfig[type] || { label: type.toUpperCase(), color: '#888' };
+    const isVirtualDest = DEST_TYPES.includes(m.type);
 
-      const section = document.createElement('div');
-      section.className = 'hw-type-section';
+    if (isVirtualDest) {
+      // ── Destinos virtuais: seções por tipo com recolhimento ──
+      sortedTypes.forEach(type => {
+        const hwList = groups[type];
+        const hcfgSec = hwConfig[type] || { label: type.toUpperCase(), color: '#888' };
 
-      const header = document.createElement('div');
-      header.className = 'hw-type-section-header';
-      header.innerHTML = `<span>${hcfgSec.label}</span><span class="hw-type-section-count">${hwList.length}</span>`;
-      section.appendChild(header);
+        const section = document.createElement('div');
+        section.className = 'hw-type-section';
 
-      const sectionGrid = document.createElement('div');
-      sectionGrid.className = 'hw-type-section-grid';
-      hwList.forEach(hw => sectionGrid.appendChild(buildHwCard(hw)));
-      section.appendChild(sectionGrid);
-      grid.appendChild(section);
-    });
+        const sectionGrid = document.createElement('div');
+        sectionGrid.className = 'hw-type-section-grid';
+        hwList.forEach(hw => sectionGrid.appendChild(buildHwCard(hw)));
+
+        const header = document.createElement('div');
+        header.className = 'hw-type-section-header';
+        header.style.cursor = 'pointer';
+        header.innerHTML = `
+          <span class="section-arrow" style="font-size:10px;opacity:.5;transition:transform .15s">▾</span>
+          <span>${hcfgSec.label}</span>
+          <span class="hw-type-section-count">${hwList.length}</span>
+        `;
+        header.onclick = () => {
+          const collapsed = sectionGrid.style.display === 'none';
+          sectionGrid.style.display = collapsed ? '' : 'none';
+          header.querySelector('.section-arrow').style.transform = collapsed ? '' : 'rotate(-90deg)';
+        };
+
+        section.appendChild(header);
+        section.appendChild(sectionGrid);
+        grid.appendChild(section);
+      });
+    } else {
+      // ── Máquinas reais: grid flat sem seções ──
+      const flatGrid = document.createElement('div');
+      flatGrid.className = 'hw-type-section-grid';
+      m.hardware.forEach(hw => flatGrid.appendChild(buildHwCard(hw)));
+      grid.appendChild(flatGrid);
+    }
 
     // Card de adicionar
     const addCard = document.createElement('div');
