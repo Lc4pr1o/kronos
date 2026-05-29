@@ -692,10 +692,12 @@
     display: flex;
     gap: 6px;
     opacity: 0;
-    transition: opacity 0.2s;
+    pointer-events: none;
+    transition: opacity 0.15s;
   }
 
-  .hw-card:hover .hw-actions-mini { opacity: 1; }
+  .hw-card.expanded { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent22,rgba(245,166,35,0.2)); }
+  .hw-card.expanded .hw-actions-mini { opacity: 1; pointer-events: auto; }
 
   .hw-mini-btn {
     width: 26px;
@@ -1070,7 +1072,6 @@
   <div class="header-stats">
     <div class="stat-pill"><div class="stat-dot green"></div><span id="stat-machines">0 Máquinas</span></div>
     <div class="stat-pill"><div class="stat-dot orange"></div><span id="stat-hw">0 Hardwares</span></div>
-    <div class="stat-pill"><div class="stat-dot blue"></div><span id="stat-free">0 Livre</span></div>
     <div class="stat-pill connection-pill" id="connectionPill" style="cursor:pointer" onclick="loadFromSheets()" title="Clique para atualizar">
       <div class="stat-dot orange" id="connectionDot"></div>
       <span id="connectionLabel">Demo</span>
@@ -1347,7 +1348,10 @@
       <div class="transfer-arrow">↓</div>
       <div class="form-group">
         <label class="form-label">SELECIONAR DESTINO</label>
-        <div class="machine-select-grid" id="transferTargetGrid"></div>
+        <input type="text" class="form-input" id="transferSearch" placeholder="🔍 Buscar máquina..." oninput="renderTransferGrid()" style="margin-bottom:10px">
+        <div style="max-height:320px;overflow-y:auto;border-radius:8px">
+          <div class="machine-select-grid" id="transferTargetGrid"></div>
+        </div>
       </div>
     </div>
     <div class="modal-footer">
@@ -1596,7 +1600,7 @@ const machineConfig = {
 
 const REAL_TYPES = new Set(['trator', 'colhedora', 'motoniveladora']);
 const DEST_TYPES = ['estoque', 'manutencao', 'inativo'];
-let campoExpanded = true;
+let campoExpanded = false;
 
 // =========================================
 // RENDER
@@ -1744,6 +1748,11 @@ function renderDetail(id) {
       const hcfg = hwConfig[hw.type];
       const card = document.createElement('div');
       card.className = 'hw-card animate-in';
+      card.onclick = () => {
+        const wasExpanded = card.classList.contains('expanded');
+        document.querySelectorAll('.hw-card.expanded').forEach(c => c.classList.remove('expanded'));
+        if (!wasExpanded) card.classList.add('expanded');
+      };
       card.innerHTML = `
         <div class="hw-card-header">
           <span class="hw-type-badge ${hcfg.cssClass}">${hcfg.emoji} ${hcfg.label}</span>
@@ -1792,7 +1801,6 @@ function updateStats() {
   });
   document.getElementById('stat-machines').textContent = `${total} Máquinas`;
   document.getElementById('stat-hw').textContent = `${hwTotal} Hardwares`;
-  document.getElementById('stat-free').textContent = `${machines.filter(m=>m.hardware.length===0).length} Sem HW`;
 }
 
 // =========================================
@@ -2094,30 +2102,39 @@ function openTransfer(machineId, hwId) {
 
   document.getElementById('transferHwName').textContent = `${hcfg.emoji} ${hw.name}`;
   document.getElementById('transferHwDetail').textContent = `${hw.id} · S/N: ${hw.sn || '—'} · ${hcfg.label}`;
+  document.getElementById('transferSearch').value = '';
 
+  renderTransferGrid();
+  openModal('transferModal');
+}
+
+function renderTransferGrid() {
+  const term = (document.getElementById('transferSearch')?.value || '').toLowerCase().trim();
   const grid = document.getElementById('transferTargetGrid');
   grid.innerHTML = '';
 
-  machines.forEach(target => {
-    const cfg = machineConfig[target.type];
+  const list = term
+    ? machines.filter(t => t.name.toLowerCase().includes(term) || String(t.id).toLowerCase().includes(term))
+    : machines;
+
+  list.forEach(target => {
+    const cfg = machineConfig[target.type] || { emoji: '🚛' };
+    const isSelf = target.id === transferSourceMachineId;
     const div = document.createElement('div');
-    div.className = `msq-item${target.id === machineId ? ' disabled-target' : ''}`;
+    div.className = `msq-item${isSelf ? ' disabled-target' : ''}${transferTargetMachineId === target.id ? ' selected-target' : ''}`;
     div.innerHTML = `
       <div class="msq-icon">${cfg.emoji}</div>
       <div class="msq-name">${target.name}</div>
       <div class="msq-id">${target.id}</div>
     `;
-    if (target.id !== machineId) {
+    if (!isSelf) {
       div.onclick = () => {
-        document.querySelectorAll('.msq-item').forEach(x => x.classList.remove('selected-target'));
-        div.classList.add('selected-target');
         transferTargetMachineId = target.id;
+        renderTransferGrid();
       };
     }
     grid.appendChild(div);
   });
-
-  openModal('transferModal');
 }
 
 async function confirmTransfer() {
