@@ -1,0 +1,1709 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>KRONOS — Campo</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0c0f;
+    --surface: #111318;
+    --surface2: #181c24;
+    --surface3: #1e2330;
+    --border: #252b38;
+    --border2: #2e3648;
+    --accent: #f5a623;
+    --accent2: #e8870a;
+    --green: #2ecc8a;
+    --red: #e05252;
+    --blue: #4a9eff;
+    --text: #e8ecf4;
+    --text2: #8a94a8;
+    --text3: #4a5468;
+    --trator: #f5a623;
+    --motoniveladora: #4a9eff;
+    --colhedora: #2ecc8a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow-x: hidden;
+  }
+
+  /* ── HEADER ── */
+  .top-bar {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .top-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .top-logo-icon {
+    width: 32px; height: 32px;
+    background: var(--accent);
+    border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px;
+  }
+
+  .top-logo-text {
+    font-size: 16px; font-weight: 800; letter-spacing: 2px;
+  }
+  .top-logo-text span { color: var(--accent); }
+
+  .top-right { display: flex; align-items: center; gap: 10px; }
+
+  .sync-indicator {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 10px; font-family: 'JetBrains Mono', monospace;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 5px 10px;
+    color: var(--text2);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .sync-indicator.online { border-color: rgba(46,204,138,0.4); color: var(--green); }
+  .sync-indicator.offline { border-color: rgba(224,82,82,0.3); color: var(--red); }
+  .sync-indicator.syncing { border-color: rgba(245,166,35,0.4); color: var(--accent); }
+
+  .sync-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: currentColor;
+  }
+
+  .sync-indicator.online .sync-dot { animation: pulse 2s infinite; }
+  .sync-indicator.syncing .sync-dot { animation: spin-fade 0.8s infinite; }
+
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.7)} }
+  @keyframes spin-fade { 0%{opacity:1} 50%{opacity:0.2} 100%{opacity:1} }
+
+  /* ── PENDING BADGE ── */
+  .pending-banner {
+    background: rgba(245,166,35,0.08);
+    border-bottom: 1px solid rgba(245,166,35,0.2);
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 12px;
+    display: none;
+  }
+
+  .pending-banner.visible { display: flex; }
+
+  .pb-left { display: flex; align-items: center; gap: 8px; color: var(--accent); font-weight: 600; }
+  .pb-count {
+    background: var(--accent);
+    color: #000;
+    font-size: 10px;
+    font-weight: 800;
+    border-radius: 10px;
+    padding: 1px 7px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .pb-sync-btn {
+    font-size: 11px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    background: rgba(245,166,35,0.15);
+    border: 1px solid rgba(245,166,35,0.4);
+    color: var(--accent);
+    padding: 5px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+
+  /* ── TABS ── */
+  .tabs {
+    display: flex;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 16px;
+    gap: 4px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+
+  .tab {
+    flex-shrink: 0;
+    padding: 12px 16px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: var(--text3);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* ── MAIN CONTENT ── */
+  .screen { display: none; padding: 20px 16px 100px; }
+  .screen.active { display: block; }
+
+  /* ── FORM ELEMENTS ── */
+  .section-title {
+    font-size: 9px;
+    letter-spacing: 3px;
+    color: var(--text3);
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+    margin-bottom: 14px;
+    margin-top: 28px;
+    padding-left: 4px;
+    border-left: 2px solid var(--border2);
+    padding-left: 8px;
+  }
+
+  .section-title:first-child { margin-top: 4px; }
+
+  #formBody { margin-top: 4px; }
+
+  .field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+
+  .field-label {
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--text3);
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+    padding-left: 2px;
+  }
+
+  .field-input, .field-select, .field-textarea {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    outline: none;
+    width: 100%;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    -webkit-appearance: none;
+  }
+
+  .field-input:focus, .field-select:focus, .field-textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(245,166,35,0.1);
+  }
+
+  .field-select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%234a5468' stroke-width='2' fill='none'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 16px center; padding-right: 40px; }
+
+  .field-select option { background: var(--surface2); }
+  .field-textarea { resize: none; min-height: 80px; line-height: 1.5; font-size: 14px; }
+
+  /* ── ACTION TYPE SELECTOR ── */
+  .action-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .action-btn {
+    background: var(--surface2);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .action-btn:active { transform: scale(0.96); }
+
+  .action-btn.selected-install  { border-color: var(--green);  background: rgba(46,204,138,0.08); }
+  .action-btn.selected-remove   { border-color: var(--red);    background: rgba(224,82,82,0.08); }
+  .action-btn.selected-transfer { border-color: var(--blue);   background: rgba(74,158,255,0.08); }
+  .action-btn.selected-estoque  { border-color: var(--accent); background: rgba(245,166,35,0.08); }
+
+  .action-icon { font-size: 24px; }
+  .action-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: var(--text2);
+  }
+
+  .action-btn.selected-install .action-label  { color: var(--green); }
+  .action-btn.selected-remove .action-label   { color: var(--red); }
+  .action-btn.selected-transfer .action-label { color: var(--blue); }
+  .action-btn.selected-estoque .action-label  { color: var(--accent); }
+
+  /* ── ORIGIN BUTTONS ── */
+  .origin-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 4px;
+  }
+
+  .origin-btn {
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 16px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    color: var(--text2);
+    cursor: pointer;
+    transition: all 0.2s;
+    flex-shrink: 0;
+    font-family: 'Syne', sans-serif;
+  }
+
+  .origin-btn:active { transform: scale(0.96); }
+
+  .origin-btn.selected {
+    border-color: var(--accent);
+    background: rgba(245,166,35,0.08);
+    color: var(--accent);
+  }
+
+  /* ── MACHINE DROPDOWN ── */
+  .machine-dropdown { position: relative; }
+
+  .machine-dropdown-btn {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    transition: border-color 0.2s;
+    gap: 12px;
+  }
+  .machine-dropdown-btn:active { opacity: 0.85; }
+  .machine-dropdown-btn.open {
+    border-color: var(--accent);
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+  .dropdown-placeholder { color: var(--text3); font-size: 14px; }
+  .dropdown-selected { display: flex; align-items: center; gap: 10px; }
+  .dropdown-selected-icon { font-size: 20px; flex-shrink: 0; }
+  .dropdown-selected-name { font-size: 13px; font-weight: 700; color: var(--text); }
+  .dropdown-selected-id { font-size: 11px; color: var(--text3); font-family: 'JetBrains Mono', monospace; margin-top: 1px; }
+  .dropdown-arrow { color: var(--text3); font-size: 11px; transition: transform 0.2s; flex-shrink: 0; }
+  .dropdown-arrow.open { transform: rotate(180deg); }
+
+  .machine-dropdown-panel {
+    display: none;
+    border: 1px solid var(--accent);
+    border-top: none;
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+    background: var(--surface);
+    overflow: hidden;
+    z-index: 10;
+  }
+  .machine-dropdown-panel.open { display: block; }
+
+  .machine-search-input {
+    width: 100%;
+    background: var(--surface2);
+    border: none;
+    border-bottom: 1px solid var(--border);
+    padding: 12px 16px;
+    color: var(--text);
+    font-size: 14px;
+    font-family: 'Syne', sans-serif;
+    outline: none;
+  }
+  .machine-search-input::placeholder { color: var(--text3); }
+
+  .machine-picker-scroll {
+    max-height: 280px;
+    overflow-y: auto;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .machine-picker-scroll::-webkit-scrollbar { width: 3px; }
+  .machine-picker-scroll::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+  /* ── MACHINE PICKER (dentro do scroll) ── */
+  .machine-picker {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .machine-option {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .machine-option:active { transform: scale(0.99); }
+
+  .machine-option.selected { border-color: var(--accent); background: rgba(245,166,35,0.06); }
+
+  .mo-icon { font-size: 24px; flex-shrink: 0; }
+  .mo-info { flex: 1; }
+  .mo-name { font-size: 14px; font-weight: 700; }
+  .mo-id { font-size: 11px; font-family: 'JetBrains Mono', monospace; color: var(--text3); margin-top: 2px; }
+
+  .mo-check {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.2s;
+    font-size: 11px;
+  }
+
+  .machine-option.selected .mo-check {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #000;
+    font-weight: 800;
+  }
+
+  /* ── HW PICKER ── */
+  .hw-option {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .hw-option.selected { border-color: var(--blue); background: rgba(74,158,255,0.06); }
+  .hw-option.selected .mo-check { background: var(--blue); border-color: var(--blue); color: #fff; }
+
+  .hw-type-dot {
+    width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0;
+  }
+
+  /* ── GPS FIELD ── */
+  .gps-field {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .gps-field:active { opacity: 0.8; }
+  .gps-field.got { border-color: rgba(46,204,138,0.4); }
+
+  .gps-icon { font-size: 20px; }
+  .gps-text { flex: 1; }
+  .gps-label { font-size: 10px; color: var(--text3); letter-spacing: 1px; margin-bottom: 2px; }
+  .gps-value { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text2); }
+  .gps-value.got { color: var(--green); }
+
+  /* ── SUBMIT BUTTON ── */
+  .submit-area {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    padding: 16px;
+    background: linear-gradient(to top, var(--bg) 60%, transparent);
+    z-index: 40;
+  }
+
+  .submit-btn {
+    width: 100%;
+    padding: 18px;
+    background: var(--accent);
+    border: none;
+    border-radius: 14px;
+    color: #000;
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .submit-btn:active { transform: scale(0.98); background: var(--accent2); }
+  .submit-btn:disabled { opacity: 0.4; pointer-events: none; }
+
+  /* ── HISTORY SCREEN ── */
+  .history-list { display: flex; flex-direction: column; gap: 10px; }
+
+  .history-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .history-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+  }
+
+  .history-card.install::before { background: var(--green); }
+  .history-card.remove::before { background: var(--red); }
+  .history-card.transfer::before { background: var(--blue); }
+
+  .hc-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+
+  .hc-action {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    padding: 3px 8px;
+    border-radius: 4px;
+  }
+
+  .hc-action.install { background: rgba(46,204,138,0.15); color: var(--green); }
+  .hc-action.remove { background: rgba(224,82,82,0.15); color: var(--red); }
+  .hc-action.transfer { background: rgba(74,158,255,0.15); color: var(--blue); }
+
+  .hc-status {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 10px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .hc-status.synced { color: var(--green); }
+  .hc-status.pending { color: var(--accent); }
+  .hc-status-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+
+  .hc-hw { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+  .hc-machine { font-size: 12px; color: var(--text2); margin-bottom: 10px; }
+
+  .hc-meta {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .hc-meta-item { font-size: 10px; font-family: 'JetBrains Mono', monospace; color: var(--text3); }
+  .hc-meta-item span { color: var(--text2); }
+
+  /* ── EMPTY STATES ── */
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text3);
+  }
+
+  .empty-icon { font-size: 48px; margin-bottom: 12px; }
+  .empty-title { font-size: 16px; color: var(--text2); font-weight: 700; margin-bottom: 6px; }
+  .empty-sub { font-size: 13px; line-height: 1.5; }
+
+  /* ── SUCCESS OVERLAY ── */
+  .success-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(10,12,15,0.95);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+
+  .success-overlay.show { opacity: 1; pointer-events: all; }
+
+  .success-ring {
+    width: 100px; height: 100px;
+    border-radius: 50%;
+    border: 3px solid var(--green);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 44px;
+    animation: ring-in 0.4s ease forwards;
+  }
+
+  @keyframes ring-in {
+    from { transform: scale(0.6); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+
+  .success-title { font-size: 22px; font-weight: 800; color: var(--green); }
+  .success-sub { font-size: 13px; color: var(--text2); text-align: center; max-width: 260px; line-height: 1.5; }
+  .success-close {
+    margin-top: 8px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 14px 40px;
+    border-radius: 12px;
+    cursor: pointer;
+  }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed;
+    top: 70px; left: 16px; right: 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    z-index: 200;
+    transform: translateY(-20px);
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    pointer-events: none;
+  }
+
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.err { border-color: rgba(224,82,82,0.4); }
+  .toast.ok { border-color: rgba(46,204,138,0.4); }
+
+  /* ── TRANSFER DEST ── */
+  .transfer-dest-section { display: none; }
+  .transfer-dest-section.visible { display: block; }
+
+  /* ── FIELD HINT ── */
+  .field-hint {
+    font-size: 10px;
+    color: var(--text3);
+    font-family: 'JetBrains Mono', monospace;
+    padding: 0 4px;
+  }
+
+  /* ── DIVIDER ── */
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 8px 0;
+  }
+
+  /* ── ANIMATE ── */
+  .fade-in {
+    animation: fadeIn 0.25s ease forwards;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="top-bar">
+  <div class="top-logo">
+    <div class="top-logo-icon">⚙️</div>
+    <div class="top-logo-text">KRO<span>NOS</span></div>
+  </div>
+  <div class="top-right">
+    <div class="sync-indicator offline" id="syncIndicator" onclick="trySyncAll()">
+      <div class="sync-dot"></div>
+      <span id="syncLabel">Offline</span>
+    </div>
+  </div>
+</div>
+
+<!-- PENDING BANNER -->
+<div class="pending-banner" id="pendingBanner">
+  <div class="pb-left">
+    <span>⏳</span>
+    <span id="pendingText">registros pendentes</span>
+    <div class="pb-count" id="pendingCount">0</div>
+  </div>
+  <button class="pb-sync-btn" onclick="trySyncAll()">Sincronizar ↑</button>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <div class="tab active" data-tab="novo">📋 Novo Registro</div>
+  <div class="tab" data-tab="historico">🕐 Histórico</div>
+</div>
+
+<!-- ══════════════ NOVO REGISTRO ══════════════ -->
+<div class="screen active" id="screen-novo">
+
+  <div class="section-title">TIPO DE SERVIÇO</div>
+  <div class="action-grid">
+    <div class="action-btn" data-action="instalar" onclick="selectAction(this,'instalar')">
+      <div class="action-icon">📥</div>
+      <div class="action-label">INSTALAR</div>
+    </div>
+    <div class="action-btn" data-action="estoque" onclick="selectAction(this,'estoque')">
+      <div class="action-icon">📦</div>
+      <div class="action-label">→ ESTOQUE</div>
+    </div>
+    <div class="action-btn" data-action="manutencao" onclick="selectAction(this,'manutencao')">
+      <div class="action-icon">🔧</div>
+      <div class="action-label">MANUTENÇÃO</div>
+    </div>
+    <div class="action-btn" data-action="inativo" onclick="selectAction(this,'inativo')">
+      <div class="action-icon">⛔</div>
+      <div class="action-label">INATIVO</div>
+    </div>
+  </div>
+
+  <!-- Origem do equipamento (aparece após selecionar ação) -->
+  <div id="originSection" style="display:none">
+    <div class="section-title" style="margin-top:20px">ORIGEM DO EQUIPAMENTO</div>
+    <div class="origin-grid" id="originGrid"></div>
+  </div>
+
+  <div id="formBody" style="display:none" class="fade-in">
+
+    <div class="section-title">TÉCNICO</div>
+    <div class="field-group">
+      <div class="field">
+        <label class="field-label">SEU NOME</label>
+        <select class="field-select" id="techName">
+          <option value="">— Selecione —</option>
+          <option value="Anderson">Anderson</option>
+          <option value="Lucas">Lucas</option>
+          <option value="Kayky">Kayky</option>
+          <option value="Murilo">Murilo</option>
+          <option value="Isaac">Isaac</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="machineSectionWrap">
+      <div class="section-title" id="machineSectionLabel">MÁQUINA</div>
+      <div class="machine-dropdown" id="machineDropdownWrap">
+        <div class="machine-dropdown-btn" id="machineDropdownBtn" onclick="toggleMachineDropdown('origin')">
+          <div id="machineDropdownValue"><span class="dropdown-placeholder">— Selecione a máquina —</span></div>
+          <span class="dropdown-arrow" id="machineDropdownArrow">▾</span>
+        </div>
+        <div class="machine-dropdown-panel" id="machineDropdownPanel">
+          <input type="text" class="machine-search-input" id="machineSearchInput" placeholder="🔍 Buscar por nome ou ID..." oninput="renderMachinePicker()">
+          <div class="machine-picker-scroll">
+            <div class="machine-picker" id="machinePicker"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-title">HARDWARE</div>
+    <div id="hwSection">
+      <div class="field-group">
+        <div class="field">
+          <label class="field-label">TIPO DE HARDWARE</label>
+          <select class="field-select" id="hwType" onchange="renderHwPicker()">
+            <option value="">— Selecione —</option>
+            <option value="monitor">🖥️ Monitor (PA)</option>
+            <option value="receptor">📡 Receptor (PA)</option>
+            <option value="radio">📻 Rádio (PA)</option>
+            <option value="tela">📱 Tela (Solinftec)</option>
+            <option value="bordo">🔧 Bordo (Solinftec)</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="hwPickerWrap" style="margin-top:12px;display:none">
+        <div class="field-label" style="margin-bottom:8px">SELECIONE O EQUIPAMENTO</div>
+        <div class="machine-picker" id="hwPicker"></div>
+      </div>
+
+      <div style="margin-top:14px">
+        <div class="field-label" style="margin-bottom:6px">OU INFORME MANUALMENTE</div>
+        <div class="field-group">
+          <div class="field">
+            <select class="field-select" id="hwModelo" style="font-size:14px;padding:12px 14px">
+              <option value="">— Modelo —</option>
+            </select>
+          </div>
+          <div class="field">
+            <input type="text" class="field-input" id="hwPatrimonio" placeholder="Patrimônio" style="font-size:14px;padding:12px 14px">
+          </div>
+          <div class="field">
+            <input type="text" class="field-input" id="hwIdManual" placeholder="ID do hardware (ex: REC-007)" style="font-size:14px;padding:12px 14px">
+          </div>
+          <div class="field">
+            <input type="text" class="field-input" id="hwSnManual" placeholder="Número de série (S/N)" style="font-size:14px;padding:12px 14px">
+          </div>
+          <div class="field">
+            <input type="text" class="field-input" id="hwNameManual" placeholder="Modelo / nome do equipamento" style="font-size:14px;padding:12px 14px">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DESTINO (só para transferência) -->
+    <div class="transfer-dest-section" id="transferDestSection">
+      <div class="section-title">MÁQUINA DESTINO</div>
+      <div class="machine-dropdown" id="machineDropdownDestWrap">
+        <div class="machine-dropdown-btn" id="machineDropdownDestBtn" onclick="toggleMachineDropdown('dest')">
+          <div id="machineDropdownDestValue"><span class="dropdown-placeholder">— Selecione o destino —</span></div>
+          <span class="dropdown-arrow" id="machineDropdownDestArrow">▾</span>
+        </div>
+        <div class="machine-dropdown-panel" id="machineDropdownDestPanel">
+          <input type="text" class="machine-search-input" id="machineSearchDestInput" placeholder="🔍 Buscar por nome ou ID..." oninput="renderMachinePickerDest()">
+          <div class="machine-picker-scroll">
+            <div class="machine-picker" id="machinePickerDest"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-title">LOCALIZAÇÃO & DATA</div>
+    <div class="field-group">
+      <div class="gps-field" id="gpsField" onclick="captureGPS()">
+        <div class="gps-icon">📍</div>
+        <div class="gps-text">
+          <div class="gps-label">GPS AUTOMÁTICO</div>
+          <div class="gps-value" id="gpsValue">Toque para capturar localização</div>
+        </div>
+      </div>
+      <div class="field">
+        <label class="field-label">DATA E HORA</label>
+        <input type="datetime-local" class="field-input" id="serviceDateTime">
+      </div>
+    </div>
+
+    <div class="section-title">OBSERVAÇÕES</div>
+    <div class="field">
+      <textarea class="field-textarea" id="notes" placeholder="Condição do equipamento, problemas encontrados, informações adicionais..."></textarea>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════ HISTÓRICO ══════════════ -->
+<div class="screen" id="screen-historico">
+  <div id="historyList" class="history-list"></div>
+</div>
+
+<!-- SUBMIT BUTTON (fixed) -->
+<div class="submit-area" id="submitArea" style="display:none">
+  <button class="submit-btn" id="submitBtn" onclick="submitRecord()">
+    <span>⬆</span> Registrar Serviço
+  </button>
+</div>
+
+<!-- SUCCESS OVERLAY -->
+<div class="success-overlay" id="successOverlay">
+  <div class="success-ring">✓</div>
+  <div class="success-title">Registrado!</div>
+  <div class="success-sub" id="successMsg">Serviço salvo com sucesso.</div>
+  <button class="success-close" onclick="closeSuccess()">Novo Registro</button>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <span id="toastIcon">⚠️</span>
+  <span id="toastMsg">mensagem</span>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+// CONFIGURAÇÃO — cole sua URL do Apps Script aqui
+// ══════════════════════════════════════════
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzAoyJeocqzd_QGvXqwFdSQ0k4X12ERowpi-Qt_RLMbugw1Mo9Cit8psEIHXONXZmfOcQ/exec';
+
+// ══════════════════════════════════════════
+// ESTADO
+// ══════════════════════════════════════════
+let currentAction = null;
+let currentOrigin = null;
+let selectedMachineId = null;
+let selectedMachineDestId = null;
+let selectedHwId = null;
+let gpsCoords = null;
+
+// Origens possíveis por ação
+const ORIGEM_POR_ACAO = {
+  instalar:  [
+    { id: 'maquina',    label: '🚜 De uma máquina',  picker: true  },
+    { id: 'estoque',    label: '📦 Do estoque',       picker: false },
+    { id: 'manutencao', label: '🔧 Da manutenção',    picker: false },
+  ],
+  estoque: [
+    { id: 'maquina',       label: '🚜 De uma máquina',    picker: true  },
+    { id: 'novo',          label: '✨ Novo equipamento',  picker: false },
+    { id: 'manutencao',    label: '🔧 Da manutenção',     picker: false },
+    { id: 'outra_unidade', label: '🏭 De outra unidade',  picker: false },
+  ],
+  manutencao: [
+    { id: 'maquina',  label: '🚜 De uma máquina', picker: true  },
+    { id: 'estoque',  label: '📦 Do estoque',      picker: false },
+  ],
+  inativo: [
+    { id: 'manutencao', label: '🔧 Da manutenção', picker: false },
+    { id: 'estoque',    label: '📦 Do estoque',     picker: false },
+  ],
+};
+
+// Mapa origem→machineId quando não é uma máquina real
+const ORIGEM_ID_MAP = {
+  estoque:       'ESTOQUE',
+  manutencao:    'MANUTENCAO',
+  novo:          'NOVO',
+  outra_unidade: 'OUTRA_UNIDADE',
+};
+
+// Destino fixo por ação (para ações que não precisam de picker de destino)
+const ACAO_DEST_MAP = {
+  estoque:   'ESTOQUE',
+  manutencao:'MANUTENCAO',
+  inativo: 'INATIVO',
+};
+
+// Dados vindos da planilha (ou fallback local)
+let machines = [];
+let hardwares = [];
+
+// ══════════════════════════════════════════
+// DADOS DEMO (usados enquanto não conectar ao Sheets)
+// ══════════════════════════════════════════
+const demoMachines = [
+  { id: '50461', name: 'COLHEDORA JD (3520)', type: 'colhedora' },
+  { id: '50486', name: 'TRATOR JD (7815)', type: 'trator' },
+  { id: '50501', name: 'TRATOR JD (7205J)', type: 'trator' },
+  { id: '50724', name: 'COLHEDORA JD (3520)', type: 'colhedora' },
+  { id: '50728', name: 'COLHEDORA JD (3520)', type: 'colhedora' },
+  { id: '50729', name: 'COLHEDORA JD (3520)', type: 'colhedora' },
+  { id: '50748', name: 'COLHEDORA JD (3520)', type: 'colhedora' },
+  { id: '51028', name: 'TRATOR JD (7210J)', type: 'trator' },
+  { id: '51120', name: 'COLHEDORA JD (3520)', type: 'colhedora' },
+  { id: '51121', name: 'COLHEDORA JD (3520)', type: 'colhedora' },
+  { id: '51122', name: 'COLHEDORA JD (3520)', type: 'colhedora' },
+  { id: '51199', name: 'TRATOR JD (6130J)', type: 'trator' },
+  { id: '51212', name: 'TRATOR JD (8335R)', type: 'trator' },
+  { id: '51874', name: 'COLHEDORA CASE (A-8800)', type: 'colhedora' },
+  { id: '52215', name: 'TRATOR JD (7225J)', type: 'trator' },
+  { id: '52217', name: 'TRATOR JD (7230J)', type: 'trator' },
+  { id: '52218', name: 'TRATOR JD (7225J)', type: 'trator' },
+  { id: '52221', name: 'TRATOR JD (7225J)', type: 'trator' },
+  { id: '52294', name: 'COLHEDORA JD (CH570)', type: 'colhedora' },
+  { id: '52296', name: 'COLHEDORA JD (CH570)', type: 'colhedora' },
+  { id: '52454', name: 'TRATOR JD (7225J)', type: 'trator' },
+  { id: '52456', name: 'TRATOR JD (7225J)', type: 'trator' },
+  { id: '53725', name: 'COLHEDORA CASE (A-8800)', type: 'colhedora' },
+  { id: '53729', name: 'COLHEDORA CASE (A-8800)', type: 'colhedora' },
+  { id: '53730', name: 'COLHEDORA CASE (A-8800)', type: 'colhedora' },
+  { id: '54035', name: 'COLHEDORA CASE (A-8810)', type: 'colhedora' },
+  { id: '54045', name: 'TRATOR JD (6135J)', type: 'trator' },
+  { id: '54047', name: 'TRATOR JD (6135J)', type: 'trator' },
+  { id: '55405', name: 'COLHEDORA CASE (A-8800)', type: 'colhedora' },
+  { id: '55406', name: 'COLHEDORA CASE (A-8800)', type: 'colhedora' },
+  { id: '55407', name: 'COLHEDORA CASE (A-8800)', type: 'colhedora' },
+  { id: '55408', name: 'COLHEDORA CASE (A-8800)', type: 'colhedora' },
+  { id: '55409', name: 'COLHEDORA CASE (A-8800)', type: 'colhedora' },
+  { id: '55424', name: 'TRATOR JD (7230J)', type: 'trator' },
+  { id: '55432', name: 'TRATOR JD (7225J)', type: 'trator' },
+  { id: '55449', name: 'TRATOR JD (7230J)', type: 'trator' },
+  { id: '55561', name: 'TRATOR JD (7225J)', type: 'trator' },
+  { id: '55795', name: 'COLHEDORA JD (CH570)', type: 'colhedora' },
+  { id: '55796', name: 'COLHEDORA JD (CH570)', type: 'colhedora' },
+  { id: '55797', name: 'COLHEDORA JD (CH570)', type: 'colhedora' },
+  { id: '55798', name: 'COLHEDORA JD (CH570)', type: 'colhedora' },
+  { id: '55799', name: 'COLHEDORA JD (CH570)', type: 'colhedora' },
+  { id: '55800', name: 'COLHEDORA JD (CH570)', type: 'colhedora' },
+  { id: '55804', name: 'TRATOR JD (7230J)', type: 'trator' },
+  { id: '55805', name: 'TRATOR JD (7230J)', type: 'trator' },
+  { id: '55806', name: 'TRATOR JD (8335R)', type: 'trator' },
+  { id: '55808', name: 'TRATOR JD (7230J)', type: 'trator' },
+  { id: '55814', name: 'TRATOR JD (6135J)', type: 'trator' },
+  { id: '55817', name: 'TRATOR JD (6135J)', type: 'trator' },
+  { id: '55818', name: 'TRATOR JD (6135J)', type: 'trator' },
+  { id: '55819', name: 'TRATOR JD (6135J)', type: 'trator' },
+  { id: '55828', name: 'TRATOR JD (6135J)', type: 'trator' },
+  { id: '56042', name: 'TRATOR CASE (PUMA140)', type: 'trator' },
+  { id: '56043', name: 'TRATOR CASE (PUMA140)', type: 'trator' },
+  { id: '56044', name: 'TRATOR CASE (PUMA140)', type: 'trator' },
+  { id: '56045', name: 'TRATOR CASE (PUMA140)', type: 'trator' },
+  { id: '56046', name: 'TRATOR CASE (PUMA140)', type: 'trator' },
+  { id: '56245', name: 'TRATOR JD (7230J)', type: 'trator' },
+  { id: '56252', name: 'TRATOR JD (6115J)', type: 'trator' },
+  { id: '56253', name: 'TRATOR JD (6115J)', type: 'trator' },
+  { id: '56254', name: 'TRATOR JD (6115J)', type: 'trator' },
+  { id: '56291', name: 'COLHEDORA JD (CH570)', type: 'colhedora' },
+  { id: '56310', name: 'COLHEDORA JD (CH570)', type: 'colhedora' },
+  { id: '56311', name: 'COLHEDORA JD (CH570)', type: 'colhedora' },
+  { id: '56312', name: 'TRATOR JD (7230J)', type: 'trator' },
+  { id: '56313', name: 'TRATOR JD (7230J)', type: 'trator' },
+  { id: '56315', name: 'COLHEDORA JD (CH570)', type: 'colhedora' },
+  { id: '56318', name: 'TRATOR JD (8335R)', type: 'trator' },
+  { id: '56757', name: 'COLHEDORA JD (CH950)', type: 'colhedora' },
+  { id: '58385', name: 'TRATOR JD (7225J)', type: 'trator' },
+  { id: '59020', name: 'COLHEDORA JD (CH570)', type: 'colhedora' },
+  { id: '59475', name: 'TRATOR JD (7230J)', type: 'trator' },
+  { id: '61006', name: 'COLHEDORA JD (CH570)', type: 'colhedora' },
+  { id: '61007', name: 'COLHEDORA JD (CH570)', type: 'colhedora' },
+  { id: '61008', name: 'COLHEDORA JD (CH570)', type: 'colhedora' },
+  { id: '62231', name: 'TRATOR JD (6150J)', type: 'trator' },
+  { id: '62232', name: 'TRATOR JD (6150J)', type: 'trator' },
+  { id: '62566', name: 'TRATOR JD (7230J)', type: 'trator' },
+  { id: '62571', name: 'TRATOR JD (7230J)', type: 'trator' },
+  { id: '62572', name: 'TRATOR JD (7230J)', type: 'trator' },
+  { id: '64086', name: 'TRATOR JD (7230J)', type: 'trator' },
+  { id: '64088', name: 'TRATOR JD (7230J)', type: 'trator' },
+  { id: '64089', name: 'TRATOR JD (7230J)', type: 'trator' },
+  { id: '66296', name: 'TRATOR JD (7230J)', type: 'trator' },
+  { id: '66297', name: 'TRATOR JD (7230J)', type: 'trator' },
+  { id: '66298', name: 'TRATOR JD (7230J)', type: 'trator' },
+  { id: '66299', name: 'TRATOR JD (7230J)', type: 'trator' },
+  { id: '66328', name: 'TRATOR JD (7230J)', type: 'trator' },
+  { id: '66329', name: 'TRATOR JD (7230J)', type: 'trator' },
+  { id: '66330', name: 'TRATOR JD (7230J)', type: 'trator' },
+  { id: '66331', name: 'TRATOR JD (7230J)', type: 'trator' },
+  { id: '66348', name: 'COLHEDORA JD (CH950)', type: 'colhedora' },
+  { id: '66441', name: 'TRATOR JD (6190J)', type: 'trator' },
+  { id: '66442', name: 'TRATOR JD (6190J)', type: 'trator' },
+  { id: '66444', name: 'TRATOR JD (6190J)', type: 'trator' },
+  { id: '66446', name: 'TRATOR VALTRA (T230)', type: 'trator' },
+  { id: '66447', name: 'TRATOR VALTRA (T230)', type: 'trator' },
+  { id: '66472', name: 'TRATOR JD (6190J)', type: 'trator' },
+  { id: '66473', name: 'TRATOR JD (6190J)', type: 'trator' },
+  { id: '66474', name: 'TRATOR JD (6190J)', type: 'trator' },
+  { id: '66475', name: 'TRATOR JD (6190J)', type: 'trator' },
+  { id: '66476', name: 'TRATOR JD (6190J)', type: 'trator' },
+  { id: '66527', name: 'TRATOR JD (8335R)', type: 'trator' },
+  { id: '66589', name: 'MOTONIVELADORA JD (620 G)', type: 'motoniveladora' },
+  { id: '66631', name: 'TRATOR JD (7230J)', type: 'trator' },
+  { id: '66632', name: 'TRATOR JD (7230J)', type: 'trator' },
+  { id: '66633', name: 'TRATOR JD (7230J)', type: 'trator' },
+  { id: '66634', name: 'TRATOR JD (7230J)', type: 'trator' },
+  { id: '66635', name: 'TRATOR JD (7230J)', type: 'trator' },
+  { id: '66661', name: 'MOTONIVELADORA JD (620 G)', type: 'motoniveladora' },
+  { id: '66662', name: 'MOTONIVELADORA JD (620 G)', type: 'motoniveladora' },
+  { id: '66663', name: 'MOTONIVELADORA JD (620 G)', type: 'motoniveladora' },
+  { id: '66719', name: 'COLHEDORA CASE (A-9900)', type: 'colhedora' },
+  { id: '66720', name: 'COLHEDORA CASE (A-9900)', type: 'colhedora' },
+  { id: '66721', name: 'COLHEDORA CASE (A-9900)', type: 'colhedora' },
+  { id: '66732', name: 'TRATOR JD (6190J)', type: 'trator' },
+  { id: '66733', name: 'TRATOR JD (6190J)', type: 'trator' },
+  { id: '66734', name: 'TRATOR JD (6190J)', type: 'trator' },
+  { id: '66735', name: 'TRATOR JD (6190J)', type: 'trator' },
+  { id: '66736', name: 'TRATOR JD (6190J)', type: 'trator' },
+  { id: '67092', name: 'MOTONIVELADORA JD (620 G)', type: 'motoniveladora' },
+  { id: '67120', name: 'MOTONIVELADORA JD (620 G)', type: 'motoniveladora' },
+  { id: '67206', name: 'TRATOR FENDT (VARIO 942)', type: 'trator' },
+  { id: 'DIOVANI', name: 'TRATOR JD (7230J)', type: 'trator' },
+  { id: 'ESTOQUE', name: 'Estoque', type: 'estoque' },
+  { id: 'MANUTENCAO', name: 'Manutenção', type: 'manutencao' },
+];
+
+const demoHardwares = [
+  { id: 'REC-001', name: 'Trimble AG-372', type: 'receptor', sn: 'SN-482901', machine: 'T-001' },
+  { id: 'REC-002', name: 'Leica iCON tecu', type: 'receptor', sn: 'SN-554321', machine: 'T-002' },
+  { id: 'REC-003', name: 'Trimble GCS900', type: 'receptor', sn: 'SN-667890', machine: 'MN-001' },
+  { id: 'RAD-001', name: 'Pacific Crest PDL', type: 'radio', sn: 'SN-192837', machine: 'T-001' },
+  { id: 'RAD-002', name: 'Satel SATELLINE-3AS', type: 'radio', sn: 'SN-334455', machine: 'MN-001' },
+  { id: 'TEL-001', name: 'GreenStar 3 2630', type: 'tela', sn: 'SN-774921', machine: 'T-001' },
+  { id: 'TEL-002', name: 'Trimble CB460', type: 'tela', sn: 'SN-990011', machine: 'MN-001' },
+  { id: 'BOA-001', name: 'Topcon X35', type: 'bordo', sn: 'SN-881122', machine: 'T-002' },
+  { id: 'BOA-002', name: 'Leica MC1', type: 'bordo', sn: 'SN-221133', machine: 'MN-001' },
+];
+
+// ══════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════
+const machineEmojis = { trator:'🚜', motoniveladora:'🚧', colhedora:'🌾', estoque:'📦', manutencao:'🔧', inativo:'⛔' };
+const hwColors = { monitor:'#60a5fa', receptor:'#c084fc', radio:'#fbbf24', tela:'#2ecc8a', bordo:'#f97316' };
+const hwConfig = {
+  monitor:  { modelos: ['RAVEN','CFX 750','EZ GUIDE','OMNI','PRO 700','GS3','GS4','XCN 1050','XCN 1060'] },
+  receptor: { modelos: ['StarFire 3000','StarFire 6000','StarFire 7000'] },
+  radio:    { modelos: ['450'] },
+  tela:     { modelos: ['S7','SOL7'] },
+  bordo:    { modelos: ['MAG 100','MAG X'] },
+};
+
+window.addEventListener('DOMContentLoaded', () => {
+  // Preenche data/hora atual
+  const now = new Date();
+  now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+  document.getElementById('serviceDateTime').value = now.toISOString().slice(0,16);
+
+  // Carrega nome do técnico salvo
+  const savedName = localStorage.getItem('techName');
+  if (savedName) {
+    const sel = document.getElementById('techName');
+    if ([...sel.options].some(o => o.value === savedName)) sel.value = savedName;
+  }
+
+  // Carrega dados (tenta planilha, usa demo se falhar)
+  loadData();
+
+  // Tabs
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => switchTab(tab.dataset.tab));
+  });
+
+  updatePendingBanner();
+  checkOnline();
+  setInterval(checkOnline, 5000);
+});
+
+// ══════════════════════════════════════════
+// LOAD DATA
+// ══════════════════════════════════════════
+function mapMachines(raw) {
+  return raw.map(m => ({
+    id:   String(m.id   ?? ''),
+    name: String(m.nome ?? m.name ?? ''),
+    type: String(m.tipo ?? m.type ?? ''),
+  }));
+}
+
+function mapHardwares(raw) {
+  return raw.map(h => ({
+    id:      String(h.id      ?? ''),
+    name:    String(h.nome    ?? h.name ?? ''),
+    type:    String(h.tipo    ?? h.type ?? ''),
+    sn:      String(h.numeroDeSerie ?? h.sn ?? ''),
+    machine: String(h.maquinaAtual  ?? h.machine ?? ''),
+  }));
+}
+
+async function loadData() {
+  if (APPS_SCRIPT_URL === 'COLE_SUA_URL_AQUI') {
+    machines = demoMachines;
+    hardwares = demoHardwares;
+    return;
+  }
+  try {
+    const res = await fetch(`${APPS_SCRIPT_URL}?action=getData`);
+    const data = await res.json();
+    const rawMachines  = data.machines  || [];
+    const rawHardwares = data.hardwares || [];
+    machines  = rawMachines.length  ? mapMachines(rawMachines)   : demoMachines;
+    hardwares = mapHardwares(rawHardwares);
+  } catch(e) {
+    machines  = demoMachines;
+    hardwares = demoHardwares;
+  }
+}
+
+// ══════════════════════════════════════════
+// TABS
+// ══════════════════════════════════════════
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+  document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id === `screen-${tab}`));
+  document.getElementById('submitArea').style.display = tab === 'novo' && currentAction ? 'block' : 'none';
+  if (tab === 'historico') renderHistory();
+}
+
+// ══════════════════════════════════════════
+// ACTION SELECT
+// ══════════════════════════════════════════
+const ACTION_COLOR = { instalar:'install', estoque:'estoque', manutencao:'transfer', inativo:'remove' };
+
+function selectAction(el, action) {
+  document.querySelectorAll('.action-btn').forEach(b => b.className = 'action-btn');
+  el.className = `action-btn selected-${ACTION_COLOR[action] || 'install'}`;
+  currentAction = action;
+  currentOrigin = null;
+  selectedMachineId = null;
+  selectedMachineDestId = null;
+
+  // Popula botões de origem
+  const origins = ORIGEM_POR_ACAO[action] || [];
+  const grid = document.getElementById('originGrid');
+  grid.innerHTML = '';
+  origins.forEach(o => {
+    const btn = document.createElement('div');
+    btn.className = 'origin-btn';
+    btn.dataset.origin = o.id;
+    btn.textContent = o.label;
+    btn.onclick = () => selectOrigin(o);
+    grid.appendChild(btn);
+  });
+
+  document.getElementById('originSection').style.display = 'block';
+  document.getElementById('formBody').style.display = 'none';
+  document.getElementById('submitArea').style.display = 'none';
+  setMachineDropdownLabel('origin', null);
+  setMachineDropdownLabel('dest', null);
+}
+
+function selectOrigin(origin) {
+  currentOrigin = origin.id;
+
+  document.querySelectorAll('.origin-btn').forEach(b =>
+    b.classList.toggle('selected', b.dataset.origin === origin.id)
+  );
+
+  // Mostra/oculta picker de máquina origem
+  document.getElementById('machineSectionWrap').style.display = origin.picker ? 'block' : 'none';
+
+  // Rótulo dinâmico
+  document.getElementById('machineSectionLabel').textContent =
+    currentAction === 'instalar' ? 'MÁQUINA DE ORIGEM' : 'MÁQUINA';
+
+  // Destino só aparece para INSTALAR
+  document.getElementById('transferDestSection').classList.toggle('visible', currentAction === 'instalar');
+
+  document.getElementById('formBody').style.display = 'block';
+  document.getElementById('formBody').classList.add('fade-in');
+  document.getElementById('submitArea').style.display = 'block';
+
+  renderMachinePicker();
+  if (currentAction === 'instalar') renderMachinePickerDest();
+}
+
+// ══════════════════════════════════════════
+// MACHINE DROPDOWN
+// ══════════════════════════════════════════
+function toggleMachineDropdown(which) {
+  const panelId  = which === 'dest' ? 'machineDropdownDestPanel' : 'machineDropdownPanel';
+  const btnId    = which === 'dest' ? 'machineDropdownDestBtn'   : 'machineDropdownBtn';
+  const arrowId  = which === 'dest' ? 'machineDropdownDestArrow' : 'machineDropdownArrow';
+  const panel = document.getElementById(panelId);
+  const isOpen = panel.classList.contains('open');
+  document.querySelectorAll('.machine-dropdown-panel').forEach(p => p.classList.remove('open'));
+  document.querySelectorAll('.machine-dropdown-btn').forEach(b => b.classList.remove('open'));
+  document.querySelectorAll('.dropdown-arrow').forEach(a => a.classList.remove('open'));
+  if (!isOpen) {
+    panel.classList.add('open');
+    document.getElementById(btnId).classList.add('open');
+    document.getElementById(arrowId).classList.add('open');
+    const input = panel.querySelector('.machine-search-input');
+    if (input) { input.value = ''; input.focus(); }
+    if (which === 'dest') renderMachinePickerDest();
+    else renderMachinePicker();
+  }
+}
+
+function setMachineDropdownLabel(which, machine) {
+  const valId = which === 'dest' ? 'machineDropdownDestValue' : 'machineDropdownValue';
+  const el = document.getElementById(valId);
+  if (machine) {
+    el.innerHTML = `<div class="dropdown-selected">
+      <span class="dropdown-selected-icon">${machineEmojis[machine.type] || '🚛'}</span>
+      <div>
+        <div class="dropdown-selected-name">${machine.name}</div>
+        <div class="dropdown-selected-id">${machine.id}</div>
+      </div>
+    </div>`;
+  } else {
+    const placeholder = which === 'dest' ? '— Selecione o destino —' : '— Selecione a máquina —';
+    el.innerHTML = `<span class="dropdown-placeholder">${placeholder}</span>`;
+  }
+}
+
+function closeMachineDropdown(which) {
+  const panelId = which === 'dest' ? 'machineDropdownDestPanel' : 'machineDropdownPanel';
+  const btnId   = which === 'dest' ? 'machineDropdownDestBtn'   : 'machineDropdownBtn';
+  const arrowId = which === 'dest' ? 'machineDropdownDestArrow' : 'machineDropdownArrow';
+  document.getElementById(panelId).classList.remove('open');
+  document.getElementById(btnId).classList.remove('open');
+  document.getElementById(arrowId).classList.remove('open');
+}
+
+// ══════════════════════════════════════════
+// MACHINE PICKER
+// ══════════════════════════════════════════
+const VIRTUAL_TYPES = new Set(['estoque','manutencao','inativo']);
+
+function renderMachinePicker() {
+  const container = document.getElementById('machinePicker');
+  container.innerHTML = '';
+  const term = (document.getElementById('machineSearchInput')?.value || '').toLowerCase().trim();
+  const real = machines.filter(m => !VIRTUAL_TYPES.has(m.type));
+  const list = term
+    ? real.filter(m => m.name.toLowerCase().includes(term) || m.id.toLowerCase().includes(term))
+    : real;
+  list.forEach(m => {
+    const div = document.createElement('div');
+    div.className = `machine-option${selectedMachineId === m.id ? ' selected' : ''}`;
+    div.innerHTML = `
+      <div class="mo-icon">${machineEmojis[m.type] || '🚛'}</div>
+      <div class="mo-info">
+        <div class="mo-name">${m.name}</div>
+        <div class="mo-id">${m.id}</div>
+      </div>
+      <div class="mo-check">${selectedMachineId === m.id ? '✓' : ''}</div>
+    `;
+    div.onclick = () => {
+      selectedMachineId = m.id;
+      setMachineDropdownLabel('origin', m);
+      closeMachineDropdown('origin');
+      renderMachinePicker();
+      renderHwPicker();
+    };
+    container.appendChild(div);
+  });
+}
+
+function renderMachinePickerDest() {
+  const container = document.getElementById('machinePickerDest');
+  container.innerHTML = '';
+  const term = (document.getElementById('machineSearchDestInput')?.value || '').toLowerCase().trim();
+  const real = machines.filter(m => !VIRTUAL_TYPES.has(m.type));
+  const list = term
+    ? real.filter(m => m.name.toLowerCase().includes(term) || m.id.toLowerCase().includes(term))
+    : real;
+  list.forEach(m => {
+    const div = document.createElement('div');
+    div.className = `machine-option${selectedMachineDestId === m.id ? ' selected' : ''}`;
+    div.style.opacity = m.id === selectedMachineId ? '0.3' : '1';
+    div.style.pointerEvents = m.id === selectedMachineId ? 'none' : 'auto';
+    div.innerHTML = `
+      <div class="mo-icon">${machineEmojis[m.type] || '🚛'}</div>
+      <div class="mo-info">
+        <div class="mo-name">${m.name}</div>
+        <div class="mo-id">${m.id}</div>
+      </div>
+      <div class="mo-check">${selectedMachineDestId === m.id ? '✓' : ''}</div>
+    `;
+    div.onclick = () => {
+      selectedMachineDestId = m.id;
+      setMachineDropdownLabel('dest', m);
+      closeMachineDropdown('dest');
+      renderMachinePickerDest();
+    };
+    container.appendChild(div);
+  });
+}
+
+// ══════════════════════════════════════════
+// HW PICKER
+// ══════════════════════════════════════════
+function populateModelos() {
+  const type = document.getElementById('hwType').value;
+  const sel = document.getElementById('hwModelo');
+  sel.innerHTML = '<option value="">— Modelo —</option>';
+  if (!type || !hwConfig[type]) return;
+  hwConfig[type].modelos.forEach(m => {
+    const opt = document.createElement('option');
+    opt.value = m; opt.textContent = m;
+    sel.appendChild(opt);
+  });
+}
+
+function renderHwPicker() {
+  populateModelos();
+  const type = document.getElementById('hwType').value;
+  const wrap = document.getElementById('hwPickerWrap');
+  const container = document.getElementById('hwPicker');
+
+  if (!type) { wrap.style.display = 'none'; return; }
+
+  // Filtra hardwares pelo tipo e pela máquina selecionada (se remove/transfer)
+  let filtered = hardwares.filter(h => h.type === type);
+  if ((currentAction === 'remove' || currentAction === 'transfer') && selectedMachineId) {
+    filtered = filtered.filter(h => h.machine === selectedMachineId);
+  }
+
+  if (filtered.length === 0) { wrap.style.display = 'none'; return; }
+
+  wrap.style.display = 'block';
+  container.innerHTML = '';
+
+  filtered.forEach(hw => {
+    const div = document.createElement('div');
+    div.className = `hw-option${selectedHwId === hw.id ? ' selected' : ''}`;
+    div.innerHTML = `
+      <div class="hw-type-dot" style="background:${hwColors[hw.type]||'#888'}"></div>
+      <div class="mo-info">
+        <div class="mo-name">${hw.name}</div>
+        <div class="mo-id">${hw.id} · S/N: ${hw.sn || '—'}</div>
+      </div>
+      <div class="mo-check">${selectedHwId === hw.id ? '✓' : ''}</div>
+    `;
+    div.onclick = () => {
+      selectedHwId = hw.id;
+      // Preenche campos manuais
+      document.getElementById('hwIdManual').value = hw.id;
+      document.getElementById('hwSnManual').value = hw.sn || '';
+      document.getElementById('hwNameManual').value = hw.name;
+      renderHwPicker();
+    };
+    container.appendChild(div);
+  });
+}
+
+// ══════════════════════════════════════════
+// GPS
+// ══════════════════════════════════════════
+function captureGPS() {
+  const field = document.getElementById('gpsField');
+  const val = document.getElementById('gpsValue');
+  val.textContent = 'Capturando...';
+
+  if (!navigator.geolocation) {
+    val.textContent = 'GPS não disponível neste dispositivo';
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      gpsCoords = { lat: pos.coords.latitude.toFixed(6), lng: pos.coords.longitude.toFixed(6), acc: Math.round(pos.coords.accuracy) };
+      val.textContent = `${gpsCoords.lat}, ${gpsCoords.lng} (±${gpsCoords.acc}m)`;
+      val.className = 'gps-value got';
+      field.classList.add('got');
+    },
+    err => {
+      val.textContent = 'Não foi possível obter localização';
+    },
+    { enableHighAccuracy: true, timeout: 10000 }
+  );
+}
+
+// ══════════════════════════════════════════
+// SUBMIT
+// ══════════════════════════════════════════
+function getMachineName(id) {
+  if (!id) return '';
+  const found = machines.find(m => m.id === id);
+  if (found) return found.name;
+  const labels = { ESTOQUE:'Estoque', MANUTENCAO:'Manutenção', INATIVO:'Inativo', NOVO:'Novo', OUTRA_UNIDADE:'Outra Unidade' };
+  return labels[id] || id;
+}
+
+function submitRecord() {
+  if (!currentAction) { showToast('err','⚠️','Selecione o tipo de serviço'); return; }
+  if (!currentOrigin)  { showToast('err','⚠️','Selecione a origem do equipamento'); return; }
+
+  // Resolve machineId (origem)
+  const finalMachineId = currentOrigin === 'maquina'
+    ? selectedMachineId
+    : (ORIGEM_ID_MAP[currentOrigin] || currentOrigin.toUpperCase());
+
+  if (currentOrigin === 'maquina' && !selectedMachineId) {
+    showToast('err','⚠️','Selecione a máquina'); return;
+  }
+
+  // Resolve machineDestId (destino)
+  const finalMachineDestId = currentAction === 'instalar'
+    ? selectedMachineDestId
+    : (ACAO_DEST_MAP[currentAction] || '');
+
+  if (currentAction === 'instalar' && !finalMachineDestId) {
+    showToast('err','⚠️','Selecione a máquina destino'); return;
+  }
+
+  const hwId = document.getElementById('hwIdManual').value.trim();
+  const hwSn = document.getElementById('hwSnManual').value.trim();
+  const hwName = document.getElementById('hwNameManual').value.trim();
+  const hwType = document.getElementById('hwType').value;
+  const hwModelo = document.getElementById('hwModelo').value.trim();
+  const hwPatrimonio = document.getElementById('hwPatrimonio').value.trim();
+
+  if (!hwId && !hwSn && !hwPatrimonio) { showToast('err','⚠️','Informe ID, S/N ou Patrimônio do hardware'); return; }
+
+  const techName = document.getElementById('techName').value.trim() || 'Técnico';
+  localStorage.setItem('techName', techName);
+
+  const record = {
+    id: `REG-${Date.now()}`,
+    action: currentAction,
+    origem: currentOrigin,
+    techName,
+    machineId:       finalMachineId,
+    machineName:     getMachineName(finalMachineId),
+    machineDestId:   finalMachineDestId,
+    machineDestName: getMachineName(finalMachineDestId),
+    hwId,
+    hwSn,
+    hwName,
+    hwType,
+    hwModelo,
+    hwPatrimonio,
+    gpsLat: gpsCoords?.lat || '',
+    gpsLng: gpsCoords?.lng || '',
+    gpsAcc: gpsCoords?.acc || '',
+    dateTime: document.getElementById('serviceDateTime').value,
+    notes: document.getElementById('notes').value.trim(),
+    synced: false,
+    createdAt: new Date().toISOString(),
+  };
+
+  // Salva local
+  saveRecordLocal(record);
+
+  // Tenta sincronizar
+  if (navigator.onLine && APPS_SCRIPT_URL !== 'COLE_SUA_URL_AQUI') {
+    syncRecord(record);
+  }
+
+  showSuccess(record);
+}
+
+// ══════════════════════════════════════════
+// LOCAL STORAGE
+// ══════════════════════════════════════════
+function saveRecordLocal(record) {
+  const records = getLocalRecords();
+  records.unshift(record);
+  localStorage.setItem('fleetRegistros', JSON.stringify(records));
+  updatePendingBanner();
+}
+
+function getLocalRecords() {
+  try { return JSON.parse(localStorage.getItem('fleetRegistros') || '[]'); } catch { return []; }
+}
+
+function markSynced(id) {
+  const records = getLocalRecords();
+  const r = records.find(r=>r.id===id);
+  if (r) { r.synced = true; localStorage.setItem('fleetRegistros', JSON.stringify(records)); }
+  updatePendingBanner();
+}
+
+// ══════════════════════════════════════════
+// SYNC
+// ══════════════════════════════════════════
+async function syncRecord(record) {
+  try {
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'addRecord', record }),
+    });
+    const data = await res.json();
+    if (data.success) markSynced(record.id);
+  } catch(e) {}
+}
+
+async function trySyncAll() {
+  if (!navigator.onLine || APPS_SCRIPT_URL === 'COLE_SUA_URL_AQUI') {
+    showToast('err','📡','Sem conexão ou URL não configurada');
+    return;
+  }
+  const pending = getLocalRecords().filter(r => !r.synced);
+  if (pending.length === 0) { showToast('ok','✅','Tudo já sincronizado'); return; }
+
+  setSyncState('syncing');
+  let ok = 0;
+  for (const r of pending) {
+    try {
+      const res = await fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'addRecord', record: r }),
+      });
+      const data = await res.json();
+      if (data.success) { markSynced(r.id); ok++; }
+    } catch(e) {}
+  }
+  setSyncState(navigator.onLine ? 'online' : 'offline');
+  showToast('ok','✅', ok > 0 ? `${ok} registro(s) sincronizado(s)` : 'Nenhum sincronizado');
+}
+
+// ══════════════════════════════════════════
+// ONLINE STATUS
+// ══════════════════════════════════════════
+function checkOnline() {
+  setSyncState(navigator.onLine ? 'online' : 'offline');
+  if (navigator.onLine) {
+    const pending = getLocalRecords().filter(r=>!r.synced);
+    if (pending.length > 0 && APPS_SCRIPT_URL !== 'COLE_SUA_URL_AQUI') {
+      pending.forEach(r => syncRecord(r));
+    }
+  }
+}
+
+function setSyncState(state) {
+  const el = document.getElementById('syncIndicator');
+  const label = document.getElementById('syncLabel');
+  el.className = `sync-indicator ${state}`;
+  label.textContent = state === 'online' ? 'Online' : state === 'syncing' ? 'Sincronizando...' : 'Offline';
+}
+
+function updatePendingBanner() {
+  const pending = getLocalRecords().filter(r=>!r.synced);
+  const banner = document.getElementById('pendingBanner');
+  document.getElementById('pendingCount').textContent = pending.length;
+  banner.classList.toggle('visible', pending.length > 0);
+}
+
+// ══════════════════════════════════════════
+// HISTORY
+// ══════════════════════════════════════════
+const actionLabels = {
+  instalar:'INSTALAÇÃO', estoque:'→ ESTOQUE', manutencao:'MANUTENÇÃO', inativo:'⛔ INATIVO',
+  install:'INSTALAÇÃO', remove:'→ ESTOQUE', transfer:'TRANSFERÊNCIA',
+};
+
+function renderHistory() {
+  const records = getLocalRecords();
+  const container = document.getElementById('historyList');
+  container.innerHTML = '';
+
+  if (records.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">📋</div>
+        <div class="empty-title">Nenhum registro ainda</div>
+        <div class="empty-sub">Os registros de serviço vão aparecer aqui</div>
+      </div>`;
+    return;
+  }
+
+  records.forEach(r => {
+    const card = document.createElement('div');
+    card.className = `history-card ${r.action}`;
+    const dt = r.dateTime ? new Date(r.dateTime).toLocaleString('pt-BR') : '—';
+    card.innerHTML = `
+      <div class="hc-header">
+        <span class="hc-action ${r.action}">${actionLabels[r.action]||r.action}</span>
+        <span class="hc-status ${r.synced?'synced':'pending'}">
+          <span class="hc-status-dot"></span>
+          ${r.synced ? 'Sincronizado' : 'Pendente'}
+        </span>
+      </div>
+      <div class="hc-hw">${r.hwName || r.hwId || '—'}</div>
+      <div class="hc-machine">
+        ${machineEmojis[machines.find(m=>m.id===r.machineId)?.type]||'🚛'} ${r.machineName}
+        ${r.machineDestName ? `→ ${r.machineDestName}` : ''}
+      </div>
+      <div class="hc-meta">
+        <div class="hc-meta-item">S/N: <span>${r.hwSn||'—'}</span></div>
+        <div class="hc-meta-item">ID: <span>${r.hwId||'—'}</span></div>
+        <div class="hc-meta-item">Técnico: <span>${r.techName}</span></div>
+        <div class="hc-meta-item">Data: <span>${dt}</span></div>
+        ${r.gpsLat ? `<div class="hc-meta-item">GPS: <span>${r.gpsLat}, ${r.gpsLng}</span></div>` : ''}
+      </div>
+    `;
+    container.appendChild(card);
+  });
+}
+
+// ══════════════════════════════════════════
+// SUCCESS & RESET
+// ══════════════════════════════════════════
+function showSuccess(record) {
+  const hw = record.hwName || record.hwId || 'Hardware';
+  const msgs = {
+    instalar:  `${hw} instalado em ${record.machineDestName}`,
+    estoque:   `${hw} enviado para o estoque`,
+    manutencao:`${hw} enviado para manutenção`,
+    inativo: `${hw} marcado como inativo`,
+    install:   `${hw} instalado em ${record.machineDestName || record.machineName}`,
+    remove:    `${hw} removido de ${record.machineName}`,
+    transfer:  `${hw} transferido para ${record.machineDestName}`,
+  };
+  document.getElementById('successMsg').textContent = msgs[record.action] || 'Serviço registrado.';
+  document.getElementById('successOverlay').classList.add('show');
+}
+
+function closeSuccess() {
+  document.getElementById('successOverlay').classList.remove('show');
+  resetForm();
+}
+
+function resetForm() {
+  currentAction = null;
+  currentOrigin = null;
+  selectedMachineId = null;
+  selectedMachineDestId = null;
+  selectedHwId = null;
+  gpsCoords = null;
+
+  document.querySelectorAll('.action-btn').forEach(b => b.className = 'action-btn');
+  document.querySelectorAll('.origin-btn').forEach(b => b.classList.remove('selected'));
+  document.getElementById('originSection').style.display = 'none';
+  document.getElementById('formBody').style.display = 'none';
+  document.getElementById('submitArea').style.display = 'none';
+  setMachineDropdownLabel('origin', null);
+  setMachineDropdownLabel('dest', null);
+  document.getElementById('hwType').value = '';
+  document.getElementById('hwPickerWrap').style.display = 'none';
+  document.getElementById('hwIdManual').value = '';
+  document.getElementById('hwSnManual').value = '';
+  document.getElementById('hwNameManual').value = '';
+  document.getElementById('hwPatrimonio').value = '';
+  document.getElementById('notes').value = '';
+  document.getElementById('gpsValue').textContent = 'Toque para capturar localização';
+  document.getElementById('gpsValue').className = 'gps-value';
+  document.getElementById('gpsField').classList.remove('got');
+
+  const now = new Date();
+  now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+  document.getElementById('serviceDateTime').value = now.toISOString().slice(0,16);
+
+  window.scrollTo(0,0);
+}
+
+// ══════════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════════
+let toastTimer;
+function showToast(type, icon, msg) {
+  const el = document.getElementById('toast');
+  document.getElementById('toastIcon').textContent = icon;
+  document.getElementById('toastMsg').textContent = msg;
+  el.className = `toast ${type} show`;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
+}
+</script>
+</body>
+</html>
