@@ -1318,6 +1318,23 @@
           <input type="text" class="form-input" id="newMachinePatrimony" placeholder="PAT-0001">
         </div>
       </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">UNIDADE</label>
+          <select class="form-select" id="newMachineUnidade">
+            <option value="">— Selecione —</option>
+            <option value="PEDRA">PEDRA</option>
+            <option value="CEDRO">CEDRO</option>
+            <option value="BURITI">BURITI</option>
+            <option value="IPÊ">IPÊ</option>
+            <option value="PEDRA/LOCAÇÃO">PEDRA/LOCAÇÃO</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">CHASSI <span style="font-size:9px;color:var(--text3);font-weight:400">(opcional)</span></label>
+          <input type="text" class="form-input" id="newMachineChassi" placeholder="Ex: 1BM7230...">
+        </div>
+      </div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('addMachineModal')">Cancelar</button>
@@ -2334,25 +2351,28 @@ function highlight(text, term) {
 // CRUD
 // =========================================
 async function addMachine() {
-  const type = document.getElementById('newMachineType').value;
-  const id   = document.getElementById('newMachineId').value.trim();
-  const name = document.getElementById('newMachineName').value.trim();
-  const year = document.getElementById('newMachineYear').value.trim();
-  const pat  = document.getElementById('newMachinePatrimony').value.trim();
+  const type    = document.getElementById('newMachineType').value;
+  const id      = document.getElementById('newMachineId').value.trim();
+  const name    = document.getElementById('newMachineName').value.trim();
+  const year    = document.getElementById('newMachineYear').value.trim();
+  const pat     = document.getElementById('newMachinePatrimony').value.trim();
+  const unidade = document.getElementById('newMachineUnidade').value;
+  const chassi  = document.getElementById('newMachineChassi').value.trim();
 
   if (!id || !name) { showToast('warning', '⚠️', 'Campos obrigatórios', 'Preencha o ID e o nome'); return; }
   if (machines.find(m => m.id === id)) { showToast('warning', '⚠️', 'ID duplicado', 'Já existe uma máquina com esse ID'); return; }
 
-  machines.push({ id, name, type, year, unidade: '', chassi: '', patrimony: pat, createdAt: new Date().toISOString().split('T')[0], hardware: [] });
+  machines.push({ id, name, type, year, unidade, chassi, patrimony: pat, createdAt: new Date().toISOString().split('T')[0], hardware: [] });
 
   closeModal('addMachineModal');
-  ['newMachineId','newMachineName','newMachineYear','newMachinePatrimony'].forEach(f => document.getElementById(f).value = '');
+  ['newMachineId','newMachineName','newMachineYear','newMachinePatrimony','newMachineChassi'].forEach(f => document.getElementById(f).value = '');
+  document.getElementById('newMachineUnidade').value = '';
   renderAll();
   showToast('success', '✅', 'Máquina cadastrada', `${name} adicionada à frota`);
   selectMachine(id);
 
   try {
-    await fetch(`${SUPABASE_URL}/rest/v1/maquinas`, {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/maquinas`, {
       method: 'POST',
       headers: { ...sbHeaders, 'Prefer': 'return=minimal' },
       body: JSON.stringify({
@@ -2360,13 +2380,18 @@ async function addMachine() {
         nome: name,
         tipo: type,
         ano: year,
+        unidade,
+        chassi,
         patrimonio: pat,
-        unidade: '',
-        chassi: '',
         centroCusto: '',
         criadoEm: new Date().toISOString().split('T')[0],
       }),
     });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      showToast('warning', '⚠️', 'Erro ao salvar no banco', err.message || `HTTP ${res.status}`);
+      console.error('addMachine Supabase error:', err);
+    }
   } catch(e) {
     showToast('warning', '⚠️', 'Sem conexão', 'Máquina salva localmente apenas');
   }
