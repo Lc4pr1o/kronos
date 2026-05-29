@@ -724,16 +724,38 @@
     font-weight: 700;
   }
 
-  .hw-actions-mini {
-    display: flex;
+  .hw-card.expanded { border-color: var(--accent); box-shadow: 0 0 0 1px rgba(245,166,35,0.2); }
+
+  .hw-card-actions {
+    display: none;
     gap: 6px;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.15s;
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
   }
 
-  .hw-card.expanded { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent22,rgba(245,166,35,0.2)); }
-  .hw-card.expanded .hw-actions-mini { opacity: 1; pointer-events: auto; }
+  .hw-card.expanded .hw-card-actions { display: flex; }
+
+  .hw-action-btn {
+    flex: 1;
+    padding: 8px 4px;
+    border-radius: 6px;
+    background: var(--surface3);
+    border: 1px solid var(--border);
+    color: var(--text2);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+  }
+
+  .hw-action-btn span { font-size: 9px; letter-spacing: .5px; color: var(--text3); }
+  .hw-action-btn:hover { background: var(--border2); border-color: var(--border2); color: var(--text); }
+  .hw-action-btn:hover span { color: var(--text2); }
+  .hw-action-btn.remove-btn:hover { background: rgba(224,82,82,.1); border-color: rgba(224,82,82,.3); color: var(--red); }
 
   .hw-mini-btn {
     width: 26px;
@@ -1235,9 +1257,15 @@
             <input type="color" class="form-input" id="tipoCor" value="#888888" style="height:42px;padding:4px 8px;cursor:pointer">
           </div>
         </div>
-        <div class="form-group">
-          <label class="form-label">MODELOS <span style="font-size:9px;color:var(--text3)">(um por linha)</span></label>
-          <textarea class="form-input" id="tipoModelos" style="min-height:72px;font-family:'JetBrains Mono',monospace;font-size:12px" placeholder="Modelo A&#10;Modelo B"></textarea>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">MODELOS <span style="font-size:9px;color:var(--text3)">(um por linha)</span></label>
+            <textarea class="form-input" id="tipoModelos" style="min-height:72px;font-family:'JetBrains Mono',monospace;font-size:12px" placeholder="Modelo A&#10;Modelo B"></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">FABRICANTES <span style="font-size:9px;color:var(--text3)">(um por linha)</span></label>
+            <textarea class="form-input" id="tipoFabricantes" style="min-height:72px;font-family:'JetBrains Mono',monospace;font-size:12px" placeholder="John Deere&#10;Reven"></textarea>
+          </div>
         </div>
       </div>
     </div>
@@ -1667,6 +1695,7 @@ function buildHwConfig(rawTipos) {
       cssClass: `tag-${t.id}`,
       color: t.cor || '#888888',
       modelos: Array.isArray(t.modelos) ? t.modelos : [],
+      fabricantes: Array.isArray(t.fabricantes) ? t.fabricantes : [],
     };
   });
   populateHwTypeSelects();
@@ -1705,7 +1734,7 @@ function renderTiposSettings() {
     row.innerHTML = `
       <span style="width:26px;text-align:center;font-size:16px">${cfg.emoji}</span>
       <span style="flex:1;font-weight:600;font-size:13px;letter-spacing:.5px">${cfg.label}</span>
-      <span style="font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace">${cfg.modelos.length} modelos</span>
+      <span style="font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace">${cfg.modelos.length} mod · ${cfg.fabricantes?.length || 0} fab</span>
       <div style="width:14px;height:14px;border-radius:50%;background:${cfg.color};flex-shrink:0"></div>
       <button class="btn btn-ghost" style="padding:4px 10px;font-size:11px" onclick="editTipo('${id}')">Editar</button>
       <button class="hw-mini-btn remove-btn" onclick="deleteTipo('${id}')" title="Excluir tipo">🗑</button>
@@ -1723,6 +1752,7 @@ function editTipo(id) {
   document.getElementById('tipoEmoji').value = cfg.emoji;
   document.getElementById('tipoCor').value = cfg.color || '#888888';
   document.getElementById('tipoModelos').value = cfg.modelos.join('\n');
+  document.getElementById('tipoFabricantes').value = (cfg.fabricantes || []).join('\n');
   document.getElementById('settingsFormTitle').textContent = `EDITAR: ${cfg.label}`;
 }
 
@@ -1734,6 +1764,7 @@ function clearSettingsForm() {
   document.getElementById('tipoEmoji').value = '';
   document.getElementById('tipoCor').value = '#888888';
   document.getElementById('tipoModelos').value = '';
+  document.getElementById('tipoFabricantes').value = '';
   document.getElementById('settingsFormTitle').textContent = 'ADICIONAR NOVO TIPO';
 }
 
@@ -1743,18 +1774,19 @@ async function saveTipo() {
   const emoji = document.getElementById('tipoEmoji').value.trim();
   const cor   = document.getElementById('tipoCor').value;
   const modelos = document.getElementById('tipoModelos').value.split('\n').map(m=>m.trim()).filter(Boolean);
+  const fabricantes = document.getElementById('tipoFabricantes').value.split('\n').map(f=>f.trim()).filter(Boolean);
 
   if (!id || !label) { showToast('warning','⚠️','Campos obrigatórios','Preencha ID e Nome'); return; }
   try {
     if (editingTipoId) {
       await fetch(`${SUPABASE_URL}/rest/v1/hw_tipos?id=eq.${encodeURIComponent(editingTipoId)}`, {
         method: 'PATCH', headers: { ...sbHeaders, 'Prefer':'return=minimal' },
-        body: JSON.stringify({ label, emoji, cor, modelos }),
+        body: JSON.stringify({ label, emoji, cor, modelos, fabricantes }),
       });
     } else {
       await fetch(`${SUPABASE_URL}/rest/v1/hw_tipos`, {
         method: 'POST', headers: { ...sbHeaders, 'Prefer':'return=minimal' },
-        body: JSON.stringify({ id, label, emoji, cor, modelos }),
+        body: JSON.stringify({ id, label, emoji, cor, modelos, fabricantes }),
       });
     }
     await reloadTipos();
@@ -1961,7 +1993,8 @@ function renderDetail(id) {
       const badgeStyle = `background:${hcfg.color}22;color:${hcfg.color};border:1px solid ${hcfg.color}55;font-size:10px;font-weight:700;letter-spacing:1px;padding:3px 8px;border-radius:6px`;
       const card = document.createElement('div');
       card.className = 'hw-card animate-in';
-      card.onclick = () => {
+      card.title = 'Clique duplo para expandir';
+      card.ondblclick = () => {
         const wasExpanded = card.classList.contains('expanded');
         document.querySelectorAll('.hw-card.expanded').forEach(c => c.classList.remove('expanded'));
         if (!wasExpanded) card.classList.add('expanded');
@@ -1969,12 +2002,6 @@ function renderDetail(id) {
       card.innerHTML = `
         <div class="hw-card-header">
           <span class="hw-type-badge" style="${badgeStyle}">${hcfg.label}</span>
-          <div class="hw-actions-mini">
-            <button class="hw-mini-btn" title="Ver detalhes" onclick="event.stopPropagation();showHwDetail('${m.id}','${hw.id}')">👁</button>
-            <button class="hw-mini-btn" title="Editar" onclick="event.stopPropagation();openEditHw('${m.id}','${hw.id}')">✏️</button>
-            <button class="hw-mini-btn transfer-btn" title="Transferir" onclick="event.stopPropagation();openTransfer('${m.id}','${hw.id}')">🔄</button>
-            <button class="hw-mini-btn remove-btn" title="Remover" onclick="event.stopPropagation();removeHardware('${m.id}','${hw.id}')">🗑</button>
-          </div>
         </div>
         <div class="hw-name">${hw.name}</div>
         <div class="hw-model">${hw.manufacturer || '—'}</div>
@@ -1991,6 +2018,12 @@ function renderDetail(id) {
         <div class="hw-install-date">
           <span class="hid-label">INSTALADO EM</span>
           <span class="hid-value">${hw.installedAt || '—'}</span>
+        </div>
+        <div class="hw-card-actions">
+          <button class="hw-action-btn" onclick="event.stopPropagation();showHwDetail('${m.id}','${hw.id}')">👁<span>DETALHES</span></button>
+          <button class="hw-action-btn" onclick="event.stopPropagation();openEditHw('${m.id}','${hw.id}')">✏️<span>EDITAR</span></button>
+          <button class="hw-action-btn" onclick="event.stopPropagation();openTransfer('${m.id}','${hw.id}')">🔄<span>MOVER</span></button>
+          <button class="hw-action-btn remove-btn" onclick="event.stopPropagation();removeHardware('${m.id}','${hw.id}')">🗑<span>REMOVER</span></button>
         </div>
       `;
       return card;
@@ -2172,16 +2205,26 @@ function openAddHwModal() {
 
 function updateHwModels() {
   const type = document.getElementById('newHwType').value;
-  const sel = document.getElementById('newHwModel');
-  sel.innerHTML = '<option value="">— Selecione o modelo —</option>';
   const cfg = hwConfig[type];
-  if (cfg && cfg.modelos) {
-    cfg.modelos.forEach(m => {
-      const opt = document.createElement('option');
-      opt.value = m; opt.textContent = m;
-      sel.appendChild(opt);
-    });
-  }
+
+  const modelSel = document.getElementById('newHwModel');
+  modelSel.innerHTML = '<option value="">— Selecione o modelo —</option>';
+  (cfg?.modelos || []).forEach(m => {
+    const opt = document.createElement('option');
+    opt.value = m; opt.textContent = m;
+    modelSel.appendChild(opt);
+  });
+
+  const manufSel = document.getElementById('newHwManuf');
+  const prevManuf = manufSel.value;
+  manufSel.innerHTML = '<option value="">— Selecione —</option>';
+  const fabs = cfg?.fabricantes?.length ? cfg.fabricantes : ['John Deere','Timple','Solinftec','Reven'];
+  fabs.forEach(f => {
+    const opt = document.createElement('option');
+    opt.value = f; opt.textContent = f;
+    if (f === prevManuf) opt.selected = true;
+    manufSel.appendChild(opt);
+  });
 }
 
 async function addHardware() {
@@ -2252,24 +2295,32 @@ function openEditHw(machineId, hwId) {
   document.getElementById('editHwType').value = hw.type || '';
   document.getElementById('editHwPat').value = hw.patrimony || '';
   document.getElementById('editHwSn').value = hw.sn || '';
-  document.getElementById('editHwManuf').value = hw.manufacturer || '';
-  updateEditHwModels(hw.name);
+  updateEditHwModels(hw.name, hw.manufacturer || '');
   openModal('editHwModal');
 }
 
-function updateEditHwModels(currentModel) {
+function updateEditHwModels(currentModel, currentManuf) {
   const type = document.getElementById('editHwType').value;
-  const sel = document.getElementById('editHwModel');
-  sel.innerHTML = '';
   const cfg = hwConfig[type];
-  if (cfg && cfg.modelos) {
-    cfg.modelos.forEach(m => {
-      const opt = document.createElement('option');
-      opt.value = m; opt.textContent = m;
-      if (m === currentModel) opt.selected = true;
-      sel.appendChild(opt);
-    });
-  }
+
+  const modelSel = document.getElementById('editHwModel');
+  modelSel.innerHTML = '';
+  (cfg?.modelos || []).forEach(m => {
+    const opt = document.createElement('option');
+    opt.value = m; opt.textContent = m;
+    if (m === currentModel) opt.selected = true;
+    modelSel.appendChild(opt);
+  });
+
+  const manufSel = document.getElementById('editHwManuf');
+  const fabs = cfg?.fabricantes?.length ? cfg.fabricantes : ['John Deere','Timple','Solinftec','Reven'];
+  manufSel.innerHTML = '<option value="">— Selecione —</option>';
+  fabs.forEach(f => {
+    const opt = document.createElement('option');
+    opt.value = f; opt.textContent = f;
+    if (f === currentManuf) opt.selected = true;
+    manufSel.appendChild(opt);
+  });
 }
 
 async function saveEditHw() {

@@ -59,12 +59,16 @@ ALTER TABLE hardwares DISABLE ROW LEVEL SECURITY;
 ALTER TABLE registros DISABLE ROW LEVEL SECURITY;
 
 CREATE TABLE IF NOT EXISTS hw_tipos (
-  id      TEXT PRIMARY KEY,
-  label   TEXT NOT NULL,
-  emoji   TEXT DEFAULT '',
-  cor     TEXT DEFAULT '#888888',
-  modelos JSONB DEFAULT '[]'
+  id          TEXT PRIMARY KEY,
+  label       TEXT NOT NULL,
+  emoji       TEXT DEFAULT '',
+  cor         TEXT DEFAULT '#888888',
+  modelos     JSONB DEFAULT '[]',
+  fabricantes JSONB DEFAULT '[]'
 );
+
+-- Se a tabela já existia sem a coluna fabricantes:
+ALTER TABLE hw_tipos ADD COLUMN IF NOT EXISTS fabricantes JSONB DEFAULT '[]';
 
 ALTER TABLE hw_tipos DISABLE ROW LEVEL SECURITY;
 GRANT SELECT, INSERT, UPDATE, DELETE ON maquinas  TO anon;
@@ -72,13 +76,14 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON hardwares TO anon;
 GRANT SELECT, INSERT, UPDATE, DELETE ON registros TO anon;
 GRANT SELECT, INSERT, UPDATE, DELETE ON hw_tipos  TO anon;
 
-INSERT INTO hw_tipos (id, label, emoji, cor, modelos) VALUES
-('monitor',  'MONITOR',  '🖥️', '#f97316', '["RAVEN","CFX 750","EZ GUIDE","OMNI","PRO 700","GS3","GS4","XCN 1050","XCN 1060"]'),
-('receptor', 'RECEPTOR', '📡', '#c084fc', '["StarFire 3000","StarFire 6000","StarFire 7000"]'),
-('radio',    'RÁDIO',    '📻', '#60a5fa', '["450"]'),
-('tela',     'TELA',     '📱', '#fbbf24', '["S7","SOL7"]'),
-('bordo',    'BORDO',    '🔧', '#4ade80', '["MAG 100","MAG X"]')
-ON CONFLICT (id) DO NOTHING;
+INSERT INTO hw_tipos (id, label, emoji, cor, modelos, fabricantes) VALUES
+('monitor',  'MONITOR',  '🖥️', '#f97316', '["RAVEN","CFX 750","EZ GUIDE","OMNI","PRO 700","GS3","GS4","XCN 1050","XCN 1060"]', '["John Deere","Reven"]'),
+('receptor', 'RECEPTOR', '📡', '#c084fc', '["StarFire 3000","StarFire 6000","StarFire 7000"]',                                   '["John Deere"]'),
+('radio',    'RÁDIO',    '📻', '#60a5fa', '["450"]',                                                                              '["John Deere","Reven"]'),
+('tela',     'TELA',     '📱', '#fbbf24', '["S7","SOL7"]',                                                                       '["Solinftec"]'),
+('bordo',    'BORDO',    '🔧', '#4ade80', '["MAG 100","MAG X"]',                                                                  '["Solinftec"]')
+ON CONFLICT (id) DO UPDATE SET
+  fabricantes = EXCLUDED.fabricantes;
 
 -- ── MÁQUINAS (111 reais + DIOVANI + ESTOQUE + MANUTENCAO + INATIVO) ──
 
