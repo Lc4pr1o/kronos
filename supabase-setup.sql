@@ -58,9 +58,27 @@ ALTER TABLE maquinas  DISABLE ROW LEVEL SECURITY;
 ALTER TABLE hardwares DISABLE ROW LEVEL SECURITY;
 ALTER TABLE registros DISABLE ROW LEVEL SECURITY;
 
+CREATE TABLE IF NOT EXISTS hw_tipos (
+  id      TEXT PRIMARY KEY,
+  label   TEXT NOT NULL,
+  emoji   TEXT DEFAULT '',
+  cor     TEXT DEFAULT '#888888',
+  modelos JSONB DEFAULT '[]'
+);
+
+ALTER TABLE hw_tipos DISABLE ROW LEVEL SECURITY;
 GRANT SELECT, INSERT, UPDATE, DELETE ON maquinas  TO anon;
 GRANT SELECT, INSERT, UPDATE, DELETE ON hardwares TO anon;
 GRANT SELECT, INSERT, UPDATE, DELETE ON registros TO anon;
+GRANT SELECT, INSERT, UPDATE, DELETE ON hw_tipos  TO anon;
+
+INSERT INTO hw_tipos (id, label, emoji, cor, modelos) VALUES
+('monitor',  'MONITOR',  '🖥️', '#f97316', '["RAVEN","CFX 750","EZ GUIDE","OMNI","PRO 700","GS3","GS4","XCN 1050","XCN 1060"]'),
+('receptor', 'RECEPTOR', '📡', '#c084fc', '["StarFire 3000","StarFire 6000","StarFire 7000"]'),
+('radio',    'RÁDIO',    '📻', '#60a5fa', '["450"]'),
+('tela',     'TELA',     '📱', '#fbbf24', '["S7","SOL7"]'),
+('bordo',    'BORDO',    '🔧', '#4ade80', '["MAG 100","MAG X"]')
+ON CONFLICT (id) DO NOTHING;
 
 -- ── MÁQUINAS (111 reais + DIOVANI + ESTOQUE + MANUTENCAO + INATIVO) ──
 

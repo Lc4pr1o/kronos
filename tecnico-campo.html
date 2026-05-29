@@ -766,11 +766,6 @@
           <label class="field-label">TIPO DE HARDWARE</label>
           <select class="field-select" id="hwType" onchange="selectedHwId=null;setHwDropdownLabel(null);renderHwPicker()">
             <option value="">— Selecione —</option>
-            <option value="monitor">🖥️ Monitor (PA)</option>
-            <option value="receptor">📡 Receptor (PA)</option>
-            <option value="radio">📻 Rádio (PA)</option>
-            <option value="tela">📱 Tela (Solinftec)</option>
-            <option value="bordo">🔧 Bordo (Solinftec)</option>
           </select>
         </div>
       </div>
@@ -1062,14 +1057,36 @@ const demoHardwares = [
 // INIT
 // ══════════════════════════════════════════
 const machineEmojis = { trator:'🚜', motoniveladora:'🚧', colhedora:'🌾', estoque:'📦', manutencao:'🔧', inativo:'⛔' };
-const hwColors = { monitor:'#60a5fa', receptor:'#c084fc', radio:'#fbbf24', tela:'#2ecc8a', bordo:'#f97316' };
-const hwConfig = {
-  monitor:  { modelos: ['RAVEN','CFX 750','EZ GUIDE','OMNI','PRO 700','GS3','GS4','XCN 1050','XCN 1060'] },
-  receptor: { modelos: ['StarFire 3000','StarFire 6000','StarFire 7000'] },
-  radio:    { modelos: ['450'] },
-  tela:     { modelos: ['S7','SOL7'] },
-  bordo:    { modelos: ['MAG 100','MAG X'] },
+let hwColors = { monitor:'#f97316', receptor:'#c084fc', radio:'#60a5fa', tela:'#fbbf24', bordo:'#4ade80' };
+let hwConfig = {
+  monitor:  { color:'#f97316', modelos: ['RAVEN','CFX 750','EZ GUIDE','OMNI','PRO 700','GS3','GS4','XCN 1050','XCN 1060'] },
+  receptor: { color:'#c084fc', modelos: ['StarFire 3000','StarFire 6000','StarFire 7000'] },
+  radio:    { color:'#60a5fa', modelos: ['450'] },
+  tela:     { color:'#fbbf24', modelos: ['S7','SOL7'] },
+  bordo:    { color:'#4ade80', modelos: ['MAG 100','MAG X'] },
 };
+
+function buildHwConfig(rawTipos) {
+  hwConfig = {};
+  hwColors = {};
+  rawTipos.forEach(t => {
+    const mods = Array.isArray(t.modelos) ? t.modelos : [];
+    hwConfig[t.id] = { color: t.cor || '#888', modelos: mods, label: t.label, emoji: t.emoji };
+    hwColors[t.id] = t.cor || '#888';
+  });
+  // Repopula o select de tipo
+  const sel = document.getElementById('hwType');
+  if (!sel) return;
+  const current = sel.value;
+  sel.innerHTML = '<option value="">— Selecione —</option>';
+  Object.entries(hwConfig).forEach(([id, cfg]) => {
+    const opt = document.createElement('option');
+    opt.value = id;
+    opt.textContent = cfg.label || id.toUpperCase();
+    if (id === current) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
 
 window.addEventListener('DOMContentLoaded', () => {
   // Preenche data/hora atual
@@ -1121,12 +1138,14 @@ function mapHardwares(raw) {
 
 async function loadData() {
   try {
-    const [resMaq, resHw] = await Promise.all([
+    const [resMaq, resHw, resTipos] = await Promise.all([
       fetch(`${SUPABASE_URL}/rest/v1/maquinas?select=*&order=nome`, { headers: sbHeaders }),
       fetch(`${SUPABASE_URL}/rest/v1/hardwares?select=*`, { headers: sbHeaders }),
+      fetch(`${SUPABASE_URL}/rest/v1/hw_tipos?select=*&order=id`, { headers: sbHeaders }),
     ]);
     if (!resMaq.ok || !resHw.ok) throw new Error('Erro Supabase');
-    const [rawMachines, rawHardwares] = await Promise.all([resMaq.json(), resHw.json()]);
+    const [rawMachines, rawHardwares, rawTipos] = await Promise.all([resMaq.json(), resHw.json(), resTipos.json()]);
+    if (Array.isArray(rawTipos) && rawTipos.length) buildHwConfig(rawTipos);
     machines  = rawMachines.length  ? mapMachines(rawMachines)  : demoMachines;
     hardwares = rawHardwares.length ? mapHardwares(rawHardwares) : demoHardwares;
   } catch(e) {

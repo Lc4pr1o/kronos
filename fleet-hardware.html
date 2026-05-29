@@ -649,6 +649,40 @@
   }
 
   .hw-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .hw-type-section-header {
+    font-size: 10px;
+    letter-spacing: 2.5px;
+    color: var(--text3);
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .hw-type-section-header::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .hw-type-section-count {
+    background: var(--surface3);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 1px 8px;
+    font-size: 10px;
+    color: var(--text2);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .hw-type-section-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
     gap: 12px;
@@ -1079,6 +1113,9 @@
       <span id="connectionLabel">Demo</span>
       <span style="font-size:10px;opacity:0.5">↺</span>
     </div>
+    <div class="stat-pill" style="cursor:pointer;gap:6px" onclick="openSettings()" title="Tipos de hardware">
+      <span style="font-size:13px">⚙️</span><span style="font-size:11px">Tipos</span>
+    </div>
   </div>
 </header>
 
@@ -1164,6 +1201,54 @@
 
 <!-- ===================== MODALS ===================== -->
 
+<!-- SETTINGS: TIPOS DE HARDWARE -->
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">⚙️ Tipos de Hardware</div>
+        <div class="modal-sub">Gerencie tipos e modelos disponíveis</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('settingsModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="tiposListSettings" style="margin-bottom:20px"></div>
+      <div style="border-top:1px solid var(--border);padding-top:16px">
+        <div style="font-size:12px;font-weight:700;letter-spacing:1px;color:var(--text3);margin-bottom:12px" id="settingsFormTitle">ADICIONAR NOVO TIPO</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">ID <span style="font-size:9px;color:var(--text3)">(único, sem espaços)</span></label>
+            <input type="text" class="form-input" id="tipoId" placeholder="ex: antena">
+          </div>
+          <div class="form-group">
+            <label class="form-label">NOME</label>
+            <input type="text" class="form-input" id="tipoLabel" placeholder="ex: ANTENA">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">EMOJI</label>
+            <input type="text" class="form-input" id="tipoEmoji" placeholder="📡" style="font-size:18px">
+          </div>
+          <div class="form-group">
+            <label class="form-label">COR</label>
+            <input type="color" class="form-input" id="tipoCor" value="#888888" style="height:42px;padding:4px 8px;cursor:pointer">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">MODELOS <span style="font-size:9px;color:var(--text3)">(um por linha)</span></label>
+          <textarea class="form-input" id="tipoModelos" style="min-height:72px;font-family:'JetBrains Mono',monospace;font-size:12px" placeholder="Modelo A&#10;Modelo B"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="clearSettingsForm()">Limpar</button>
+      <button class="btn btn-ghost" onclick="closeModal('settingsModal')">Fechar</button>
+      <button class="btn btn-primary" onclick="saveTipo()">Salvar</button>
+    </div>
+  </div>
+</div>
+
 <!-- ADD MACHINE -->
 <div class="modal-overlay" id="addMachineModal">
   <div class="modal">
@@ -1225,13 +1310,8 @@
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">TIPO</label>
-          <select class="form-select" id="newHwType" onchange="updateHwModels()">
+          <select class="form-select hw-type-select" id="newHwType" onchange="updateHwModels()">
             <option value="">— Selecione —</option>
-            <option value="monitor">Monitor</option>
-            <option value="receptor">Receptor</option>
-            <option value="radio">Rádio</option>
-            <option value="tela">Tela</option>
-            <option value="bordo">Bordo</option>
           </select>
         </div>
         <div class="form-group">
@@ -1281,12 +1361,8 @@
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">TIPO</label>
-          <select class="form-select" id="editHwType" onchange="updateEditHwModels()">
-            <option value="monitor">Monitor</option>
-            <option value="receptor">Receptor</option>
-            <option value="radio">Rádio</option>
-            <option value="tela">Tela</option>
-            <option value="bordo">Bordo</option>
+          <select class="form-select hw-type-select" id="editHwType" onchange="updateEditHwModels()">
+            <option value="">— Selecione —</option>
           </select>
         </div>
         <div class="form-group">
@@ -1453,12 +1529,14 @@ async function loadFromSheets() {
   isLoadingData = true;
   setConnectionStatus('loading');
   try {
-    const [resMaq, resHw] = await Promise.all([
+    const [resMaq, resHw, resTipos] = await Promise.all([
       fetch(`${SUPABASE_URL}/rest/v1/maquinas?select=*&order=nome`, { headers: sbHeaders }),
       fetch(`${SUPABASE_URL}/rest/v1/hardwares?select=*`, { headers: sbHeaders }),
+      fetch(`${SUPABASE_URL}/rest/v1/hw_tipos?select=*&order=id`, { headers: sbHeaders }),
     ]);
     if (!resMaq.ok || !resHw.ok) throw new Error('Erro na resposta do Supabase');
-    const [rawMachines, rawHardwares] = await Promise.all([resMaq.json(), resHw.json()]);
+    const [rawMachines, rawHardwares, rawTipos] = await Promise.all([resMaq.json(), resHw.json(), resTipos.json()]);
+    if (Array.isArray(rawTipos) && rawTipos.length) buildHwConfig(rawTipos);
     machines = sheetsToMachines(rawMachines, rawHardwares);
     setConnectionStatus('online');
     showToast('success', '☁️', 'Dados atualizados', `${machines.length} máquinas carregadas`);
@@ -1565,9 +1643,9 @@ function setConnectionStatus(state) {
 }
 
 // =========================================
-// HW CONFIG
+// HW CONFIG (dinâmico — populado pelo Supabase)
 // =========================================
-const hwConfig = {
+let hwConfig = {
   monitor:  { emoji: '🖥️', label: 'MONITOR',  cssClass: 'tag-monitor',  color: '#f97316',
     modelos: ['RAVEN','CFX 750','EZ GUIDE','OMNI','PRO 700','GS3','GS4','XCN 1050','XCN 1060'] },
   receptor: { emoji: '📡', label: 'RECEPTOR', cssClass: 'tag-receptor', color: '#c084fc',
@@ -1579,6 +1657,134 @@ const hwConfig = {
   bordo:    { emoji: '🔧', label: 'BORDO',    cssClass: 'tag-bordo',    color: '#4ade80',
     modelos: ['MAG 100','MAG X'] },
 };
+
+function buildHwConfig(rawTipos) {
+  hwConfig = {};
+  rawTipos.forEach(t => {
+    hwConfig[t.id] = {
+      emoji: t.emoji || '',
+      label: t.label || t.id.toUpperCase(),
+      cssClass: `tag-${t.id}`,
+      color: t.cor || '#888888',
+      modelos: Array.isArray(t.modelos) ? t.modelos : [],
+    };
+  });
+  populateHwTypeSelects();
+}
+
+function populateHwTypeSelects() {
+  document.querySelectorAll('.hw-type-select').forEach(sel => {
+    const current = sel.value;
+    sel.innerHTML = '<option value="">— Selecione —</option>';
+    Object.entries(hwConfig).forEach(([id, cfg]) => {
+      const opt = document.createElement('option');
+      opt.value = id;
+      opt.textContent = cfg.label;
+      if (id === current) opt.selected = true;
+      sel.appendChild(opt);
+    });
+  });
+}
+
+// ── SETTINGS ─────────────────────────────────
+let editingTipoId = null;
+
+function openSettings() {
+  editingTipoId = null;
+  clearSettingsForm();
+  renderTiposSettings();
+  openModal('settingsModal');
+}
+
+function renderTiposSettings() {
+  const container = document.getElementById('tiposListSettings');
+  container.innerHTML = '';
+  Object.entries(hwConfig).forEach(([id, cfg]) => {
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;margin-bottom:6px';
+    row.innerHTML = `
+      <span style="width:26px;text-align:center;font-size:16px">${cfg.emoji}</span>
+      <span style="flex:1;font-weight:600;font-size:13px;letter-spacing:.5px">${cfg.label}</span>
+      <span style="font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace">${cfg.modelos.length} modelos</span>
+      <div style="width:14px;height:14px;border-radius:50%;background:${cfg.color};flex-shrink:0"></div>
+      <button class="btn btn-ghost" style="padding:4px 10px;font-size:11px" onclick="editTipo('${id}')">Editar</button>
+      <button class="hw-mini-btn remove-btn" onclick="deleteTipo('${id}')" title="Excluir tipo">🗑</button>
+    `;
+    container.appendChild(row);
+  });
+}
+
+function editTipo(id) {
+  editingTipoId = id;
+  const cfg = hwConfig[id];
+  document.getElementById('tipoId').value = id;
+  document.getElementById('tipoId').disabled = true;
+  document.getElementById('tipoLabel').value = cfg.label;
+  document.getElementById('tipoEmoji').value = cfg.emoji;
+  document.getElementById('tipoCor').value = cfg.color || '#888888';
+  document.getElementById('tipoModelos').value = cfg.modelos.join('\n');
+  document.getElementById('settingsFormTitle').textContent = `EDITAR: ${cfg.label}`;
+}
+
+function clearSettingsForm() {
+  editingTipoId = null;
+  document.getElementById('tipoId').value = '';
+  document.getElementById('tipoId').disabled = false;
+  document.getElementById('tipoLabel').value = '';
+  document.getElementById('tipoEmoji').value = '';
+  document.getElementById('tipoCor').value = '#888888';
+  document.getElementById('tipoModelos').value = '';
+  document.getElementById('settingsFormTitle').textContent = 'ADICIONAR NOVO TIPO';
+}
+
+async function saveTipo() {
+  const id = editingTipoId || document.getElementById('tipoId').value.trim().toLowerCase().replace(/[\s\W]+/g,'_');
+  const label = document.getElementById('tipoLabel').value.trim().toUpperCase();
+  const emoji = document.getElementById('tipoEmoji').value.trim();
+  const cor   = document.getElementById('tipoCor').value;
+  const modelos = document.getElementById('tipoModelos').value.split('\n').map(m=>m.trim()).filter(Boolean);
+
+  if (!id || !label) { showToast('warning','⚠️','Campos obrigatórios','Preencha ID e Nome'); return; }
+  try {
+    if (editingTipoId) {
+      await fetch(`${SUPABASE_URL}/rest/v1/hw_tipos?id=eq.${encodeURIComponent(editingTipoId)}`, {
+        method: 'PATCH', headers: { ...sbHeaders, 'Prefer':'return=minimal' },
+        body: JSON.stringify({ label, emoji, cor, modelos }),
+      });
+    } else {
+      await fetch(`${SUPABASE_URL}/rest/v1/hw_tipos`, {
+        method: 'POST', headers: { ...sbHeaders, 'Prefer':'return=minimal' },
+        body: JSON.stringify({ id, label, emoji, cor, modelos }),
+      });
+    }
+    await reloadTipos();
+    clearSettingsForm();
+    showToast('success','✅','Tipo salvo', label);
+  } catch(e) {
+    showToast('warning','⚠️','Erro','Não foi possível salvar');
+  }
+}
+
+async function deleteTipo(id) {
+  if (!confirm(`Excluir tipo "${hwConfig[id]?.label}"?\nOs hardwares já cadastrados com este tipo não serão afetados.`)) return;
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/hw_tipos?id=eq.${encodeURIComponent(id)}`, {
+      method: 'DELETE', headers: sbHeaders,
+    });
+    await reloadTipos();
+    showToast('success','✅','Tipo excluído','');
+  } catch(e) {
+    showToast('warning','⚠️','Erro','Não foi possível excluir');
+  }
+}
+
+async function reloadTipos() {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/hw_tipos?select=*&order=id`, { headers: sbHeaders });
+  const rawTipos = await res.json();
+  buildHwConfig(rawTipos);
+  renderTiposSettings();
+  renderAll();
+}
 
 const machineConfig = {
   trator:        { emoji: '🚜', label: 'TRATOR',        color: 'var(--trator)' },
@@ -1735,8 +1941,24 @@ function renderDetail(id) {
         <button class="add-hw-btn" onclick="openAddHwModal()">+ Instalar Hardware</button>
       </div>`;
   } else {
+    // Agrupar por tipo
+    const groups = {};
+    const typeOrder = Object.keys(hwConfig);
     m.hardware.forEach(hw => {
-      const hcfg = hwConfig[hw.type] || { emoji: '❓', label: hw.type || '?', cssClass: 'tag-monitor' };
+      const t = hw.type || '_outros';
+      if (!groups[t]) groups[t] = [];
+      groups[t].push(hw);
+    });
+
+    // Renderizar na ordem do hwConfig, depois tipos desconhecidos
+    const sortedTypes = [
+      ...typeOrder.filter(t => groups[t]),
+      ...Object.keys(groups).filter(t => !typeOrder.includes(t)),
+    ];
+
+    function buildHwCard(hw) {
+      const hcfg = hwConfig[hw.type] || { label: hw.type || '?', color: '#888' };
+      const badgeStyle = `background:${hcfg.color}22;color:${hcfg.color};border:1px solid ${hcfg.color}55;font-size:10px;font-weight:700;letter-spacing:1px;padding:3px 8px;border-radius:6px`;
       const card = document.createElement('div');
       card.className = 'hw-card animate-in';
       card.onclick = () => {
@@ -1746,7 +1968,7 @@ function renderDetail(id) {
       };
       card.innerHTML = `
         <div class="hw-card-header">
-          <span class="hw-type-badge ${hcfg.cssClass}">${hcfg.emoji} ${hcfg.label}</span>
+          <span class="hw-type-badge" style="${badgeStyle}">${hcfg.label}</span>
           <div class="hw-actions-mini">
             <button class="hw-mini-btn" title="Ver detalhes" onclick="event.stopPropagation();showHwDetail('${m.id}','${hw.id}')">👁</button>
             <button class="hw-mini-btn" title="Editar" onclick="event.stopPropagation();openEditHw('${m.id}','${hw.id}')">✏️</button>
@@ -1771,10 +1993,29 @@ function renderDetail(id) {
           <span class="hid-value">${hw.installedAt || '—'}</span>
         </div>
       `;
-      grid.appendChild(card);
+      return card;
+    }
+
+    sortedTypes.forEach(type => {
+      const hwList = groups[type];
+      const hcfgSec = hwConfig[type] || { label: type.toUpperCase(), color: '#888' };
+
+      const section = document.createElement('div');
+      section.className = 'hw-type-section';
+
+      const header = document.createElement('div');
+      header.className = 'hw-type-section-header';
+      header.innerHTML = `<span>${hcfgSec.label}</span><span class="hw-type-section-count">${hwList.length}</span>`;
+      section.appendChild(header);
+
+      const sectionGrid = document.createElement('div');
+      sectionGrid.className = 'hw-type-section-grid';
+      hwList.forEach(hw => sectionGrid.appendChild(buildHwCard(hw)));
+      section.appendChild(sectionGrid);
+      grid.appendChild(section);
     });
 
-    // Add card
+    // Card de adicionar
     const addCard = document.createElement('div');
     addCard.className = 'add-hw-card';
     addCard.onclick = openAddHwModal;
