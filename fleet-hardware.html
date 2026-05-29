@@ -724,38 +724,7 @@
     font-weight: 700;
   }
 
-  .hw-card.expanded { border-color: var(--accent); box-shadow: 0 0 0 1px rgba(245,166,35,0.2); }
-
-  .hw-card-actions {
-    display: none;
-    gap: 6px;
-    margin-top: 14px;
-    padding-top: 12px;
-    border-top: 1px solid var(--border);
-  }
-
-  .hw-card.expanded .hw-card-actions { display: flex; }
-
-  .hw-action-btn {
-    flex: 1;
-    padding: 8px 4px;
-    border-radius: 6px;
-    background: var(--surface3);
-    border: 1px solid var(--border);
-    color: var(--text2);
-    font-size: 13px;
-    cursor: pointer;
-    transition: all 0.15s;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 3px;
-  }
-
-  .hw-action-btn span { font-size: 9px; letter-spacing: .5px; color: var(--text3); }
-  .hw-action-btn:hover { background: var(--border2); border-color: var(--border2); color: var(--text); }
-  .hw-action-btn:hover span { color: var(--text2); }
-  .hw-action-btn.remove-btn:hover { background: rgba(224,82,82,.1); border-color: rgba(224,82,82,.3); color: var(--red); }
+  .hw-card:hover { border-color: var(--border2); cursor: pointer; }
 
   .hw-mini-btn {
     width: 26px;
@@ -1469,6 +1438,9 @@
     <div class="modal-body" id="hwDetailBody"></div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('hwDetailModal')">Fechar</button>
+      <button class="btn btn-ghost" onclick="closeModal('hwDetailModal');openEditHw(detailMachineId,detailHwId)">✏️ Editar</button>
+      <button class="btn btn-ghost" onclick="closeModal('hwDetailModal');openTransfer(detailMachineId,detailHwId)">🔄 Mover</button>
+      <button class="btn btn-ghost" style="color:var(--red);border-color:rgba(224,82,82,.3)" onclick="closeModal('hwDetailModal');removeHardware(detailMachineId,detailHwId)">🗑 Remover</button>
     </div>
   </div>
 </div>
@@ -1993,12 +1965,8 @@ function renderDetail(id) {
       const badgeStyle = `background:${hcfg.color}22;color:${hcfg.color};border:1px solid ${hcfg.color}55;font-size:10px;font-weight:700;letter-spacing:1px;padding:3px 8px;border-radius:6px`;
       const card = document.createElement('div');
       card.className = 'hw-card animate-in';
-      card.title = 'Clique duplo para expandir';
-      card.ondblclick = () => {
-        const wasExpanded = card.classList.contains('expanded');
-        document.querySelectorAll('.hw-card.expanded').forEach(c => c.classList.remove('expanded'));
-        if (!wasExpanded) card.classList.add('expanded');
-      };
+      card.title = 'Clique duplo para ver detalhes';
+      card.ondblclick = () => showHwDetail(m.id, hw.id);
       card.innerHTML = `
         <div class="hw-card-header">
           <span class="hw-type-badge" style="${badgeStyle}">${hcfg.label}</span>
@@ -2018,12 +1986,6 @@ function renderDetail(id) {
         <div class="hw-install-date">
           <span class="hid-label">INSTALADO EM</span>
           <span class="hid-value">${hw.installedAt || '—'}</span>
-        </div>
-        <div class="hw-card-actions">
-          <button class="hw-action-btn" onclick="event.stopPropagation();showHwDetail('${m.id}','${hw.id}')">👁<span>DETALHES</span></button>
-          <button class="hw-action-btn" onclick="event.stopPropagation();openEditHw('${m.id}','${hw.id}')">✏️<span>EDITAR</span></button>
-          <button class="hw-action-btn" onclick="event.stopPropagation();openTransfer('${m.id}','${hw.id}')">🔄<span>MOVER</span></button>
-          <button class="hw-action-btn remove-btn" onclick="event.stopPropagation();removeHardware('${m.id}','${hw.id}')">🗑<span>REMOVER</span></button>
         </div>
       `;
       return card;
@@ -2463,19 +2425,26 @@ async function confirmTransfer() {
 // =========================================
 // HW DETAIL
 // =========================================
+let detailMachineId = null;
+let detailHwId = null;
+
 function showHwDetail(machineId, hwId) {
+  detailMachineId = machineId;
+  detailHwId = hwId;
+
   const m = machines.find(x => x.id === machineId);
   const hw = m.hardware.find(h => h.id === hwId);
-  const hcfg = hwConfig[hw.type];
-  const mcfg = machineConfig[m.type];
+  const hcfg = hwConfig[hw.type] || { emoji: '', label: hw.type || '?', color: '#888' };
+  const mcfg = machineConfig[m.type] || { emoji: '🚛', label: m.type || '?' };
+  const badgeStyle = `background:${hcfg.color}22;color:${hcfg.color};border:1px solid ${hcfg.color}55;font-size:10px;font-weight:700;letter-spacing:1px;padding:3px 8px;border-radius:6px`;
 
-  document.getElementById('hwDetailTitle').textContent = `${hcfg.emoji} ${hw.name}`;
+  document.getElementById('hwDetailTitle').textContent = `${hw.name}`;
   document.getElementById('hwDetailSub').textContent = `${hcfg.label} em ${mcfg.emoji} ${m.name}`;
 
   document.getElementById('hwDetailBody').innerHTML = `
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
       ${[
-        ['Tipo', `<span class="mc-tag ${hcfg.cssClass}">${hcfg.emoji} ${hcfg.label}</span>`],
+        ['Tipo', `<span style="${badgeStyle}">${hcfg.label}</span>`],
         ['Modelo', hw.name || '—'],
         ['Número de Série', hw.sn || '—'],
         ['Fabricante', hw.manufacturer || '—'],
