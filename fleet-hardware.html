@@ -2333,23 +2333,43 @@ function highlight(text, term) {
 // =========================================
 // CRUD
 // =========================================
-function addMachine() {
+async function addMachine() {
   const type = document.getElementById('newMachineType').value;
-  const id = document.getElementById('newMachineId').value.trim();
+  const id   = document.getElementById('newMachineId').value.trim();
   const name = document.getElementById('newMachineName').value.trim();
   const year = document.getElementById('newMachineYear').value.trim();
-  const pat = document.getElementById('newMachinePatrimony').value.trim();
+  const pat  = document.getElementById('newMachinePatrimony').value.trim();
 
   if (!id || !name) { showToast('warning', '⚠️', 'Campos obrigatórios', 'Preencha o ID e o nome'); return; }
   if (machines.find(m => m.id === id)) { showToast('warning', '⚠️', 'ID duplicado', 'Já existe uma máquina com esse ID'); return; }
 
-  machines.push({ id, name, type, year, patrimony: pat, createdAt: new Date().toISOString().split('T')[0], hardware: [] });
+  machines.push({ id, name, type, year, unidade: '', chassi: '', patrimony: pat, createdAt: new Date().toISOString().split('T')[0], hardware: [] });
 
   closeModal('addMachineModal');
   ['newMachineId','newMachineName','newMachineYear','newMachinePatrimony'].forEach(f => document.getElementById(f).value = '');
   renderAll();
   showToast('success', '✅', 'Máquina cadastrada', `${name} adicionada à frota`);
   selectMachine(id);
+
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/maquinas`, {
+      method: 'POST',
+      headers: { ...sbHeaders, 'Prefer': 'return=minimal' },
+      body: JSON.stringify({
+        id,
+        nome: name,
+        tipo: type,
+        ano: year,
+        patrimonio: pat,
+        unidade: '',
+        chassi: '',
+        centroCusto: '',
+        criadoEm: new Date().toISOString().split('T')[0],
+      }),
+    });
+  } catch(e) {
+    showToast('warning', '⚠️', 'Sem conexão', 'Máquina salva localmente apenas');
+  }
 }
 
 function openAddHwModal() {
@@ -2687,6 +2707,22 @@ function showToast(type, icon, title, sub) {
 // =========================================
 // INIT
 // =========================================
+// Popula chips e select de máquina com os dados hardcoded (fallback antes do Supabase)
+(function initFromDefaults() {
+  rebuildFilterChips();
+  const sel = document.getElementById('newMachineType');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">— Selecione —</option>';
+  REAL_TYPES.forEach(id => {
+    const cfg = machineConfig[id];
+    if (!cfg) return;
+    const opt = document.createElement('option');
+    opt.value = id;
+    opt.textContent = `${cfg.emoji} ${cfg.label}`;
+    sel.appendChild(opt);
+  });
+})();
+
 loadFromSheets();
 </script>
 </body>
