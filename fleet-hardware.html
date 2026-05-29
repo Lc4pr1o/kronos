@@ -576,6 +576,7 @@
     border: 1px solid var(--border);
     border-radius: 14px;
     padding: 24px;
+    min-height: 116px;
     display: grid;
     grid-template-columns: auto 1fr auto;
     gap: 20px;
@@ -610,6 +611,7 @@
   .hero-icon-wrap.colhedora { background: rgba(46, 204, 138, 0.12); border: 1px solid rgba(46,204,138,0.3); }
   .hero-icon-wrap.estoque    { background: rgba(74, 158, 255, 0.12); border: 1px solid rgba(74,158,255,0.3); }
   .hero-icon-wrap.manutencao { background: rgba(224, 82, 82, 0.12);  border: 1px solid rgba(224,82,82,0.3); }
+  .hero-icon-wrap.inativo    { background: rgba(74, 84, 104, 0.12);  border: 1px solid rgba(74,84,104,0.3); }
 
   .hero-info { display: flex; flex-direction: column; gap: 4px; }
   .hero-type { font-size: 10px; letter-spacing: 2px; color: var(--text3); font-weight: 600; }
@@ -1077,17 +1079,6 @@
       <span id="connectionLabel">Demo</span>
       <span style="font-size:10px;opacity:0.5">↺</span>
     </div>
-    <a href="tecnico-campo.html" target="_blank" style="
-      display:flex;align-items:center;gap:7px;
-      background:rgba(245,166,35,0.08);
-      border:1px solid rgba(245,166,35,0.3);
-      border-radius:20px;padding:6px 14px;
-      font-size:11px;font-family:'JetBrains Mono',monospace;
-      color:var(--accent);text-decoration:none;
-      transition:all 0.2s;
-    " onmouseover="this.style.background='rgba(245,166,35,0.15)'" onmouseout="this.style.background='rgba(245,166,35,0.08)'">
-      📱 Campo
-    </a>
   </div>
 </header>
 
@@ -1717,7 +1708,7 @@ function renderDetail(id) {
   const m = machines.find(x => x.id === id);
   if (!m) return;
 
-  const cfg = machineConfig[m.type];
+  const cfg = machineConfig[m.type] || { emoji: '🚛', label: m.type?.toUpperCase() || 'MÁQUINA', color: 'var(--text3)', cssClass: '' };
   document.getElementById('emptyState').style.display = 'none';
   document.getElementById('machineDetail').style.display = 'flex';
   document.getElementById('machineDetail').className = 'machine-detail active';
@@ -1745,7 +1736,7 @@ function renderDetail(id) {
       </div>`;
   } else {
     m.hardware.forEach(hw => {
-      const hcfg = hwConfig[hw.type];
+      const hcfg = hwConfig[hw.type] || { emoji: '❓', label: hw.type || '?', cssClass: 'tag-monitor' };
       const card = document.createElement('div');
       card.className = 'hw-card animate-in';
       card.onclick = () => {
