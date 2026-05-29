@@ -776,28 +776,7 @@
       </div>
 
       <div id="hwPickerWrap" style="margin-top:12px;display:none">
-        <div class="field-label" style="margin-bottom:8px">SELECIONE O EQUIPAMENTO</div>
         <div class="machine-picker" id="hwPicker"></div>
-      </div>
-
-      <div style="margin-top:14px">
-        <div class="field-label" style="margin-bottom:6px">OU INFORME MANUALMENTE</div>
-        <div class="field-group">
-          <div class="field">
-            <select class="field-select" id="hwModelo" style="font-size:14px;padding:12px 14px">
-              <option value="">— Modelo —</option>
-            </select>
-          </div>
-          <div class="field">
-            <input type="text" class="field-input" id="hwPatrimonio" placeholder="Patrimônio" style="font-size:14px;padding:12px 14px">
-          </div>
-          <div class="field">
-            <input type="text" class="field-input" id="hwSnManual" placeholder="Número de série (S/N)" style="font-size:14px;padding:12px 14px">
-          </div>
-          <div class="field">
-            <input type="text" class="field-input" id="hwNameManual" placeholder="Modelo / nome do equipamento" style="font-size:14px;padding:12px 14px">
-          </div>
-        </div>
       </div>
     </div>
 
@@ -818,17 +797,9 @@
       </div>
     </div>
 
-    <div class="section-title">LOCALIZAÇÃO & DATA</div>
+    <div class="section-title">DATA E HORA</div>
     <div class="field-group">
-      <div class="gps-field" id="gpsField" onclick="captureGPS()">
-        <div class="gps-icon">📍</div>
-        <div class="gps-text">
-          <div class="gps-label">GPS AUTOMÁTICO</div>
-          <div class="gps-value" id="gpsValue">Toque para capturar localização</div>
-        </div>
-      </div>
       <div class="field">
-        <label class="field-label">DATA E HORA</label>
         <input type="datetime-local" class="field-input" id="serviceDateTime">
       </div>
     </div>
@@ -1128,11 +1099,12 @@ function mapMachines(raw) {
 
 function mapHardwares(raw) {
   return raw.map(h => ({
-    id:      String(h.id      ?? ''),
-    name:    String(h.nome    ?? h.name ?? ''),
-    type:    String(h.tipo    ?? h.type ?? ''),
-    sn:      String(h.numeroDeSerie ?? h.sn ?? ''),
-    machine: String(h.maquinaAtual  ?? h.machine ?? ''),
+    id:        String(h.id           ?? ''),
+    name:      String(h.nome         ?? h.name ?? ''),
+    type:      String(h.tipo         ?? h.type ?? ''),
+    sn:        String(h.numeroDeSerie ?? h.sn ?? ''),
+    machine:   String(h.maquinaAtual  ?? h.machine ?? ''),
+    patrimonio: String(h.patrimonio   ?? ''),
   }));
 }
 
@@ -1412,83 +1384,55 @@ function renderMachinePickerDest() {
 // ══════════════════════════════════════════
 // HW PICKER
 // ══════════════════════════════════════════
-function populateModelos() {
-  const type = document.getElementById('hwType').value;
-  const sel = document.getElementById('hwModelo');
-  sel.innerHTML = '<option value="">— Modelo —</option>';
-  if (!type || !hwConfig[type]) return;
-  hwConfig[type].modelos.forEach(m => {
-    const opt = document.createElement('option');
-    opt.value = m; opt.textContent = m;
-    sel.appendChild(opt);
-  });
-}
-
 function renderHwPicker() {
-  populateModelos();
   const type = document.getElementById('hwType').value;
   const wrap = document.getElementById('hwPickerWrap');
   const container = document.getElementById('hwPicker');
 
   if (!type) { wrap.style.display = 'none'; return; }
 
-  // Filtra hardwares pelo tipo e pela máquina selecionada (se remove/transfer)
+  // Filtra por tipo
   let filtered = hardwares.filter(h => h.type === type);
-  if ((currentAction === 'remove' || currentAction === 'transfer') && selectedMachineId) {
-    filtered = filtered.filter(h => h.machine === selectedMachineId);
-  }
 
-  if (filtered.length === 0) { wrap.style.display = 'none'; return; }
+  // Filtra por origem
+  if (currentOrigin === 'maquina' && selectedMachineId) {
+    filtered = filtered.filter(h => h.machine === selectedMachineId);
+  } else if (currentOrigin === 'estoque') {
+    filtered = filtered.filter(h => h.machine === 'ESTOQUE');
+  } else if (currentOrigin === 'manutencao') {
+    filtered = filtered.filter(h => h.machine === 'MANUTENCAO');
+  } else if (currentOrigin === 'inativo') {
+    filtered = filtered.filter(h => h.machine === 'INATIVO');
+  }
 
   wrap.style.display = 'block';
   container.innerHTML = '';
 
+  if (filtered.length === 0) {
+    container.innerHTML = `<div class="hw-option" style="opacity:0.5;cursor:default;justify-content:center;font-size:13px">
+      Nenhum equipamento disponível nesta origem
+    </div>`;
+    return;
+  }
+
   filtered.forEach(hw => {
     const div = document.createElement('div');
     div.className = `hw-option${selectedHwId === hw.id ? ' selected' : ''}`;
+    const pat = hw.patrimonio ? ` · Pat: ${hw.patrimonio}` : '';
     div.innerHTML = `
       <div class="hw-type-dot" style="background:${hwColors[hw.type]||'#888'}"></div>
       <div class="mo-info">
         <div class="mo-name">${hw.name}</div>
-        <div class="mo-id">${hw.id} · S/N: ${hw.sn || '—'}</div>
+        <div class="mo-id">S/N: ${hw.sn || '—'}${pat}</div>
       </div>
       <div class="mo-check">${selectedHwId === hw.id ? '✓' : ''}</div>
     `;
     div.onclick = () => {
       selectedHwId = hw.id;
-      document.getElementById('hwSnManual').value = hw.sn || '';
-      document.getElementById('hwNameManual').value = hw.name;
       renderHwPicker();
     };
     container.appendChild(div);
   });
-}
-
-// ══════════════════════════════════════════
-// GPS
-// ══════════════════════════════════════════
-function captureGPS() {
-  const field = document.getElementById('gpsField');
-  const val = document.getElementById('gpsValue');
-  val.textContent = 'Capturando...';
-
-  if (!navigator.geolocation) {
-    val.textContent = 'GPS não disponível neste dispositivo';
-    return;
-  }
-
-  navigator.geolocation.getCurrentPosition(
-    pos => {
-      gpsCoords = { lat: pos.coords.latitude.toFixed(6), lng: pos.coords.longitude.toFixed(6), acc: Math.round(pos.coords.accuracy) };
-      val.textContent = `${gpsCoords.lat}, ${gpsCoords.lng} (±${gpsCoords.acc}m)`;
-      val.className = 'gps-value got';
-      field.classList.add('got');
-    },
-    err => {
-      val.textContent = 'Não foi possível obter localização';
-    },
-    { enableHighAccuracy: true, timeout: 10000 }
-  );
 }
 
 // ══════════════════════════════════════════
@@ -1524,14 +1468,16 @@ function submitRecord() {
     showToast('err','⚠️','Selecione a máquina destino'); return;
   }
 
-  const hwSn = document.getElementById('hwSnManual').value.trim();
-  const hwName = document.getElementById('hwNameManual').value.trim();
-  const hwType = document.getElementById('hwType').value;
-  const hwModelo = document.getElementById('hwModelo').value.trim();
-  const hwPatrimonio = document.getElementById('hwPatrimonio').value.trim();
+  if (!selectedHwId) { showToast('err','⚠️','Selecione um equipamento na lista'); return; }
+  const selectedHw = hardwares.find(h => h.id === selectedHwId);
+  if (!selectedHw) { showToast('err','⚠️','Equipamento não encontrado'); return; }
 
-  if (!hwSn && !hwPatrimonio && !hwName) { showToast('err','⚠️','Informe S/N, Patrimônio ou Modelo do hardware'); return; }
-  const hwId = hwPatrimonio;
+  const hwId = selectedHw.id;
+  const hwSn = selectedHw.sn || '';
+  const hwName = selectedHw.name || '';
+  const hwType = selectedHw.type || '';
+  const hwModelo = selectedHw.name || '';
+  const hwPatrimonio = selectedHw.patrimonio || '';
 
   const techName = document.getElementById('techName').value.trim() || 'Técnico';
   localStorage.setItem('techName', techName);
@@ -1745,13 +1691,8 @@ function resetForm() {
   setMachineDropdownLabel('dest', null);
   document.getElementById('hwType').value = '';
   document.getElementById('hwPickerWrap').style.display = 'none';
-  document.getElementById('hwSnManual').value = '';
-  document.getElementById('hwNameManual').value = '';
-  document.getElementById('hwPatrimonio').value = '';
   document.getElementById('notes').value = '';
-  document.getElementById('gpsValue').textContent = 'Toque para capturar localização';
-  document.getElementById('gpsValue').className = 'gps-value';
-  document.getElementById('gpsField').classList.remove('got');
+  gpsCoords = null;
 
   const now = new Date();
   now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
