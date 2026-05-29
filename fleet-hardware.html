@@ -1332,9 +1332,15 @@
 
 <script>
 // =========================================
-// CONFIGURAÇÃO — cole sua URL do Apps Script
+// CONFIGURAÇÃO — Supabase
 // =========================================
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzAoyJeocqzd_QGvXqwFdSQ0k4X12ERowpi-Qt_RLMbugw1Mo9Cit8psEIHXONXZmfOcQ/exec';
+const SUPABASE_URL = 'https://fevzqjeybsnjznespplr.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_DIYe_vM9kLVk05PGjGrq9Q_Rr6n-mr9';
+const sbHeaders = {
+  'apikey': SUPABASE_KEY,
+  'Authorization': `Bearer ${SUPABASE_KEY}`,
+  'Content-Type': 'application/json',
+};
 
 // =========================================
 // DADOS DEMO (usados enquanto URL não configurada)
@@ -1396,32 +1402,100 @@ function sheetsToMachines(rawMachines, rawHardwares) {
 }
 
 async function loadFromSheets() {
-  if (APPS_SCRIPT_URL === 'COLE_SUA_URL_AQUI') {
-    machines = sheetsToMachines(DEMO_DATA.machines, DEMO_DATA.hardwares);
-    setConnectionStatus('demo');
-    renderAll();
-    return;
-  }
-
   isLoadingData = true;
   setConnectionStatus('loading');
-
   try {
-    const res = await fetch(`${APPS_SCRIPT_URL}?action=getData`);
-    const data = await res.json();
-    machines = sheetsToMachines(data.machines || [], data.hardwares || []);
+    const [resMaq, resHw] = await Promise.all([
+      fetch(`${SUPABASE_URL}/rest/v1/maquinas?select=*&order=nome`, { headers: sbHeaders }),
+      fetch(`${SUPABASE_URL}/rest/v1/hardwares?select=*`, { headers: sbHeaders }),
+    ]);
+    if (!resMaq.ok || !resHw.ok) throw new Error('Erro na resposta do Supabase');
+    const [rawMachines, rawHardwares] = await Promise.all([resMaq.json(), resHw.json()]);
+    machines = sheetsToMachines(rawMachines, rawHardwares);
     setConnectionStatus('online');
     showToast('success', '☁️', 'Dados atualizados', `${machines.length} máquinas carregadas`);
   } catch(e) {
-    // fallback para demo
     machines = sheetsToMachines(DEMO_DATA.machines, DEMO_DATA.hardwares);
     setConnectionStatus('error');
     showToast('warning', '⚠️', 'Sem conexão', 'Exibindo dados demo');
   }
-
   isLoadingData = false;
   renderAll();
   if (selectedMachineId) renderDetail(selectedMachineId);
+}
+
+async function sbFindHardware(record) {
+  const checks = [
+    record.hwId         && `id=eq.${encodeURIComponent(record.hwId)}`,
+    record.hwSn         && `numeroDeSerie=eq.${encodeURIComponent(record.hwSn)}`,
+    record.hwPatrimonio && `patrimonio=eq.${encodeURIComponent(record.hwPatrimonio)}`,
+  ].filter(Boolean);
+  for (const q of checks) {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/hardwares?${q}&limit=1`, { headers: sbHeaders });
+    const rows = await res.json();
+    if (Array.isArray(rows) && rows.length > 0) return rows[0];
+  }
+  return null;
+}
+
+async function saveRecord(record) {
+  await fetch(`${SUPABASE_URL}/rest/v1/registros`, {
+    method: 'POST',
+    headers: { ...sbHeaders, 'Prefer': 'return=minimal' },
+    body: JSON.stringify({
+      id: record.id,
+      acao: record.action,
+      tecnico: record.techName,
+      maquinaId: record.machineId || '',
+      maquinaNome: record.machineName || '',
+      maquinaDestinoId: record.machineDestId || '',
+      maquinaDestinoNome: record.machineDestName || '',
+      hardwareId: record.hwId || '',
+      hardwareSN: record.hwSn || '',
+      hardwareNome: record.hwName || '',
+      hardwareTipo: record.hwType || '',
+      hardwareModelo: record.hwModelo || '',
+      hardwarePatrimonio: record.hwPatrimonio || '',
+      gpsLat: String(record.gpsLat || ''),
+      gpsLng: String(record.gpsLng || ''),
+      gpsAcc: String(record.gpsAcc || ''),
+      dataHora: record.dateTime || '',
+      observacoes: record.notes || '',
+      sincronizadoEm: new Date().toISOString(),
+    }),
+  });
+
+  const hasIdentifier = record.hwId || record.hwSn || record.hwPatrimonio;
+  const destId = record.machineDestId || '';
+  if (!hasIdentifier || !destId) return { success: true };
+
+  const existing = await sbFindHardware(record);
+  if (existing) {
+    await fetch(`${SUPABASE_URL}/rest/v1/hardwares?id=eq.${encodeURIComponent(existing.id)}`, {
+      method: 'PATCH',
+      headers: { ...sbHeaders, 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ maquinaAtual: destId, instaladoEm: record.dateTime || new Date().toISOString() }),
+    });
+  } else {
+    const newId = record.hwId || record.hwPatrimonio || record.hwSn;
+    await fetch(`${SUPABASE_URL}/rest/v1/hardwares`, {
+      method: 'POST',
+      headers: { ...sbHeaders, 'Prefer': 'return=minimal' },
+      body: JSON.stringify({
+        id: newId,
+        nome: record.hwName || '',
+        tipo: record.hwType || '',
+        modelo: record.hwModelo || '',
+        numeroDeSerie: record.hwSn || '',
+        patrimonio: record.hwPatrimonio || '',
+        fabricante: record.hwManuf || '',
+        firmware: '',
+        maquinaAtual: destId,
+        instaladoEm: record.dateTime || new Date().toISOString(),
+      }),
+    });
+  }
+  return { success: true };
 }
 
 function setConnectionStatus(state) {
@@ -1430,7 +1504,7 @@ function setConnectionStatus(state) {
   const label = document.getElementById('connectionLabel');
   const configs = {
     demo:    { cls:'',        dotCls:'orange', text:'Demo' },
-    online:  { cls:'online',  dotCls:'green',  text:'Sheets ✓' },
+    online:  { cls:'online',  dotCls:'green',  text:'Supabase ✓' },
     loading: { cls:'loading', dotCls:'orange', text:'Carregando...' },
     error:   { cls:'error',   dotCls:'',       text:'Offline' },
   };
@@ -1845,8 +1919,8 @@ async function addHardware() {
   renderAll();
   showToast('success', '✅', 'Hardware instalado', `${model} instalado em ${m.name}`);
 
-  if (APPS_SCRIPT_URL !== 'COLE_SUA_URL_AQUI') {
-    const record = {
+  try {
+    await saveRecord({
       id: `REG-${Date.now()}`,
       action: 'instalar',
       techName: 'Analista',
@@ -1864,17 +1938,9 @@ async function addHardware() {
       gpsLat: '', gpsLng: '', gpsAcc: '',
       dateTime: new Date().toISOString().slice(0,16),
       notes: '',
-    };
-    try {
-      const res = await fetch(APPS_SCRIPT_URL, {
-        method: 'POST',
-        body: JSON.stringify({ action: 'addRecord', record }),
-      });
-      const data = await res.json();
-      if (!data.success) showToast('warning', '⚠️', 'Não salvo na planilha', 'Verifique a conexão');
-    } catch(e) {
-      showToast('warning', '⚠️', 'Sem conexão', 'Hardware salvo localmente apenas');
-    }
+    });
+  } catch(e) {
+    showToast('warning', '⚠️', 'Sem conexão', 'Hardware salvo localmente apenas');
   }
 }
 
@@ -1942,8 +2008,8 @@ async function confirmTransfer() {
   renderAll();
   showToast('success', '🔄', 'Transferência concluída', `${hw.name} movido para ${target.name}`);
 
-  if (APPS_SCRIPT_URL !== 'COLE_SUA_URL_AQUI') {
-    const record = {
+  try {
+    await saveRecord({
       id: `REG-${Date.now()}`,
       action: 'transferir',
       techName: 'Analista',
@@ -1961,17 +2027,9 @@ async function confirmTransfer() {
       gpsLat: '', gpsLng: '', gpsAcc: '',
       dateTime: new Date().toISOString().slice(0,16),
       notes: '',
-    };
-    try {
-      const res = await fetch(APPS_SCRIPT_URL, {
-        method: 'POST',
-        body: JSON.stringify({ action: 'addRecord', record }),
-      });
-      const data = await res.json();
-      if (!data.success) showToast('warning', '⚠️', 'Não salvo na planilha', 'Verifique a conexão');
-    } catch(e) {
-      showToast('warning', '⚠️', 'Sem conexão', 'Transferência salva localmente apenas');
-    }
+    });
+  } catch(e) {
+    showToast('warning', '⚠️', 'Sem conexão', 'Transferência salva localmente apenas');
   }
 }
 
