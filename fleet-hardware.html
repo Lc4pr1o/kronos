@@ -1275,6 +1275,59 @@
   </div>
 </div>
 
+<!-- EDIT HARDWARE -->
+<div class="modal-overlay" id="editHwModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">✏️ Editar Hardware</div>
+        <div class="modal-sub" id="editHwModalSub">—</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('editHwModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">TIPO</label>
+          <select class="form-select" id="editHwType" onchange="updateEditHwModels()">
+            <option value="monitor">Monitor</option>
+            <option value="receptor">Receptor</option>
+            <option value="radio">Rádio</option>
+            <option value="tela">Tela</option>
+            <option value="bordo">Bordo</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">PATRIMÔNIO <span style="font-size:9px;color:var(--text3);font-weight:400">(opcional)</span></label>
+          <input type="text" class="form-input" id="editHwPat" placeholder="Ex: 12345">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">MODELO</label>
+        <select class="form-select" id="editHwModel"></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">NÚMERO DE SÉRIE</label>
+        <input type="text" class="form-input" id="editHwSn" placeholder="S/N">
+      </div>
+      <div class="form-group">
+        <label class="form-label">FABRICANTE</label>
+        <select class="form-select" id="editHwManuf">
+          <option value="">— Selecione —</option>
+          <option value="John Deere">John Deere</option>
+          <option value="Timple">Timple</option>
+          <option value="Solinftec">Solinftec</option>
+          <option value="Reven">Reven</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('editHwModal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveEditHw()">Salvar</button>
+    </div>
+  </div>
+</div>
+
 <!-- TRANSFER HARDWARE -->
 <div class="modal-overlay" id="transferModal">
   <div class="modal" style="max-width:520px">
@@ -1696,6 +1749,7 @@ function renderDetail(id) {
           <span class="hw-type-badge ${hcfg.cssClass}">${hcfg.emoji} ${hcfg.label}</span>
           <div class="hw-actions-mini">
             <button class="hw-mini-btn" title="Ver detalhes" onclick="event.stopPropagation();showHwDetail('${m.id}','${hw.id}')">👁</button>
+            <button class="hw-mini-btn" title="Editar" onclick="event.stopPropagation();openEditHw('${m.id}','${hw.id}')">✏️</button>
             <button class="hw-mini-btn transfer-btn" title="Transferir" onclick="event.stopPropagation();openTransfer('${m.id}','${hw.id}')">🔄</button>
             <button class="hw-mini-btn remove-btn" title="Remover" onclick="event.stopPropagation();removeHardware('${m.id}','${hw.id}')">🗑</button>
           </div>
@@ -1941,6 +1995,79 @@ async function addHardware() {
     });
   } catch(e) {
     showToast('warning', '⚠️', 'Sem conexão', 'Hardware salvo localmente apenas');
+  }
+}
+
+let editingMachineId = null;
+let editingHwId = null;
+
+function openEditHw(machineId, hwId) {
+  editingMachineId = machineId;
+  editingHwId = hwId;
+  const m = machines.find(x => x.id === machineId);
+  const hw = m.hardware.find(h => h.id === hwId);
+  const hcfg = hwConfig[hw.type] || {};
+
+  document.getElementById('editHwModalSub').textContent = `${hcfg.emoji || ''} ${hw.id} em ${m.name}`;
+  document.getElementById('editHwType').value = hw.type || '';
+  document.getElementById('editHwPat').value = hw.patrimony || '';
+  document.getElementById('editHwSn').value = hw.sn || '';
+  document.getElementById('editHwManuf').value = hw.manufacturer || '';
+  updateEditHwModels(hw.name);
+  openModal('editHwModal');
+}
+
+function updateEditHwModels(currentModel) {
+  const type = document.getElementById('editHwType').value;
+  const sel = document.getElementById('editHwModel');
+  sel.innerHTML = '';
+  const cfg = hwConfig[type];
+  if (cfg && cfg.modelos) {
+    cfg.modelos.forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = m; opt.textContent = m;
+      if (m === currentModel) opt.selected = true;
+      sel.appendChild(opt);
+    });
+  }
+}
+
+async function saveEditHw() {
+  const m = machines.find(x => x.id === editingMachineId);
+  const hw = m.hardware.find(h => h.id === editingHwId);
+
+  const type  = document.getElementById('editHwType').value;
+  const model = document.getElementById('editHwModel').value;
+  const sn    = document.getElementById('editHwSn').value.trim();
+  const pat   = document.getElementById('editHwPat').value.trim();
+  const manuf = document.getElementById('editHwManuf').value;
+
+  // Atualiza estado local
+  hw.type = type;
+  hw.name = model;
+  hw.sn = sn;
+  hw.patrimony = pat;
+  hw.manufacturer = manuf;
+
+  closeModal('editHwModal');
+  renderAll();
+  showToast('success', '✅', 'Hardware atualizado', model);
+
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/hardwares?id=eq.${encodeURIComponent(editingHwId)}`, {
+      method: 'PATCH',
+      headers: { ...sbHeaders, 'Prefer': 'return=minimal' },
+      body: JSON.stringify({
+        nome: model,
+        tipo: type,
+        modelo: model,
+        numeroDeSerie: sn,
+        patrimonio: pat,
+        fabricante: manuf,
+      }),
+    });
+  } catch(e) {
+    showToast('warning', '⚠️', 'Sem conexão', 'Alteração salva localmente apenas');
   }
 }
 
