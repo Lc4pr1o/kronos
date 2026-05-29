@@ -1233,7 +1233,8 @@
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">TIPO</label>
-          <select class="form-select" id="newHwType">
+          <select class="form-select" id="newHwType" onchange="updateHwModels()">
+            <option value="">— Selecione —</option>
             <option value="monitor">Monitor</option>
             <option value="receptor">Receptor</option>
             <option value="radio">Rádio</option>
@@ -1242,27 +1243,29 @@
           </select>
         </div>
         <div class="form-group">
-          <label class="form-label">ID INTERNO</label>
-          <input type="text" class="form-input" id="newHwId" placeholder="Ex: REC-042">
+          <label class="form-label">PATRIMÔNIO <span style="font-size:9px;color:var(--text3);font-weight:400">(opcional)</span></label>
+          <input type="text" class="form-input" id="newHwId" placeholder="Ex: 12345">
         </div>
       </div>
       <div class="form-group">
-        <label class="form-label">NOME / MODELO</label>
-        <input type="text" class="form-input" id="newHwName" placeholder="Ex: Trimble AG-372">
+        <label class="form-label">MODELO</label>
+        <select class="form-select" id="newHwModel">
+          <option value="">— Selecione o tipo primeiro —</option>
+        </select>
       </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">NÚMERO DE SÉRIE</label>
-          <input type="text" class="form-input" id="newHwSn" placeholder="S/N">
-        </div>
-        <div class="form-group">
-          <label class="form-label">FIRMWARE / VER.</label>
-          <input type="text" class="form-input" id="newHwFw" placeholder="v2.4.1">
-        </div>
+      <div class="form-group">
+        <label class="form-label">NÚMERO DE SÉRIE</label>
+        <input type="text" class="form-input" id="newHwSn" placeholder="S/N">
       </div>
       <div class="form-group">
         <label class="form-label">FABRICANTE</label>
-        <input type="text" class="form-input" id="newHwManuf" placeholder="Trimble, Leica, Topcon...">
+        <select class="form-select" id="newHwManuf">
+          <option value="">— Selecione —</option>
+          <option value="John Deere">John Deere</option>
+          <option value="Timple">Timple</option>
+          <option value="Solinftec">Solinftec</option>
+          <option value="Reven">Reven</option>
+        </select>
       </div>
     </div>
     <div class="modal-footer">
@@ -1384,8 +1387,8 @@ function sheetsToMachines(rawMachines, rawHardwares) {
           name: String(h.nome ?? ''),
           type: String(h.tipo ?? ''),
           sn: String(h.numeroDeSerie || ''),
-          firmware: h.firmware || '',
           manufacturer: h.fabricante || '',
+          patrimony: String(h.patrimonio || ''),
           installedAt: h.instaladoEm,
         }))
     };
@@ -1627,16 +1630,12 @@ function renderDetail(id) {
         <div class="hw-model">${hw.manufacturer || '—'}</div>
         <div class="hw-fields">
           <div class="hw-field">
-            <span class="hf-label">ID Interno</span>
-            <span class="hf-value">${hw.id}</span>
+            <span class="hf-label">Patrimônio</span>
+            <span class="hf-value">${hw.patrimony || '—'}</span>
           </div>
           <div class="hw-field">
             <span class="hf-label">Nº Série</span>
             <span class="hf-value">${hw.sn || '—'}</span>
-          </div>
-          <div class="hw-field">
-            <span class="hf-label">Firmware</span>
-            <span class="hf-value">${hw.firmware || '—'}</span>
           </div>
         </div>
         <div class="hw-install-date">
@@ -1803,26 +1802,79 @@ function openAddHwModal() {
   openModal('addHwModal');
 }
 
-function addHardware() {
+function updateHwModels() {
   const type = document.getElementById('newHwType').value;
-  const id = document.getElementById('newHwId').value.trim();
-  const name = document.getElementById('newHwName').value.trim();
-  const sn = document.getElementById('newHwSn').value.trim();
-  const fw = document.getElementById('newHwFw').value.trim();
-  const manuf = document.getElementById('newHwManuf').value.trim();
+  const sel = document.getElementById('newHwModel');
+  sel.innerHTML = '<option value="">— Selecione o modelo —</option>';
+  const cfg = hwConfig[type];
+  if (cfg && cfg.modelos) {
+    cfg.modelos.forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = m; opt.textContent = m;
+      sel.appendChild(opt);
+    });
+  }
+}
 
-  if (!id || !name) { showToast('warning', '⚠️', 'Campos obrigatórios', 'Preencha o ID e o nome'); return; }
+async function addHardware() {
+  const type = document.getElementById('newHwType').value;
+  const pat  = document.getElementById('newHwId').value.trim();
+  const model = document.getElementById('newHwModel').value.trim();
+  const sn   = document.getElementById('newHwSn').value.trim();
+  const manuf = document.getElementById('newHwManuf').value;
 
+  if (!type)  { showToast('warning', '⚠️', 'Campos obrigatórios', 'Selecione o tipo'); return; }
+  if (!model) { showToast('warning', '⚠️', 'Campos obrigatórios', 'Selecione o modelo'); return; }
+
+  const hwUniqueId = pat || `HW-${Date.now()}`;
   const allHw = machines.flatMap(m => m.hardware);
-  if (allHw.find(h => h.id === id)) { showToast('warning', '⚠️', 'ID duplicado', 'Já existe um hardware com esse ID'); return; }
+  if (pat && allHw.find(h => h.patrimony === pat)) {
+    showToast('warning', '⚠️', 'Patrimônio duplicado', 'Já existe um hardware com esse patrimônio');
+    return;
+  }
 
   const m = machines.find(x => x.id === selectedMachineId);
-  m.hardware.push({ id, name, type, sn, firmware: fw, manufacturer: manuf, installedAt: new Date().toISOString().split('T')[0] });
+  const newHw = { id: hwUniqueId, name: model, type, sn, manufacturer: manuf, patrimony: pat, installedAt: new Date().toISOString().split('T')[0] };
+  m.hardware.push(newHw);
 
   closeModal('addHwModal');
-  ['newHwId','newHwName','newHwSn','newHwFw','newHwManuf'].forEach(f => document.getElementById(f).value = '');
+  ['newHwId','newHwSn'].forEach(f => document.getElementById(f).value = '');
+  document.getElementById('newHwModel').value = '';
+  document.getElementById('newHwManuf').value = '';
+  document.getElementById('newHwType').value = '';
   renderAll();
-  showToast('success', '✅', 'Hardware instalado', `${name} instalado em ${m.name}`);
+  showToast('success', '✅', 'Hardware instalado', `${model} instalado em ${m.name}`);
+
+  if (APPS_SCRIPT_URL !== 'COLE_SUA_URL_AQUI') {
+    const record = {
+      id: `REG-${Date.now()}`,
+      action: 'instalar',
+      techName: 'Analista',
+      machineId: '',
+      machineName: '',
+      machineDestId: selectedMachineId,
+      machineDestName: m.name,
+      hwId: pat,
+      hwSn: sn,
+      hwName: model,
+      hwType: type,
+      hwModelo: model,
+      hwPatrimonio: pat,
+      gpsLat: '', gpsLng: '', gpsAcc: '',
+      dateTime: new Date().toISOString().slice(0,16),
+      notes: '',
+    };
+    try {
+      const res = await fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'addRecord', record }),
+      });
+      const data = await res.json();
+      if (!data.success) showToast('warning', '⚠️', 'Não salvo na planilha', 'Verifique a conexão');
+    } catch(e) {
+      showToast('warning', '⚠️', 'Sem conexão', 'Hardware salvo localmente apenas');
+    }
+  }
 }
 
 function removeHardware(machineId, hwId) {
@@ -1906,12 +1958,10 @@ function showHwDetail(machineId, hwId) {
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
       ${[
         ['Tipo', `<span class="mc-tag ${hcfg.cssClass}">${hcfg.emoji} ${hcfg.label}</span>`],
-        ['ID Interno', hw.id],
+        ['Modelo', hw.name || '—'],
         ['Número de Série', hw.sn || '—'],
-        ['Firmware', hw.firmware || '—'],
-        ['Modelo', hw.modelo || '—'],
         ['Fabricante', hw.manufacturer || '—'],
-        ['Patrimônio HW', hw.patrimony || '—'],
+        ['Patrimônio', hw.patrimony || '—'],
         ['Instalado em', hw.installedAt || '—'],
         ['Máquina', `${mcfg.emoji} ${m.name} (${m.id})`],
         ['Chassi', m.chassi || '—'],

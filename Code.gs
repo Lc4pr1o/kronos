@@ -261,10 +261,12 @@ function addRecord(record) {
   }
 
   // Hardware novo: cria linha se não existia e tem destino
-  if (!found && record.hwId && destId) {
+  const hasIdentifier = record.hwId || record.hwSn || record.hwPatrimonio;
+  if (!found && hasIdentifier && destId) {
+    const newId = record.hwId || record.hwPatrimonio || record.hwSn;
     shHw.appendRow([
-      record.hwId, record.hwName || '', record.hwType || '', record.hwModelo || '',
-      record.hwSn || '', record.hwPatrimonio || '', '', '',
+      newId, record.hwName || '', record.hwType || '', record.hwModelo || '',
+      record.hwSn || '', record.hwPatrimonio || '', record.hwManuf || '', '',
       destId, record.dateTime
     ]);
   }

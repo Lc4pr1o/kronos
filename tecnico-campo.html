@@ -792,9 +792,6 @@
             <input type="text" class="field-input" id="hwPatrimonio" placeholder="Patrimônio" style="font-size:14px;padding:12px 14px">
           </div>
           <div class="field">
-            <input type="text" class="field-input" id="hwIdManual" placeholder="ID do hardware (ex: REC-007)" style="font-size:14px;padding:12px 14px">
-          </div>
-          <div class="field">
             <input type="text" class="field-input" id="hwSnManual" placeholder="Número de série (S/N)" style="font-size:14px;padding:12px 14px">
           </div>
           <div class="field">
@@ -927,6 +924,7 @@ const ACAO_DEST_MAP = {
 // Dados vindos da planilha (ou fallback local)
 let machines = [];
 let hardwares = [];
+const syncingIds = new Set();
 
 // ══════════════════════════════════════════
 // DADOS DEMO (usados enquanto não conectar ao Sheets)
@@ -1381,8 +1379,6 @@ function renderHwPicker() {
     `;
     div.onclick = () => {
       selectedHwId = hw.id;
-      // Preenche campos manuais
-      document.getElementById('hwIdManual').value = hw.id;
       document.getElementById('hwSnManual').value = hw.sn || '';
       document.getElementById('hwNameManual').value = hw.name;
       renderHwPicker();
@@ -1451,14 +1447,14 @@ function submitRecord() {
     showToast('err','⚠️','Selecione a máquina destino'); return;
   }
 
-  const hwId = document.getElementById('hwIdManual').value.trim();
   const hwSn = document.getElementById('hwSnManual').value.trim();
   const hwName = document.getElementById('hwNameManual').value.trim();
   const hwType = document.getElementById('hwType').value;
   const hwModelo = document.getElementById('hwModelo').value.trim();
   const hwPatrimonio = document.getElementById('hwPatrimonio').value.trim();
 
-  if (!hwId && !hwSn && !hwPatrimonio) { showToast('err','⚠️','Informe ID, S/N ou Patrimônio do hardware'); return; }
+  if (!hwSn && !hwPatrimonio && !hwName) { showToast('err','⚠️','Informe S/N, Patrimônio ou Modelo do hardware'); return; }
+  const hwId = hwPatrimonio;
 
   const techName = document.getElementById('techName').value.trim() || 'Técnico';
   localStorage.setItem('techName', techName);
@@ -1523,6 +1519,8 @@ function markSynced(id) {
 // SYNC
 // ══════════════════════════════════════════
 async function syncRecord(record) {
+  if (syncingIds.has(record.id)) return;
+  syncingIds.add(record.id);
   try {
     const res = await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
@@ -1530,7 +1528,10 @@ async function syncRecord(record) {
     });
     const data = await res.json();
     if (data.success) markSynced(record.id);
-  } catch(e) {}
+  } catch(e) {
+  } finally {
+    syncingIds.delete(record.id);
+  }
 }
 
 async function trySyncAll() {
@@ -1563,7 +1564,7 @@ async function trySyncAll() {
 function checkOnline() {
   setSyncState(navigator.onLine ? 'online' : 'offline');
   if (navigator.onLine) {
-    const pending = getLocalRecords().filter(r=>!r.synced);
+    const pending = getLocalRecords().filter(r => !r.synced && !syncingIds.has(r.id));
     if (pending.length > 0 && APPS_SCRIPT_URL !== 'COLE_SUA_URL_AQUI') {
       pending.forEach(r => syncRecord(r));
     }
@@ -1676,7 +1677,6 @@ function resetForm() {
   setMachineDropdownLabel('dest', null);
   document.getElementById('hwType').value = '';
   document.getElementById('hwPickerWrap').style.display = 'none';
-  document.getElementById('hwIdManual').value = '';
   document.getElementById('hwSnManual').value = '';
   document.getElementById('hwNameManual').value = '';
   document.getElementById('hwPatrimonio').value = '';
