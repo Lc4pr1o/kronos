@@ -764,7 +764,7 @@
       <div class="field-group">
         <div class="field">
           <label class="field-label">TIPO DE HARDWARE</label>
-          <select class="field-select" id="hwType" onchange="renderHwPicker()">
+          <select class="field-select" id="hwType" onchange="selectedHwId=null;setHwDropdownLabel(null);renderHwPicker()">
             <option value="">— Selecione —</option>
             <option value="monitor">🖥️ Monitor (PA)</option>
             <option value="receptor">📡 Receptor (PA)</option>
@@ -776,7 +776,18 @@
       </div>
 
       <div id="hwPickerWrap" style="margin-top:12px;display:none">
-        <div class="machine-picker" id="hwPicker"></div>
+        <div class="machine-dropdown" id="hwDropdownWrap">
+          <div class="machine-dropdown-btn" id="hwDropdownBtn" onclick="toggleHwDropdown()">
+            <div id="hwDropdownValue"><span class="dropdown-placeholder">— Selecione o equipamento —</span></div>
+            <span class="dropdown-arrow" id="hwDropdownArrow">▾</span>
+          </div>
+          <div class="machine-dropdown-panel" id="hwDropdownPanel">
+            <input type="text" class="machine-search-input" id="hwSearchInput" placeholder="🔍 Buscar por S/N ou patrimônio..." oninput="renderHwPicker()">
+            <div class="machine-picker-scroll">
+              <div class="machine-picker" id="hwPicker"></div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -1384,10 +1395,40 @@ function renderMachinePickerDest() {
 // ══════════════════════════════════════════
 // HW PICKER
 // ══════════════════════════════════════════
+function toggleHwDropdown() {
+  const panel = document.getElementById('hwDropdownPanel');
+  const btn   = document.getElementById('hwDropdownBtn');
+  const arrow = document.getElementById('hwDropdownArrow');
+  const open  = panel.classList.toggle('open');
+  btn.classList.toggle('open', open);
+  arrow.classList.toggle('open', open);
+  if (open) {
+    document.getElementById('hwSearchInput').focus();
+    renderHwPicker();
+  }
+}
+
+function closeHwDropdown() {
+  document.getElementById('hwDropdownPanel').classList.remove('open');
+  document.getElementById('hwDropdownBtn').classList.remove('open');
+  document.getElementById('hwDropdownArrow').classList.remove('open');
+}
+
+function setHwDropdownLabel(hw) {
+  const el = document.getElementById('hwDropdownValue');
+  if (!hw) {
+    el.innerHTML = '<span class="dropdown-placeholder">— Selecione o equipamento —</span>';
+  } else {
+    const pat = hw.patrimonio ? ` · Pat: ${hw.patrimonio}` : '';
+    el.innerHTML = `<span style="font-weight:600">${hw.name}</span> <span style="opacity:.6;font-size:12px">S/N: ${hw.sn || '—'}${pat}</span>`;
+  }
+}
+
 function renderHwPicker() {
   const type = document.getElementById('hwType').value;
   const wrap = document.getElementById('hwPickerWrap');
   const container = document.getElementById('hwPicker');
+  const term = (document.getElementById('hwSearchInput')?.value || '').toLowerCase().trim();
 
   if (!type) { wrap.style.display = 'none'; return; }
 
@@ -1405,11 +1446,20 @@ function renderHwPicker() {
     filtered = filtered.filter(h => h.machine === 'INATIVO');
   }
 
+  // Filtra por busca
+  if (term) {
+    filtered = filtered.filter(h =>
+      h.name.toLowerCase().includes(term) ||
+      (h.sn && h.sn.toLowerCase().includes(term)) ||
+      (h.patrimonio && h.patrimonio.toLowerCase().includes(term))
+    );
+  }
+
   wrap.style.display = 'block';
   container.innerHTML = '';
 
   if (filtered.length === 0) {
-    container.innerHTML = `<div class="hw-option" style="opacity:0.5;cursor:default;justify-content:center;font-size:13px">
+    container.innerHTML = `<div class="machine-option" style="opacity:0.5;cursor:default;justify-content:center;font-size:13px">
       Nenhum equipamento disponível nesta origem
     </div>`;
     return;
@@ -1417,10 +1467,10 @@ function renderHwPicker() {
 
   filtered.forEach(hw => {
     const div = document.createElement('div');
-    div.className = `hw-option${selectedHwId === hw.id ? ' selected' : ''}`;
+    div.className = `machine-option${selectedHwId === hw.id ? ' selected' : ''}`;
     const pat = hw.patrimonio ? ` · Pat: ${hw.patrimonio}` : '';
     div.innerHTML = `
-      <div class="hw-type-dot" style="background:${hwColors[hw.type]||'#888'}"></div>
+      <div class="hw-type-dot" style="background:${hwColors[hw.type]||'#888'};width:10px;height:10px;border-radius:50%;flex-shrink:0"></div>
       <div class="mo-info">
         <div class="mo-name">${hw.name}</div>
         <div class="mo-id">S/N: ${hw.sn || '—'}${pat}</div>
@@ -1429,6 +1479,8 @@ function renderHwPicker() {
     `;
     div.onclick = () => {
       selectedHwId = hw.id;
+      setHwDropdownLabel(hw);
+      closeHwDropdown();
       renderHwPicker();
     };
     container.appendChild(div);
@@ -1691,6 +1743,9 @@ function resetForm() {
   setMachineDropdownLabel('dest', null);
   document.getElementById('hwType').value = '';
   document.getElementById('hwPickerWrap').style.display = 'none';
+  setHwDropdownLabel(null);
+  closeHwDropdown();
+  if (document.getElementById('hwSearchInput')) document.getElementById('hwSearchInput').value = '';
   document.getElementById('notes').value = '';
   gpsCoords = null;
 
