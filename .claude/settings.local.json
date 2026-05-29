@@ -5,7 +5,11 @@
       "Bash(ipconfig)",
       "Bash(netstat -ano)",
       "Bash(netsh advfirewall *)",
-      "Bash(npm --version)"
+      "Bash(npm --version)",
+      "Bash(git -C \"c:\\\\Users\\\\lmalerbo\\\\Documents\\\\GitHub\\\\kronos\" status)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)"
     ]
   }
 }
