@@ -2443,7 +2443,15 @@ async function addMachine() {
   const chassi  = document.getElementById('newMachineChassi').value.trim();
 
   if (!id || !name) { showToast('warning', '⚠️', 'Campos obrigatórios', 'Preencha o ID e o nome'); return; }
-  if (machines.find(m => m.id === id)) { showToast('warning', '⚠️', 'ID duplicado', 'Já existe uma máquina com esse ID'); return; }
+  if (machines.find(m => m.id === id)) {
+    showToast('warning', '⚠️', 'ID duplicado', `Já existe uma máquina com ID ${id}`); return;
+  }
+  if (chassi) {
+    const dupChassi = machines.find(m => m.chassi && m.chassi === chassi);
+    if (dupChassi) {
+      showToast('warning', '⚠️', 'Chassi duplicado', `Chassi já cadastrado em ${dupChassi.name}`); return;
+    }
+  }
 
   machines.push({ id, name, type, year, unidade, chassi, patrimony: pat, createdAt: new Date().toISOString().split('T')[0], hardware: [] });
 
@@ -2523,9 +2531,22 @@ async function addHardware() {
 
   const hwUniqueId = pat || `HW-${Date.now()}`;
   const allHw = machines.flatMap(m => m.hardware);
-  if (pat && allHw.find(h => h.patrimony === pat)) {
-    showToast('warning', '⚠️', 'Patrimônio duplicado', 'Já existe um hardware com esse patrimônio');
-    return;
+
+  if (pat) {
+    const dupPat = allHw.find(h => h.patrimony === pat);
+    if (dupPat) {
+      const owner = machines.find(x => x.hardware.some(h => h.id === dupPat.id));
+      showToast('warning', '⚠️', 'Patrimônio duplicado', `Pat. ${pat} já existe${owner ? ' em ' + owner.name : ''}`);
+      return;
+    }
+  }
+  if (sn) {
+    const dupSn = allHw.find(h => h.sn && h.sn === sn);
+    if (dupSn) {
+      const owner = machines.find(x => x.hardware.some(h => h.id === dupSn.id));
+      showToast('warning', '⚠️', 'S/N duplicado', `S/N ${sn} já existe${owner ? ' em ' + owner.name : ''}`);
+      return;
+    }
   }
 
   const m = machines.find(x => x.id === selectedMachineId);
