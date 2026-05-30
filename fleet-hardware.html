@@ -3075,8 +3075,17 @@ async function addMachine() {
   if (year && !/^(19|20)\d{2}$/.test(year)) {
     markFieldError('newMachineYear'); showToast('warning', '⚠️', 'Ano inválido', 'Use formato YYYY entre 1900 e 2099'); return;
   }
-  if (machines.find(m => m.id === id)) {
-    markFieldError('newMachineId'); showToast('warning', '⚠️', 'ID duplicado', `Já existe uma máquina com ID ${id}`); return;
+  const dupMachine = machines.find(m => String(m.id) === String(id));
+  if (dupMachine) {
+    markFieldError('newMachineId');
+    showToast('warning', '⚠️', 'ID duplicado', `Já existe: ${dupMachine.name} — clique para localizar`);
+    // Aguarda fechar o modal e navega até a máquina duplicada
+    setTimeout(() => {
+      closeModal('addMachineModal');
+      switchView('frota');
+      selectMachine(dupMachine.id);
+    }, 1400);
+    return;
   }
   if (chassi) {
     const dupChassi = machines.find(m => m.chassi && m.chassi === chassi);
