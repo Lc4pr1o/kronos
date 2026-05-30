@@ -58,7 +58,7 @@ Todos os arquivos já existem e estão funcionais. O trabalho no Claude Code é:
 - Google Apps Script (JavaScript server-side do Google)
 - Google Sheets como banco de dados
 - `localStorage` para offline-first no mobile
-- Fontes: Syne + JetBrains Mono (Google Fonts)
+- Fonte: JetBrains Mono (Google Fonts, pesos 300–800) — diferenciação por peso, tamanho e tom de cor
 
 ---
 
@@ -87,7 +87,7 @@ Todos os arquivos já existem e estão funcionais. O trabalho no Claude Code é:
 --manutencao: #e05252
 
 /* Tipografia */
-font-family: 'Syne', sans-serif           /* UI geral */
+font-family: 'JetBrains Mono', monospace   /* única fonte — diferenciação por peso/tamanho/cor */
 font-family: 'JetBrains Mono', monospace  /* IDs, S/N, dados técnicos */
 ```
 
