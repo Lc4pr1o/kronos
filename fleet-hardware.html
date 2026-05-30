@@ -3992,14 +3992,13 @@ function renderConsultas() {
   const sortIcon = col => _consultaSortCol === col ? (_consultaSortDir === 1 ? ' ▲' : ' ▼') : '';
   const thClick = col => `onclick="sortConsultas('${col}')"`;
 
-  const sitLabel = { campo:'🚜 Campo', estoque:'📦 Estoque', manutencao:'🔧 Manutenção', inativo:'⛔ Inativo' };
+  const sitLabel = { campo:'🚜 Em Campo', estoque:'📦 Estoque', manutencao:'🔧 Manutenção', inativo:'⛔ Inativo' };
   const sitColor = { campo:'var(--green)', estoque:'var(--blue)', manutencao:'var(--red)', inativo:'var(--text3)' };
 
   wrap.innerHTML = `<table class="consultas-table">
     <thead>
       <tr>
-        <th ${thClick('situacao')}>SITUAÇÃO${sortIcon('situacao')}</th>
-        <th ${thClick('machine')}>LOCALIZAÇÃO${sortIcon('machine')}</th>
+        <th ${thClick('situacao')}>SITUAÇÃO / MÁQUINA${sortIcon('situacao')}</th>
         <th ${thClick('unidade')}>UNIDADE${sortIcon('unidade')}</th>
         <th ${thClick('hwType')}>TIPO HW${sortIcon('hwType')}</th>
         <th ${thClick('hwName')}>MODELO${sortIcon('hwName')}</th>
@@ -4012,29 +4011,47 @@ function renderConsultas() {
     <tbody>
       ${rows.map(({ machine: m, hw, situacao, isDest }) => {
         const hcfg = hwConfig[hw.type] || { emoji: '', label: hw.type, color: '#888' };
-        const mcfg = machineConfig[m.type] || { emoji: isDest ? '' : '🚛' };
+        const mcfg = machineConfig[m.type] || { emoji: '🚛' };
         const hwBadge = `background:${hcfg.color}22;color:${hcfg.color};border:1px solid ${hcfg.color}44`;
-        const sitCol = sitColor[situacao] || 'var(--text3)';
-        const sitTxt = sitLabel[situacao] || situacao;
-        const locName = isDest ? (machineConfig[m.type]?.label || m.type) : `${mcfg.emoji} ${m.name}`;
-        const locId   = isDest ? '' : `<div style="font-size:10px;color:var(--text3)">${m.id}</div>`;
+        const sitCol  = sitColor[situacao] || 'var(--text3)';
+        const sitTxt  = sitLabel[situacao] || situacao;
+        // Se em campo: mostra sitLabel + nome da máquina abaixo; se destino: só sitLabel
+        const machineLine = isDest
+          ? ''
+          : `<div style="font-size:11px;font-weight:700;color:var(--text);margin-top:2px">${mcfg.emoji} ${m.name} <span style="font-weight:400;color:var(--text3)">${m.id}</span></div>`;
         return `<tr>
-          <td><span style="font-size:11px;font-weight:600;color:${sitCol}">${sitTxt}</span></td>
-          <td style="color:var(--text);font-weight:600">${locName}${locId}</td>
+          <td>
+            <span style="font-size:10px;font-weight:700;color:${sitCol}">${sitTxt}</span>
+            ${machineLine}
+          </td>
           <td>${isDest ? '—' : (m.unidade || '—')}</td>
           <td><span class="ct-badge" style="${hwBadge}">${hcfg.emoji} ${hcfg.label}</span></td>
           <td style="color:var(--text)">${hw.name}</td>
           <td style="font-family:'JetBrains Mono',monospace;font-size:11px">${hw.sn || '—'}</td>
           <td style="font-family:'JetBrains Mono',monospace;font-size:11px">${hw.patrimony || '—'}</td>
-          <td>${hw.installedAt || '—'}</td>
+          <td style="font-size:11px;color:var(--text3)">${hw.installedAt || '—'}</td>
           <td>
             <button class="btn btn-ghost" style="padding:4px 10px;font-size:11px"
-              onclick="switchView('frota');selectMachine('${m.id}')">Ver</button>
+              onclick="goToHw('${m.id}','${hw.id}')">Ver</button>
           </td>
         </tr>`;
       }).join('')}
     </tbody>
   </table>`;
+}
+
+function goToHw(machineId, hwId) {
+  switchView('frota');
+  selectMachine(machineId);
+  // Duplo requestAnimationFrame garante que o DOM do detalhe foi renderizado antes de scrollar
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    const card = document.querySelector(`[data-hw-id="${hwId}"]`);
+    if (!card) return;
+    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    card.classList.remove('search-found');
+    void card.offsetWidth; // força reinício da animação CSS
+    card.classList.add('search-found');
+  }));
 }
 
 function sortConsultas(col) {
