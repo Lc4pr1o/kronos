@@ -1700,6 +1700,10 @@
 
       <button class="btn btn-ghost" style="font-size:10px;padding:6px 12px" onclick="resetConsultaFilters()">↺ Limpar</button>
       <span class="consultas-count" id="consultasCount"></span>
+      <div style="margin-left:auto;display:flex;gap:8px;flex-shrink:0">
+        <button class="btn btn-ghost" onclick="openModal('addMachineModal')">+ Máquina</button>
+        <button class="btn btn-primary" onclick="openAddHwModal()">+ Hardware</button>
+      </div>
     </div>
   </div>
 
@@ -1931,6 +1935,12 @@
       <button class="modal-close" onclick="closeModal('addHwModal')">✕</button>
     </div>
     <div class="modal-body">
+      <div class="form-group" id="addHwMachineRow" style="display:none">
+        <label class="form-label" for="newHwMachineId">MÁQUINA <span class="req">*</span></label>
+        <select class="form-select" id="newHwMachineId" onchange="onAddHwMachineChange()">
+          <option value="" disabled selected hidden>— Selecione a máquina —</option>
+        </select>
+      </div>
       <div class="form-row">
         <div class="form-group">
           <label class="form-label" for="newHwType">TIPO <span class="req">*</span></label>
@@ -3077,10 +3087,33 @@ async function addMachine() {
 }
 
 function openAddHwModal() {
-  if (!selectedMachineId) return;
-  const m = machines.find(x => x.id === selectedMachineId);
-  document.getElementById('addHwModalSub').textContent = `Instalar em: ${m.name}`;
+  const machineRow = document.getElementById('addHwMachineRow');
+  if (selectedMachineId) {
+    const m = machines.find(x => x.id === selectedMachineId);
+    document.getElementById('addHwModalSub').textContent = `Instalar em: ${m.name}`;
+    machineRow.style.display = 'none';
+  } else {
+    document.getElementById('addHwModalSub').textContent = 'Selecione a máquina de destino';
+    machineRow.style.display = 'block';
+    const sel = document.getElementById('newHwMachineId');
+    sel.innerHTML = '<option value="" disabled selected hidden>— Selecione a máquina —</option>';
+    machines
+      .filter(m => !DEST_TYPES.includes(m.type))
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m.id;
+        opt.textContent = `${m.name} #${m.id}`;
+        sel.appendChild(opt);
+      });
+  }
   openModal('addHwModal');
+}
+
+function onAddHwMachineChange() {
+  const sel = document.getElementById('newHwMachineId');
+  const m = machines.find(x => x.id === sel.value);
+  if (m) document.getElementById('addHwModalSub').textContent = `Instalar em: ${m.name}`;
 }
 
 function updateHwModels() {
@@ -3149,10 +3182,17 @@ async function addHardware() {
     }
   }
 
+  const targetMachineId = selectedMachineId || document.getElementById('newHwMachineId')?.value;
+  if (!targetMachineId) {
+    markFieldError('newHwMachineId');
+    showToast('warning', '⚠️', 'Campo obrigatório', 'Selecione a máquina');
+    return;
+  }
+
   const btn = document.getElementById('addHwBtn');
   btn.disabled = true; btn.textContent = 'Instalando...';
 
-  const m = machines.find(x => x.id === selectedMachineId);
+  const m = machines.find(x => x.id === targetMachineId);
   const newHw = { id: hwUniqueId, name: model, type, sn, manufacturer: manuf, patrimony: pat, installedAt: localDateStr() };
   m.hardware.push(newHw);
 
@@ -3161,6 +3201,8 @@ async function addHardware() {
   document.getElementById('newHwModel').value = '';
   document.getElementById('newHwManuf').value = '';
   document.getElementById('newHwType').value = '';
+  const mSel = document.getElementById('newHwMachineId');
+  if (mSel) mSel.value = '';
   btn.disabled = false; btn.textContent = 'Instalar';
   renderAll();
   showToast('success', '✅', 'Hardware instalado', `${model} instalado em ${m.name}`);
