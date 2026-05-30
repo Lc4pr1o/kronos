@@ -35,8 +35,10 @@
     background: var(--bg);
     color: var(--text);
     font-family: 'Syne', sans-serif;
-    min-height: 100vh;
-    overflow-x: hidden;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
   }
 
   /* HEADER */
@@ -47,8 +49,7 @@
     padding: 18px 32px;
     border-bottom: 1px solid var(--border);
     background: var(--surface);
-    position: sticky;
-    top: 0;
+    flex-shrink: 0;
     z-index: 100;
   }
 
@@ -119,7 +120,9 @@
   .app {
     display: grid;
     grid-template-columns: 320px 1fr;
-    height: calc(100vh - 65px);
+    flex: 1;
+    min-height: 0;
+    height: 100%;
   }
 
   /* SIDEBAR */
@@ -906,6 +909,13 @@
     font-weight: 600;
   }
 
+  .form-label .req { color: var(--red); margin-left: 2px; }
+
+  .form-input.field-error, .form-select.field-error {
+    border-color: var(--red);
+    box-shadow: 0 0 0 2px rgba(224,82,82,0.15);
+  }
+
   .form-input, .form-select {
     background: var(--surface2);
     border: 1px solid var(--border);
@@ -1093,6 +1103,301 @@
   .connection-pill.error  { border-color: rgba(224,82,82,0.3); }
   .connection-pill.loading { border-color: rgba(245,166,35,0.4); }
   .connection-pill:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ══════════════════════════════════════
+     VIEW NAV
+  ══════════════════════════════════════ */
+  .view-nav {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: stretch;
+    padding: 0 28px;
+    gap: 0;
+    flex-shrink: 0;
+    z-index: 90;
+  }
+
+  .view-tab {
+    padding: 14px 22px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    color: var(--text3);
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.18s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: -1px;
+  }
+  .view-tab:hover { color: var(--text2); }
+  .view-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* ══════════════════════════════════════
+     VIEW WRAPPERS
+  ══════════════════════════════════════ */
+  .view { display: none; flex: 1; min-height: 0; }
+  .view.active { display: block; }
+
+  /* frota view mantém o app grid */
+  #view-frota.active { display: block; }
+  #view-frota .app { height: 100%; }
+
+  /* ══════════════════════════════════════
+     DASHBOARD
+  ══════════════════════════════════════ */
+  #view-dashboard {
+    overflow-y: auto;
+    padding: 28px 36px;
+    flex-direction: column;
+    gap: 24px;
+  }
+  #view-dashboard.active { display: flex; }
+
+  .dash-section-title {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 2.5px;
+    color: var(--text3);
+    margin-bottom: 14px;
+  }
+
+  /* KPI row */
+  .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 14px;
+  }
+
+  .kpi-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .kpi-card:hover { border-color: var(--border2); }
+  .kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--kpi-accent, var(--accent));
+    border-radius: 14px 14px 0 0;
+  }
+  .kpi-label { font-size: 9px; font-weight: 700; letter-spacing: 2px; color: var(--text3); }
+  .kpi-value { font-size: 34px; font-weight: 800; color: var(--text); line-height: 1; font-family: 'JetBrains Mono', monospace; }
+  .kpi-sub { font-size: 11px; color: var(--text2); margin-top: 2px; }
+
+  /* Charts */
+  .charts-row {
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    gap: 14px;
+  }
+
+  .chart-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px 24px;
+  }
+
+  .chart-card-title {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--text3);
+    margin-bottom: 18px;
+  }
+
+  .donut-wrap {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .donut-legend {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex: 1;
+  }
+
+  .dl-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+  }
+  .dl-dot {
+    width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0;
+  }
+  .dl-label { color: var(--text2); flex: 1; }
+  .dl-value { color: var(--text); font-weight: 700; font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+
+  /* Bottom row */
+  .dash-bottom-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+
+  .table-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px 24px;
+    overflow: hidden;
+  }
+
+  .mini-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .mini-table th {
+    font-size: 9px; font-weight: 700; letter-spacing: 1.5px; color: var(--text3);
+    text-align: left; padding: 0 10px 10px 0; border-bottom: 1px solid var(--border);
+  }
+  .mini-table td {
+    padding: 9px 10px 9px 0; border-bottom: 1px solid var(--border2);
+    color: var(--text2);
+    vertical-align: middle;
+  }
+  .mini-table td:last-child { color: var(--text); font-weight: 700; font-family: 'JetBrains Mono', monospace; text-align: right; }
+  .mini-table tr:last-child td { border-bottom: none; }
+
+  /* ══════════════════════════════════════
+     CONSULTAS
+  ══════════════════════════════════════ */
+  #view-consultas {
+    grid-template-columns: 280px 1fr;
+    overflow: hidden;
+  }
+  #view-consultas.active { display: grid; }
+
+  .consultas-filters {
+    border-right: 1px solid var(--border);
+    padding: 24px 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .filter-section-title {
+    font-size: 9px; font-weight: 700; letter-spacing: 2px; color: var(--text3);
+    margin-bottom: 10px;
+  }
+
+  .filter-chip-group { display: flex; flex-direction: column; gap: 6px; }
+
+  .filter-check-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.15s;
+    font-size: 12px;
+    color: var(--text2);
+    user-select: none;
+  }
+  .filter-check-item:hover { background: var(--surface2); color: var(--text); }
+  .filter-check-item input[type="checkbox"] {
+    width: 14px; height: 14px;
+    accent-color: var(--accent);
+  }
+
+  .filter-count {
+    margin-left: auto;
+    font-size: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text3);
+  }
+
+  .consultas-results {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .consultas-toolbar {
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-shrink: 0;
+  }
+
+  .consultas-count {
+    font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text3);
+    margin-left: auto;
+  }
+
+  .consultas-table-wrap { flex: 1; overflow-y: auto; }
+
+  .consultas-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+
+  .consultas-table th {
+    position: sticky;
+    top: 0;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    color: var(--text3);
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+  }
+  .consultas-table th:hover { color: var(--accent); }
+  .consultas-table th.sort-asc::after  { content: ' ▲'; font-size: 8px; }
+  .consultas-table th.sort-desc::after { content: ' ▼'; font-size: 8px; }
+
+  .consultas-table td {
+    padding: 11px 16px;
+    border-bottom: 1px solid var(--border2);
+    color: var(--text2);
+    vertical-align: middle;
+    white-space: nowrap;
+  }
+
+  .consultas-table tr:hover td { background: rgba(255,255,255,0.02); color: var(--text); }
+  .consultas-table tr:last-child td { border-bottom: none; }
+
+  .ct-badge {
+    display: inline-block;
+    font-size: 9px; font-weight: 700; letter-spacing: 1px;
+    padding: 2px 8px; border-radius: 20px;
+  }
+
+  .consultas-empty {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    flex-direction: column; gap: 12px; color: var(--text3);
+    padding: 60px;
+    text-align: center;
+  }
+  .consultas-empty-icon { font-size: 40px; }
+  .consultas-empty-text { font-size: 13px; }
 </style>
 </head>
 <body>
@@ -1117,14 +1422,28 @@
   </div>
 </header>
 
+<!-- NAV DE VIEWS -->
+<nav class="view-nav" role="navigation" aria-label="Navegação principal">
+  <button class="view-tab" id="tab-dashboard" onclick="switchView('dashboard')" aria-controls="view-dashboard">📊 Dashboard</button>
+  <button class="view-tab active" id="tab-frota" onclick="switchView('frota')" aria-controls="view-frota">🚛 Frota</button>
+  <button class="view-tab" id="tab-consultas" onclick="switchView('consultas')" aria-controls="view-consultas">🔍 Consultas</button>
+</nav>
+
+<!-- VIEW: DASHBOARD -->
+<div class="view" id="view-dashboard" role="region" aria-label="Dashboard">
+  <div id="dashboardContent"></div>
+</div>
+
+<!-- VIEW: FROTA (conteúdo original) -->
+<div class="view active" id="view-frota" role="region" aria-label="Gestão de Frota">
 <div class="app">
   <!-- SIDEBAR -->
   <aside class="sidebar">
     <div class="search-container">
-      <div class="search-label">BUSCA AVANÇADA</div>
+      <label class="search-label" for="searchInput">BUSCA AVANÇADA</label>
       <div class="search-box">
-        <span class="search-icon">🔍</span>
-        <input type="text" id="searchInput" placeholder="Máquina, hardware, S/N, ID..." autocomplete="off">
+        <span class="search-icon" aria-hidden="true">🔍</span>
+        <input type="text" id="searchInput" placeholder="Buscar por nome, ID, S/N ou patrimônio..." autocomplete="off" aria-label="Buscar máquina ou hardware">
         <span id="clearSearch" style="cursor:pointer;color:var(--text3);font-size:12px;display:none;">✕</span>
       </div>
       <div class="search-filters" id="filterChipsBar">
@@ -1191,16 +1510,60 @@
       <div class="hw-grid" id="hwGrid"></div>
     </div>
   </main>
+</div><!-- /app -->
+</div><!-- /view-frota -->
+
+<!-- VIEW: CONSULTAS -->
+<div class="view" id="view-consultas" role="region" aria-label="Consultas">
+  <aside class="consultas-filters">
+    <div>
+      <div class="filter-section-title">TIPO DE MÁQUINA</div>
+      <div class="filter-chip-group" id="filt-maq-tipos"></div>
+    </div>
+    <div>
+      <div class="filter-section-title">TIPO DE HARDWARE</div>
+      <div class="filter-chip-group" id="filt-hw-tipos"></div>
+    </div>
+    <div>
+      <div class="filter-section-title">UNIDADE</div>
+      <div class="filter-chip-group" id="filt-unidades">
+        <label class="filter-check-item"><input type="checkbox" value="PEDRA" onchange="renderConsultas()"> PEDRA <span class="filter-count" id="fc-PEDRA"></span></label>
+        <label class="filter-check-item"><input type="checkbox" value="CEDRO" onchange="renderConsultas()"> CEDRO <span class="filter-count" id="fc-CEDRO"></span></label>
+        <label class="filter-check-item"><input type="checkbox" value="BURITI" onchange="renderConsultas()"> BURITI <span class="filter-count" id="fc-BURITI"></span></label>
+        <label class="filter-check-item"><input type="checkbox" value="IPÊ" onchange="renderConsultas()"> IPÊ <span class="filter-count" id="fc-IPÊ"></span></label>
+        <label class="filter-check-item"><input type="checkbox" value="PEDRA/LOCAÇÃO" onchange="renderConsultas()"> PEDRA/LOCAÇÃO <span class="filter-count" id="fc-PEDRA/LOCAÇÃO"></span></label>
+      </div>
+    </div>
+    <div style="margin-top:auto;padding-top:16px;border-top:1px solid var(--border)">
+      <button class="btn btn-ghost" style="width:100%;font-size:11px" onclick="resetConsultaFilters()">↺ Limpar filtros</button>
+    </div>
+  </aside>
+
+  <div class="consultas-results">
+    <div class="consultas-toolbar">
+      <div class="search-box" style="flex:1;max-width:360px">
+        <span class="search-icon" aria-hidden="true">🔍</span>
+        <input type="text" id="consultaSearch" placeholder="Buscar por nome, S/N, patrimônio..." autocomplete="off" oninput="renderConsultas()">
+      </div>
+      <span class="consultas-count" id="consultasCount">— resultados</span>
+    </div>
+    <div class="consultas-table-wrap" id="consultasTableWrap">
+      <div class="consultas-empty">
+        <div class="consultas-empty-icon">🔍</div>
+        <div class="consultas-empty-text">Aplique filtros ou busque por um equipamento</div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- ===================== MODALS ===================== -->
 
 <!-- SETTINGS -->
 <div class="modal-overlay" id="settingsModal">
-  <div class="modal" style="max-width:580px">
+  <div class="modal" style="max-width:580px" role="dialog" aria-modal="true" aria-labelledby="settingsModalTitle">
     <div class="modal-header">
       <div>
-        <div class="modal-title">⚙️ Configurações</div>
+        <div class="modal-title" id="settingsModalTitle">⚙️ Configurações</div>
         <div class="modal-sub">Tipos de hardware e de máquina</div>
       </div>
       <button class="modal-close" onclick="closeModal('settingsModal')">✕</button>
@@ -1292,10 +1655,10 @@
 
 <!-- MACHINE EDIT -->
 <div class="modal-overlay" id="machineEditModal">
-  <div class="modal">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="machineEditModalTitle">
     <div class="modal-header">
       <div>
-        <div class="modal-title">✏️ Editar Máquina</div>
+        <div class="modal-title" id="machineEditModalTitle">✏️ Editar Máquina</div>
         <div class="modal-sub" id="machineEditSub">—</div>
       </div>
       <button class="modal-close" onclick="closeModal('machineEditModal')">✕</button>
@@ -1342,10 +1705,10 @@
 
 <!-- ADD MACHINE -->
 <div class="modal-overlay" id="addMachineModal">
-  <div class="modal">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="addMachineModalTitle">
     <div class="modal-header">
       <div>
-        <div class="modal-title">Nova Máquina</div>
+        <div class="modal-title" id="addMachineModalTitle">Nova Máquina</div>
         <div class="modal-sub">Cadastrar máquina na frota</div>
       </div>
       <button class="modal-close" onclick="closeModal('addMachineModal')">✕</button>
@@ -1353,35 +1716,35 @@
     <div class="modal-body">
       <div class="form-row">
         <div class="form-group">
-          <label class="form-label">TIPO</label>
+          <label class="form-label" for="newMachineType">TIPO <span class="req">*</span></label>
           <select class="form-select" id="newMachineType">
-            <option value="">— Selecione —</option>
+            <option value="" disabled selected hidden>— Selecione —</option>
           </select>
         </div>
         <div class="form-group">
-          <label class="form-label">ID / APELIDO</label>
+          <label class="form-label" for="newMachineId">ID / APELIDO <span class="req">*</span></label>
           <input type="text" class="form-input" id="newMachineId" placeholder="Ex: T-001">
         </div>
       </div>
       <div class="form-group">
-        <label class="form-label">NOME / MODELO</label>
+        <label class="form-label" for="newMachineName">NOME / MODELO <span class="req">*</span></label>
         <input type="text" class="form-input" id="newMachineName" placeholder="Ex: John Deere 8R 310">
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label class="form-label">ANO</label>
+          <label class="form-label" for="newMachineYear">ANO</label>
           <input type="text" class="form-input" id="newMachineYear" placeholder="2023">
         </div>
         <div class="form-group">
-          <label class="form-label">PATRIMÔNIO</label>
+          <label class="form-label" for="newMachinePatrimony">PATRIMÔNIO</label>
           <input type="text" class="form-input" id="newMachinePatrimony" placeholder="PAT-0001">
         </div>
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label class="form-label">UNIDADE</label>
+          <label class="form-label" for="newMachineUnidade">UNIDADE</label>
           <select class="form-select" id="newMachineUnidade">
-            <option value="">— Selecione —</option>
+            <option value="" disabled selected hidden>— Selecione —</option>
             <option value="PEDRA">PEDRA</option>
             <option value="CEDRO">CEDRO</option>
             <option value="BURITI">BURITI</option>
@@ -1397,17 +1760,17 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('addMachineModal')">Cancelar</button>
-      <button class="btn btn-primary" onclick="addMachine()">Cadastrar</button>
+      <button class="btn btn-primary" id="addMachineBtn" onclick="addMachine()">Cadastrar</button>
     </div>
   </div>
 </div>
 
 <!-- ADD HARDWARE -->
 <div class="modal-overlay" id="addHwModal">
-  <div class="modal">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="addHwModalTitle">
     <div class="modal-header">
       <div>
-        <div class="modal-title">Novo Hardware</div>
+        <div class="modal-title" id="addHwModalTitle">Novo Hardware</div>
         <div class="modal-sub" id="addHwModalSub">Instalar em máquina</div>
       </div>
       <button class="modal-close" onclick="closeModal('addHwModal')">✕</button>
@@ -1415,30 +1778,30 @@
     <div class="modal-body">
       <div class="form-row">
         <div class="form-group">
-          <label class="form-label">TIPO</label>
+          <label class="form-label" for="newHwType">TIPO <span class="req">*</span></label>
           <select class="form-select hw-type-select" id="newHwType" onchange="updateHwModels()">
-            <option value="">— Selecione —</option>
+            <option value="" disabled selected hidden>— Selecione —</option>
           </select>
         </div>
         <div class="form-group">
-          <label class="form-label">PATRIMÔNIO <span style="font-size:9px;color:var(--text3);font-weight:400">(opcional)</span></label>
-          <input type="text" class="form-input" id="newHwId" placeholder="Ex: 12345" oninput="this.value=this.value.toUpperCase()">
+          <label class="form-label" for="newHwId">PATRIMÔNIO <span style="font-size:9px;color:var(--text3);font-weight:400">(opcional)</span></label>
+          <input type="text" class="form-input" id="newHwId" placeholder="Ex: 12345 (maiúsculas)" oninput="this.value=this.value.toUpperCase()">
         </div>
       </div>
       <div class="form-group">
-        <label class="form-label">MODELO</label>
+        <label class="form-label" for="newHwModel">MODELO <span class="req">*</span></label>
         <select class="form-select" id="newHwModel">
-          <option value="">— Selecione o tipo primeiro —</option>
+          <option value="" disabled selected hidden>— Selecione o tipo primeiro —</option>
         </select>
       </div>
       <div class="form-group">
-        <label class="form-label">NÚMERO DE SÉRIE</label>
+        <label class="form-label" for="newHwSn">NÚMERO DE SÉRIE <span style="font-size:9px;color:var(--text3);font-weight:400">(maiúsculas)</span></label>
         <input type="text" class="form-input" id="newHwSn" placeholder="S/N" oninput="this.value=this.value.toUpperCase()">
       </div>
       <div class="form-group">
-        <label class="form-label">FABRICANTE</label>
+        <label class="form-label" for="newHwManuf">FABRICANTE</label>
         <select class="form-select" id="newHwManuf">
-          <option value="">— Selecione —</option>
+          <option value="" disabled selected hidden>— Selecione —</option>
           <option value="John Deere">John Deere</option>
           <option value="Timple">Timple</option>
           <option value="Solinftec">Solinftec</option>
@@ -1448,17 +1811,17 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('addHwModal')">Cancelar</button>
-      <button class="btn btn-primary" onclick="addHardware()">Instalar</button>
+      <button class="btn btn-primary" id="addHwBtn" onclick="addHardware()">Instalar</button>
     </div>
   </div>
 </div>
 
 <!-- EDIT HARDWARE -->
 <div class="modal-overlay" id="editHwModal">
-  <div class="modal">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="editHwModalTitle">
     <div class="modal-header">
       <div>
-        <div class="modal-title">✏️ Editar Hardware</div>
+        <div class="modal-title" id="editHwModalTitle">✏️ Editar Hardware</div>
         <div class="modal-sub" id="editHwModalSub">—</div>
       </div>
       <button class="modal-close" onclick="closeModal('editHwModal')">✕</button>
@@ -1504,10 +1867,10 @@
 
 <!-- TRANSFER HARDWARE -->
 <div class="modal-overlay" id="transferModal">
-  <div class="modal" style="max-width:520px">
+  <div class="modal" style="max-width:520px" role="dialog" aria-modal="true" aria-labelledby="transferModalTitle">
     <div class="modal-header">
       <div>
-        <div class="modal-title">🔄 Transferir Hardware</div>
+        <div class="modal-title" id="transferModalTitle">🔄 Transferir Hardware</div>
         <div class="modal-sub">Mover equipamento para outra máquina</div>
       </div>
       <button class="modal-close" onclick="closeModal('transferModal')">✕</button>
@@ -1536,7 +1899,7 @@
 
 <!-- HW DETAIL MODAL -->
 <div class="modal-overlay" id="hwDetailModal">
-  <div class="modal">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="hwDetailTitle">
     <div class="modal-header">
       <div>
         <div class="modal-title" id="hwDetailTitle">Hardware</div>
@@ -1568,6 +1931,9 @@
 // CONFIGURAÇÃO — Supabase
 // =========================================
 const SUPABASE_URL = 'https://fevzqjeybsnjznespplr.supabase.co';
+// ATENÇÃO: esta é a chave pública (anon/publishable) — segura no frontend DESDE QUE
+// as políticas de Row Level Security (RLS) estejam ativas no Supabase.
+// NUNCA use a service_role key aqui.
 const SUPABASE_KEY = 'sb_publishable_DIYe_vM9kLVk05PGjGrq9Q_Rr6n-mr9';
 const sbHeaders = {
   'apikey': SUPABASE_KEY,
@@ -1650,10 +2016,13 @@ async function loadFromSheets() {
     ]);
     if (Array.isArray(rawHwTipos) && rawHwTipos.length) buildHwConfig(rawHwTipos);
     if (Array.isArray(rawMaqTipos) && rawMaqTipos.length) buildMachineConfig(rawMaqTipos);
+    if (!Array.isArray(rawMachines))  throw new Error('Resposta inválida: maquinas não é array');
+    if (!Array.isArray(rawHardwares)) throw new Error('Resposta inválida: hardwares não é array');
     machines = sheetsToMachines(rawMachines, rawHardwares);
     setConnectionStatus('online');
     showToast('success', '☁️', 'Dados atualizados', `${machines.length} máquinas carregadas`);
   } catch(e) {
+    console.error('loadFromSheets:', e);
     machines = sheetsToMachines(DEMO_DATA.machines, DEMO_DATA.hardwares);
     setConnectionStatus('error');
     showToast('warning', '⚠️', 'Sem conexão', 'Exibindo dados demo');
@@ -1750,8 +2119,6 @@ function setConnectionStatus(state) {
   const c = configs[state] || configs.demo;
   pill.className = `connection-pill ${c.cls}`;
   dot.className  = `stat-dot ${c.dotCls}`;
-  label.textContent = c.label ?? c.text;
-  // fix — use text not label
   label.textContent = c.text;
 }
 
@@ -1862,8 +2229,8 @@ async function saveTipo() {
   const label = document.getElementById('tipoLabel').value.trim().toUpperCase();
   const emoji = document.getElementById('tipoEmoji').value.trim();
   const cor   = document.getElementById('tipoCor').value;
-  const modelos = document.getElementById('tipoModelos').value.split('\n').map(m=>m.trim()).filter(Boolean);
-  const fabricantes = document.getElementById('tipoFabricantes').value.split('\n').map(f=>f.trim()).filter(Boolean);
+  const modelos = document.getElementById('tipoModelos').value.split(/[\n,]+/).map(m=>m.trim()).filter(Boolean);
+  const fabricantes = document.getElementById('tipoFabricantes').value.split(/[\n,]+/).map(f=>f.trim()).filter(Boolean);
 
   if (!id || !label) { showToast('warning','⚠️','Campos obrigatórios','Preencha ID e Nome'); return; }
   try {
@@ -2081,6 +2448,8 @@ function renderAll() {
   renderMachineList();
   updateStats();
   if (selectedMachineId) renderDetail(selectedMachineId);
+  if (_currentView === 'dashboard') renderDashboard();
+  if (_currentView === 'consultas') renderConsultas();
 }
 
 function buildMachineCard(m, searchTerm) {
@@ -2252,7 +2621,7 @@ function renderDetail(id) {
           <span class="hw-type-badge" style="${badgeStyle}">${hcfg.label}</span>
         </div>
         <div class="hw-name">${hw.name}</div>
-        <div class="hw-model">${hw.manufacturer || '—'}</div>
+        <div class="hw-model">${hw.manufacturer ?? '—'}</div>
         <div class="hw-fields">
           <div class="hw-field">
             <span class="hf-label">Patrimônio</span>
@@ -2336,6 +2705,13 @@ function updateStats() {
 // SEARCH
 // =========================================
 let activeFilter = 'all';
+let currentSearchResults = [];
+
+// Retorna a data local no formato YYYY-MM-DD (evita erro de timezone do toISOString)
+function localDateStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
 
 function getActiveFilter() { return activeFilter; }
 
@@ -2368,6 +2744,57 @@ document.getElementById('filterChipsBar').addEventListener('click', function(e) 
   else renderMachineList(val, activeFilter);
 });
 
+function buildSearchResultItem(r, term) {
+  const item = document.createElement('div');
+  item.className = 'search-result-item';
+  if (r.kind === 'machine') {
+    const cfg = machineConfig[r.machine.type];
+    item.innerHTML = `
+      <div class="sri-type">${cfg.emoji} ${cfg.label}</div>
+      <div class="sri-name">${highlight(r.machine.name, term)}</div>
+      <div class="sri-detail">${r.machine.id} · ${r.machine.patrimony||'—'} · ${r.machine.hardware.length} hw</div>
+    `;
+    item.onclick = () => { selectMachine(r.machine.id); };
+  } else {
+    const hcfg = hwConfig[r.hw.type] || { emoji: '❓', label: r.hw.type };
+    const mcfg = machineConfig[r.machine.type] || { emoji: '🚛' };
+    const patDetail = r.hw.patrimony ? ` · Pat: ${highlight(r.hw.patrimony, term)}` : '';
+    item.innerHTML = `
+      <div class="sri-type">${hcfg.emoji} ${hcfg.label} em ${mcfg.emoji} ${r.machine.name}</div>
+      <div class="sri-name">${highlight(r.hw.name, term)}</div>
+      <div class="sri-detail">S/N: ${highlight(r.hw.sn||'—', term)}${patDetail}</div>
+    `;
+    item.onclick = () => {
+      selectMachine(r.machine.id);
+      requestAnimationFrame(() => {
+        const card = document.querySelector(`[data-hw-id="${r.hw.id}"]`);
+        if (card) {
+          card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          card.classList.remove('search-found');
+          void card.offsetWidth;
+          card.classList.add('search-found');
+        }
+      });
+    };
+  }
+  return item;
+}
+
+function renderSearchPage(container, term, offset) {
+  const PAGE = 20;
+  currentSearchResults.slice(offset, offset + PAGE).forEach(r => {
+    container.appendChild(buildSearchResultItem(r, term));
+  });
+  const remaining = currentSearchResults.length - offset - PAGE;
+  if (remaining > 0) {
+    const btn = document.createElement('button');
+    btn.style.cssText = 'display:block;width:100%;padding:12px 20px;font-size:11px;color:var(--accent);background:none;border:none;border-top:1px solid var(--border);cursor:pointer;text-align:left;font-family:"JetBrains Mono",monospace';
+    btn.textContent = `+ ${remaining} resultado${remaining > 1 ? 's' : ''} — Carregar mais`;
+    btn.onclick = () => { btn.remove(); renderSearchPage(container, term, offset + PAGE); };
+    container.appendChild(btn);
+  }
+}
+
 function showSearchResults(term) {
   const results = [];
   const t = term.toLowerCase();
@@ -2394,48 +2821,14 @@ function showSearchResults(term) {
   container.innerHTML = '';
 
   if (results.length === 0) {
-    container.innerHTML = `<div style="padding:24px;text-align:center;color:var(--text3);font-size:13px">Nenhum resultado para "${term}"</div>`;
+    // textContent em vez de innerHTML para evitar XSS com o termo de busca
+    const empty = document.createElement('div');
+    empty.style.cssText = 'padding:24px;text-align:center;color:var(--text3);font-size:13px';
+    empty.textContent = `Nenhum resultado para "${term}"`;
+    container.appendChild(empty);
   } else {
-    results.slice(0, 20).forEach(r => {
-      const item = document.createElement('div');
-      item.className = 'search-result-item';
-      if (r.kind === 'machine') {
-        const cfg = machineConfig[r.machine.type];
-        item.innerHTML = `
-          <div class="sri-type">${cfg.emoji} ${cfg.label}</div>
-          <div class="sri-name">${highlight(r.machine.name, term)}</div>
-          <div class="sri-detail">${r.machine.id} · ${r.machine.patrimony||'—'} · ${r.machine.hardware.length} hw</div>
-        `;
-        item.onclick = () => { selectMachine(r.machine.id); };
-      } else {
-        const hcfg = hwConfig[r.hw.type] || { emoji: '❓', label: r.hw.type };
-        const mcfg = machineConfig[r.machine.type] || { emoji: '🚛' };
-        const patDetail = r.hw.patrimony ? ` · Pat: ${highlight(r.hw.patrimony, term)}` : '';
-        item.innerHTML = `
-          <div class="sri-type">${hcfg.emoji} ${hcfg.label} em ${mcfg.emoji} ${r.machine.name}</div>
-          <div class="sri-name">${highlight(r.hw.name, term)}</div>
-          <div class="sri-detail">S/N: ${highlight(r.hw.sn||'—', term)}${patDetail}</div>
-        `;
-        item.onclick = () => {
-          selectMachine(r.machine.id);
-          // Rola e destaca o card após renderizar
-          requestAnimationFrame(() => {
-            const card = document.querySelector(`[data-hw-id="${r.hw.id}"]`);
-            if (card) {
-              card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-              card.classList.remove('search-found');
-              void card.offsetWidth; // força reinício da animação
-              card.classList.add('search-found');
-            }
-          });
-        };
-      }
-      container.appendChild(item);
-    });
-
-    if (results.length > 20) {
-      container.innerHTML += `<div style="padding:12px 20px;font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace">+${results.length-20} resultados adicionais...</div>`;
-    }
+    currentSearchResults = results;
+    renderSearchPage(container, term, 0);
   }
 
   container.classList.add('active');
@@ -2458,16 +2851,21 @@ function highlight(text, term) {
 // =========================================
 async function addMachine() {
   const type    = document.getElementById('newMachineType').value;
-  const id      = document.getElementById('newMachineId').value.trim();
+  const id      = document.getElementById('newMachineId').value.trim().toUpperCase();
   const name    = document.getElementById('newMachineName').value.trim();
   const year    = document.getElementById('newMachineYear').value.trim();
   const pat     = document.getElementById('newMachinePatrimony').value.trim();
   const unidade = document.getElementById('newMachineUnidade').value;
   const chassi  = document.getElementById('newMachineChassi').value.trim();
 
-  if (!id || !name) { showToast('warning', '⚠️', 'Campos obrigatórios', 'Preencha o ID e o nome'); return; }
+  if (!id) { markFieldError('newMachineId'); showToast('warning', '⚠️', 'Campo obrigatório', 'Preencha o ID'); return; }
+  if (!name) { markFieldError('newMachineName'); showToast('warning', '⚠️', 'Campo obrigatório', 'Preencha o nome'); return; }
+  if (name.length > 100) { markFieldError('newMachineName'); showToast('warning', '⚠️', 'Nome muito longo', 'Máximo 100 caracteres'); return; }
+  if (year && !/^(19|20)\d{2}$/.test(year)) {
+    markFieldError('newMachineYear'); showToast('warning', '⚠️', 'Ano inválido', 'Use formato YYYY entre 1900 e 2099'); return;
+  }
   if (machines.find(m => m.id === id)) {
-    showToast('warning', '⚠️', 'ID duplicado', `Já existe uma máquina com ID ${id}`); return;
+    markFieldError('newMachineId'); showToast('warning', '⚠️', 'ID duplicado', `Já existe uma máquina com ID ${id}`); return;
   }
   if (chassi) {
     const dupChassi = machines.find(m => m.chassi && m.chassi === chassi);
@@ -2476,11 +2874,14 @@ async function addMachine() {
     }
   }
 
-  machines.push({ id, name, type, year, unidade, chassi, patrimony: pat, createdAt: new Date().toISOString().split('T')[0], hardware: [] });
+  const btn = document.getElementById('addMachineBtn');
+  btn.disabled = true; btn.textContent = 'Cadastrando...';
 
+  machines.push({ id, name, type, year, unidade, chassi, patrimony: pat, createdAt: localDateStr(), hardware: [] });
   closeModal('addMachineModal');
   ['newMachineId','newMachineName','newMachineYear','newMachinePatrimony','newMachineChassi'].forEach(f => document.getElementById(f).value = '');
   document.getElementById('newMachineUnidade').value = '';
+  btn.disabled = false; btn.textContent = 'Cadastrar';
   renderAll();
   showToast('success', '✅', 'Máquina cadastrada', `${name} adicionada à frota`);
   selectMachine(id);
@@ -2489,17 +2890,7 @@ async function addMachine() {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/maquinas`, {
       method: 'POST',
       headers: { ...sbHeaders, 'Prefer': 'return=minimal' },
-      body: JSON.stringify({
-        id,
-        nome: name,
-        tipo: type,
-        ano: year,
-        unidade,
-        chassi,
-        patrimonio: pat,
-        centroCusto: '',
-        criadoEm: new Date().toISOString().split('T')[0],
-      }),
+      body: JSON.stringify({ id, nome: name, tipo: type, ano: year, unidade, chassi, patrimonio: pat, centroCusto: '', criadoEm: localDateStr() }),
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
@@ -2507,6 +2898,7 @@ async function addMachine() {
       console.error('addMachine Supabase error:', err);
     }
   } catch(e) {
+    console.error('addMachine:', e);
     showToast('warning', '⚠️', 'Sem conexão', 'Máquina salva localmente apenas');
   }
 }
@@ -2543,14 +2935,14 @@ function updateHwModels() {
 }
 
 async function addHardware() {
-  const type = document.getElementById('newHwType').value;
-  const pat  = document.getElementById('newHwId').value.trim().toUpperCase();
+  const type  = document.getElementById('newHwType').value;
+  const pat   = document.getElementById('newHwId').value.trim().toUpperCase();
   const model = document.getElementById('newHwModel').value.trim();
-  const sn   = document.getElementById('newHwSn').value.trim().toUpperCase();
+  const sn    = document.getElementById('newHwSn').value.trim().toUpperCase();
   const manuf = document.getElementById('newHwManuf').value;
 
-  if (!type)  { showToast('warning', '⚠️', 'Campos obrigatórios', 'Selecione o tipo'); return; }
-  if (!model) { showToast('warning', '⚠️', 'Campos obrigatórios', 'Selecione o modelo'); return; }
+  if (!type)  { markFieldError('newHwType');  showToast('warning', '⚠️', 'Campo obrigatório', 'Selecione o tipo'); return; }
+  if (!model) { markFieldError('newHwModel'); showToast('warning', '⚠️', 'Campo obrigatório', 'Selecione o modelo'); return; }
 
   const hwUniqueId = pat || `HW-${Date.now()}`;
   const allHw = machines.flatMap(m => m.hardware);
@@ -2564,16 +2956,31 @@ async function addHardware() {
     }
   }
   if (sn) {
+    // Verifica duplicata local primeiro
     const dupSn = allHw.find(h => h.sn && h.sn === sn);
     if (dupSn) {
       const owner = machines.find(x => x.hardware.some(h => h.id === dupSn.id));
       showToast('warning', '⚠️', 'S/N duplicado', `S/N ${sn} já existe${owner ? ' em ' + owner.name : ''}`);
       return;
     }
+    // Verifica duplicata no Supabase (cobre múltiplos usuários simultâneos)
+    try {
+      const chk = await fetch(`${SUPABASE_URL}/rest/v1/hardwares?numeroDeSerie=eq.${encodeURIComponent(sn)}&limit=1`, { headers: sbHeaders });
+      const rows = await chk.json();
+      if (Array.isArray(rows) && rows.length > 0) {
+        showToast('warning', '⚠️', 'S/N duplicado no banco', `S/N ${sn} já está cadastrado`);
+        return;
+      }
+    } catch(e) {
+      console.warn('addHardware: falha ao verificar S/N no servidor, verificação local apenas', e);
+    }
   }
 
+  const btn = document.getElementById('addHwBtn');
+  btn.disabled = true; btn.textContent = 'Instalando...';
+
   const m = machines.find(x => x.id === selectedMachineId);
-  const newHw = { id: hwUniqueId, name: model, type, sn, manufacturer: manuf, patrimony: pat, installedAt: new Date().toISOString().split('T')[0] };
+  const newHw = { id: hwUniqueId, name: model, type, sn, manufacturer: manuf, patrimony: pat, installedAt: localDateStr() };
   m.hardware.push(newHw);
 
   closeModal('addHwModal');
@@ -2581,6 +2988,7 @@ async function addHardware() {
   document.getElementById('newHwModel').value = '';
   document.getElementById('newHwManuf').value = '';
   document.getElementById('newHwType').value = '';
+  btn.disabled = false; btn.textContent = 'Instalar';
   renderAll();
   showToast('success', '✅', 'Hardware instalado', `${model} instalado em ${m.name}`);
 
@@ -2605,6 +3013,7 @@ async function addHardware() {
       notes: '',
     });
   } catch(e) {
+    console.error('addHardware sync:', e);
     showToast('warning', '⚠️', 'Sem conexão', 'Hardware salvo localmente apenas');
   }
 }
@@ -2690,13 +3099,27 @@ async function saveEditHw() {
   }
 }
 
-function removeHardware(machineId, hwId) {
+async function removeHardware(machineId, hwId) {
   const m = machines.find(x => x.id === machineId);
   const hw = m.hardware.find(h => h.id === hwId);
   if (!confirm(`Remover ${hw.name} (${hw.id}) de ${m.name}?`)) return;
+
+  const backup = [...m.hardware];
   m.hardware = m.hardware.filter(h => h.id !== hwId);
   renderAll();
   showToast('success', '🗑️', 'Hardware removido', `${hw.name} removido de ${m.name}`);
+
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/hardwares?id=eq.${encodeURIComponent(hwId)}`, {
+      method: 'DELETE', headers: sbHeaders,
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  } catch(e) {
+    console.error('removeHardware sync:', e);
+    m.hardware = backup;
+    renderAll();
+    showToast('warning', '⚠️', 'Erro ao sincronizar', 'Remoção revertida — sem conexão');
+  }
 }
 
 // =========================================
@@ -2755,8 +3178,11 @@ async function confirmTransfer() {
   const target = machines.find(x => x.id === transferTargetMachineId);
   const hw = source.hardware.find(h => h.id === transferHwId);
 
+  // Snapshot para rollback em caso de falha no sync
+  const backup = machines.map(m => ({ ...m, hardware: [...m.hardware] }));
+
   source.hardware = source.hardware.filter(h => h.id !== transferHwId);
-  hw.installedAt = new Date().toISOString().split('T')[0];
+  hw.installedAt = localDateStr();
   target.hardware.push(hw);
 
   closeModal('transferModal');
@@ -2784,7 +3210,12 @@ async function confirmTransfer() {
       notes: '',
     });
   } catch(e) {
-    showToast('warning', '⚠️', 'Sem conexão', 'Transferência salva localmente apenas');
+    console.error('confirmTransfer sync:', e);
+    // Rollback do estado local para manter consistência com o banco
+    machines.length = 0;
+    backup.forEach(m => machines.push(m));
+    renderAll();
+    showToast('error', '❌', 'Falha na transferência', 'Alteração desfeita — sem conexão');
   }
 }
 
@@ -2833,13 +3264,41 @@ function showHwDetail(machineId, hwId) {
 // =========================================
 // MODALS & TOAST
 // =========================================
-function openModal(id) { document.getElementById(id).classList.add('active'); }
-function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+function markFieldError(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.add('field-error');
+  el.addEventListener('input', () => el.classList.remove('field-error'), { once: true });
+  el.focus();
+}
+
+let _lastModalFocus = null;
+
+function openModal(id) {
+  _lastModalFocus = document.activeElement;
+  const el = document.getElementById(id);
+  el.classList.add('active');
+  const firstFocusable = el.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+  firstFocusable?.focus();
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('active');
+  _lastModalFocus?.focus();
+  _lastModalFocus = null;
+}
 
 document.querySelectorAll('.modal-overlay').forEach(overlay => {
   overlay.addEventListener('click', function(e) {
     if (e.target === this) closeModal(this.id);
   });
+});
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    const active = document.querySelector('.modal-overlay.active');
+    if (active) closeModal(active.id);
+  }
 });
 
 let toastTimer;
@@ -2925,6 +3384,435 @@ async function saveMachineEdit() {
 })();
 
 loadFromSheets();
+
+// =========================================
+// VIEWS — navegação entre Dashboard / Frota / Consultas
+// =========================================
+let _currentView = 'frota';
+
+function switchView(view) {
+  _currentView = view;
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.view-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(`view-${view}`).classList.add('active');
+  document.getElementById(`tab-${view}`).classList.add('active');
+
+  if (view === 'dashboard') renderDashboard();
+  if (view === 'consultas') initConsultas();
+}
+
+// =========================================
+// DASHBOARD
+// =========================================
+function getDashboardData() {
+  const realMachines = machines.filter(m => !DEST_TYPES.includes(m.type));
+  const destMachines = machines.filter(m => DEST_TYPES.includes(m.type));
+  const allHw = machines.flatMap(m => m.hardware);
+
+  const hwCampo = realMachines.flatMap(m => m.hardware);
+  const hwManutencao = (machines.find(m => m.type === 'manutencao') || { hardware: [] }).hardware;
+  const hwEstoque    = (machines.find(m => m.type === 'estoque')    || { hardware: [] }).hardware;
+  const hwInativo    = (machines.find(m => m.type === 'inativo')    || { hardware: [] }).hardware;
+
+  const hwByType = {};
+  allHw.forEach(hw => { hwByType[hw.type] = (hwByType[hw.type] || 0) + 1; });
+
+  const machinesByUnidade = {};
+  realMachines.forEach(m => {
+    const u = m.unidade || '—';
+    if (!machinesByUnidade[u]) machinesByUnidade[u] = { machines: 0, hw: 0 };
+    machinesByUnidade[u].machines++;
+    machinesByUnidade[u].hw += m.hardware.length;
+  });
+
+  return { realMachines, allHw, hwCampo, hwManutencao, hwEstoque, hwInativo, hwByType, machinesByUnidade };
+}
+
+function renderDashboard() {
+  const d = getDashboardData();
+  const el = document.getElementById('dashboardContent');
+  el.className = '';
+  el.style.cssText = 'display:contents';
+
+  // ── KPI row ──
+  const kpis = [
+    { label: 'MÁQUINAS', value: d.realMachines.length, sub: 'na frota', color: 'var(--accent)' },
+    { label: 'HARDWARES', value: d.allHw.length, sub: 'cadastrados', color: 'var(--blue)' },
+    { label: 'EM CAMPO', value: d.hwCampo.length, sub: 'instalados', color: 'var(--green)' },
+    { label: 'EM MANUTENÇÃO', value: d.hwManutencao.length, sub: 'aguardando', color: 'var(--red)' },
+    { label: 'NO ESTOQUE', value: d.hwEstoque.length, sub: 'disponíveis', color: 'var(--blue)' },
+    { label: 'INATIVOS', value: d.hwInativo.length, sub: 'desativados', color: 'var(--text3)' },
+  ];
+
+  el.innerHTML = `
+    <div>
+      <div class="dash-section-title">VISÃO GERAL</div>
+      <div class="kpi-row">
+        ${kpis.map(k => `
+          <div class="kpi-card" style="--kpi-accent:${k.color}">
+            <div class="kpi-label">${k.label}</div>
+            <div class="kpi-value">${k.value}</div>
+            <div class="kpi-sub">${k.sub}</div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+
+    <div class="charts-row">
+      <div class="chart-card">
+        <div class="chart-card-title">HARDWARES POR SITUAÇÃO</div>
+        <div class="donut-wrap">
+          <canvas id="donutCanvas" width="160" height="160"></canvas>
+          <div class="donut-legend" id="donutLegend"></div>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-card-title">HARDWARES POR TIPO</div>
+        <canvas id="barsCanvas" width="600" height="220" style="width:100%;height:220px"></canvas>
+      </div>
+    </div>
+
+    <div class="dash-bottom-row">
+      <div class="table-card">
+        <div class="chart-card-title">HARDWARES POR UNIDADE</div>
+        <table class="mini-table" id="unidadeTable"></table>
+      </div>
+      <div class="table-card">
+        <div class="chart-card-title">TIPOS MAIS COMUNS</div>
+        <table class="mini-table" id="tiposTable"></table>
+      </div>
+    </div>
+  `;
+
+  // Donut — situação
+  const donutSegs = [
+    { label: 'Em Campo',     value: d.hwCampo.length,      color: '#2ecc8a' },
+    { label: 'Estoque',      value: d.hwEstoque.length,    color: '#4a9eff' },
+    { label: 'Manutenção',   value: d.hwManutencao.length, color: '#e05252' },
+    { label: 'Inativo',      value: d.hwInativo.length,    color: '#4a5468' },
+  ].filter(s => s.value > 0);
+
+  requestAnimationFrame(() => {
+    drawDonut('donutCanvas', donutSegs, d.allHw.length);
+
+    const legend = document.getElementById('donutLegend');
+    if (legend) {
+      legend.innerHTML = donutSegs.map(s => `
+        <div class="dl-item">
+          <div class="dl-dot" style="background:${s.color}"></div>
+          <span class="dl-label">${s.label}</span>
+          <span class="dl-value">${s.value}</span>
+        </div>
+      `).join('');
+    }
+
+    // Bars — por tipo
+    const bars = Object.entries(d.hwByType)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10)
+      .map(([type, count]) => ({
+        label: hwConfig[type]?.label || type.toUpperCase(),
+        value: count,
+        color: hwConfig[type]?.color || '#4a9eff',
+      }));
+    drawBars('barsCanvas', bars);
+
+    // Tabela unidade
+    const uTable = document.getElementById('unidadeTable');
+    if (uTable) {
+      const rows = Object.entries(d.machinesByUnidade).sort((a, b) => b[1].hw - a[1].hw);
+      uTable.innerHTML = `<tr><th>Unidade</th><th>Máquinas</th><th>Hardwares</th></tr>` +
+        rows.map(([u, v]) => `<tr><td>${u}</td><td>${v.machines}</td><td>${v.hw}</td></tr>`).join('') +
+        (rows.length === 0 ? '<tr><td colspan="3" style="opacity:.4;padding:20px;text-align:center">Sem dados</td></tr>' : '');
+    }
+
+    // Tabela tipos
+    const tTable = document.getElementById('tiposTable');
+    if (tTable) {
+      const rows = Object.entries(d.hwByType).sort((a, b) => b[1] - a[1]).slice(0, 8);
+      const total = d.allHw.length || 1;
+      tTable.innerHTML = `<tr><th>Tipo</th><th>Qtde</th><th>%</th></tr>` +
+        rows.map(([type, count]) => {
+          const cfg = hwConfig[type] || {};
+          return `<tr>
+            <td>${cfg.emoji || ''} ${cfg.label || type}</td>
+            <td>${count}</td>
+            <td style="color:var(--accent);font-family:'JetBrains Mono',monospace">${Math.round(count/total*100)}%</td>
+          </tr>`;
+        }).join('');
+    }
+  });
+}
+
+// Canvas helpers
+function drawDonut(canvasId, segs, total) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  const cx = W / 2, cy = H / 2;
+  const outerR = Math.min(cx, cy) - 8;
+  const innerR = outerR * 0.58;
+  const gap = 0.025;
+
+  if (segs.length === 0 || total === 0) {
+    ctx.beginPath();
+    ctx.arc(cx, cy, outerR, 0, Math.PI * 2);
+    ctx.fillStyle = '#1e2330';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(cx, cy, innerR, 0, Math.PI * 2);
+    ctx.fillStyle = '#111318';
+    ctx.fill();
+    return;
+  }
+
+  const sum = segs.reduce((s, seg) => s + seg.value, 0);
+  let start = -Math.PI / 2;
+
+  segs.forEach(seg => {
+    const sweep = (seg.value / sum) * Math.PI * 2 - gap;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, outerR, start + gap / 2, start + gap / 2 + sweep);
+    ctx.closePath();
+    ctx.fillStyle = seg.color;
+    ctx.fill();
+    start += (seg.value / sum) * Math.PI * 2;
+  });
+
+  ctx.beginPath();
+  ctx.arc(cx, cy, innerR, 0, Math.PI * 2);
+  ctx.fillStyle = '#111318';
+  ctx.fill();
+
+  ctx.fillStyle = '#e8ecf4';
+  ctx.font = `bold 22px 'JetBrains Mono', monospace`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(total, cx, cy - 7);
+  ctx.font = `10px 'JetBrains Mono', monospace`;
+  ctx.fillStyle = '#4a5468';
+  ctx.fillText('TOTAL', cx, cy + 13);
+}
+
+function drawBars(canvasId, bars) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  canvas.width = canvas.offsetWidth || 600;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  if (!bars.length) return;
+
+  const maxVal = Math.max(...bars.map(b => b.value), 1);
+  const barH = 22, gap = 8, labelW = 110, numW = 40;
+  const barAreaW = W - labelW - numW - 16;
+  const totalH = bars.length * (barH + gap) - gap;
+  let y = Math.max((H - totalH) / 2, 10);
+
+  bars.forEach(bar => {
+    const barW = Math.max((bar.value / maxVal) * barAreaW, 0);
+
+    ctx.fillStyle = '#1e2330';
+    roundRectFill(ctx, labelW, y, barAreaW, barH, 5);
+
+    if (barW > 0) {
+      ctx.fillStyle = bar.color + 'cc';
+      roundRectFill(ctx, labelW, y, barW, barH, 5);
+    }
+
+    ctx.fillStyle = '#8a94a8';
+    ctx.font = `11px 'JetBrains Mono', monospace`;
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(bar.label.slice(0, 12), labelW - 8, y + barH / 2);
+
+    ctx.fillStyle = '#e8ecf4';
+    ctx.font = `bold 11px 'JetBrains Mono', monospace`;
+    ctx.textAlign = 'left';
+    ctx.fillText(bar.value, labelW + barAreaW + 8, y + barH / 2);
+
+    y += barH + gap;
+  });
+}
+
+function roundRectFill(ctx, x, y, w, h, r) {
+  if (w <= 0 || h <= 0) return;
+  r = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+  ctx.fill();
+}
+
+// =========================================
+// CONSULTAS
+// =========================================
+let _consultaSortCol = 'machine';
+let _consultaSortDir = 1;
+
+function initConsultas() {
+  buildConsultaFilters();
+  renderConsultas();
+}
+
+function buildConsultaFilters() {
+  // Tipos de máquina
+  const maqEl = document.getElementById('filt-maq-tipos');
+  if (maqEl && !maqEl.dataset.built) {
+    maqEl.dataset.built = '1';
+    const tipos = [...new Set(machines.filter(m => !DEST_TYPES.includes(m.type)).map(m => m.type))];
+    maqEl.innerHTML = tipos.map(t => {
+      const cfg = machineConfig[t] || { label: t, emoji: '🚛' };
+      return `<label class="filter-check-item">
+        <input type="checkbox" value="${t}" data-group="maq" onchange="renderConsultas()">
+        ${cfg.emoji} ${cfg.label}
+        <span class="filter-count" id="fmc-${t}"></span>
+      </label>`;
+    }).join('');
+  }
+
+  // Tipos de hardware
+  const hwEl = document.getElementById('filt-hw-tipos');
+  if (hwEl && !hwEl.dataset.built) {
+    hwEl.dataset.built = '1';
+    const tipos = Object.keys(hwConfig);
+    hwEl.innerHTML = tipos.map(t => {
+      const cfg = hwConfig[t];
+      return `<label class="filter-check-item">
+        <input type="checkbox" value="${t}" data-group="hw" onchange="renderConsultas()">
+        ${cfg.emoji} ${cfg.label}
+        <span class="filter-count" id="fhc-${t}"></span>
+      </label>`;
+    }).join('');
+  }
+}
+
+function getConsultaRows() {
+  const checkedMaq = [...document.querySelectorAll('#filt-maq-tipos input:checked')].map(i => i.value);
+  const checkedHw  = [...document.querySelectorAll('#filt-hw-tipos input:checked')].map(i => i.value);
+  const checkedUnd = [...document.querySelectorAll('#filt-unidades input:checked')].map(i => i.value);
+  const term = (document.getElementById('consultaSearch')?.value || '').toLowerCase().trim();
+
+  const rows = [];
+  machines.filter(m => !DEST_TYPES.includes(m.type)).forEach(m => {
+    if (checkedMaq.length && !checkedMaq.includes(m.type)) return;
+    if (checkedUnd.length && !checkedUnd.includes(m.unidade)) return;
+
+    m.hardware.forEach(hw => {
+      if (checkedHw.length && !checkedHw.includes(hw.type)) return;
+
+      const searchTarget = [m.name, m.id, hw.name, hw.sn, hw.patrimony, m.unidade].join(' ').toLowerCase();
+      if (term && !searchTarget.includes(term)) return;
+
+      rows.push({ machine: m, hw });
+    });
+  });
+  return rows;
+}
+
+function renderConsultas() {
+  if (_currentView !== 'consultas') return;
+  buildConsultaFilters();
+
+  const rows = getConsultaRows();
+  const countEl = document.getElementById('consultasCount');
+  if (countEl) countEl.textContent = `${rows.length} resultado${rows.length !== 1 ? 's' : ''}`;
+
+  rows.sort((a, b) => {
+    let va, vb;
+    switch (_consultaSortCol) {
+      case 'machine': va = a.machine.name; vb = b.machine.name; break;
+      case 'unidade': va = a.machine.unidade || ''; vb = b.machine.unidade || ''; break;
+      case 'hwType':  va = hwConfig[a.hw.type]?.label || a.hw.type; vb = hwConfig[b.hw.type]?.label || b.hw.type; break;
+      case 'hwName':  va = a.hw.name; vb = b.hw.name; break;
+      case 'sn':      va = a.hw.sn || ''; vb = b.hw.sn || ''; break;
+      case 'pat':     va = a.hw.patrimony || ''; vb = b.hw.patrimony || ''; break;
+      case 'date':    va = a.hw.installedAt || ''; vb = b.hw.installedAt || ''; break;
+      default: va = ''; vb = '';
+    }
+    return _consultaSortDir * va.localeCompare(vb, 'pt-BR', { numeric: true });
+  });
+
+  const wrap = document.getElementById('consultasTableWrap');
+  if (!wrap) return;
+
+  if (rows.length === 0) {
+    wrap.innerHTML = `<div class="consultas-empty">
+      <div class="consultas-empty-icon">🔍</div>
+      <div class="consultas-empty-text">Nenhum resultado encontrado</div>
+    </div>`;
+    return;
+  }
+
+  const sortIcon = col => _consultaSortCol === col ? (_consultaSortDir === 1 ? ' ▲' : ' ▼') : '';
+  const thClick = col => `onclick="sortConsultas('${col}')"`;
+
+  wrap.innerHTML = `<table class="consultas-table">
+    <thead>
+      <tr>
+        <th ${thClick('machine')}>MÁQUINA${sortIcon('machine')}</th>
+        <th ${thClick('unidade')}>UNIDADE${sortIcon('unidade')}</th>
+        <th ${thClick('hwType')}>TIPO HW${sortIcon('hwType')}</th>
+        <th ${thClick('hwName')}>MODELO${sortIcon('hwName')}</th>
+        <th ${thClick('sn')}>Nº SÉRIE${sortIcon('sn')}</th>
+        <th ${thClick('pat')}>PATRIMÔNIO${sortIcon('pat')}</th>
+        <th ${thClick('date')}>INSTALADO EM${sortIcon('date')}</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      ${rows.map(({ machine: m, hw }) => {
+        const hcfg = hwConfig[hw.type] || { emoji: '', label: hw.type, color: '#888' };
+        const mcfg = machineConfig[m.type] || { emoji: '🚛' };
+        const badgeStyle = `background:${hcfg.color}22;color:${hcfg.color};border:1px solid ${hcfg.color}44`;
+        return `<tr>
+          <td style="color:var(--text);font-weight:600">${mcfg.emoji} ${m.name}</td>
+          <td>${m.unidade || '—'}</td>
+          <td><span class="ct-badge" style="${badgeStyle}">${hcfg.emoji} ${hcfg.label}</span></td>
+          <td style="color:var(--text)">${hw.name}</td>
+          <td style="font-family:'JetBrains Mono',monospace;font-size:11px">${hw.sn || '—'}</td>
+          <td style="font-family:'JetBrains Mono',monospace;font-size:11px">${hw.patrimony || '—'}</td>
+          <td>${hw.installedAt || '—'}</td>
+          <td>
+            <button class="btn btn-ghost" style="padding:4px 10px;font-size:11px"
+              onclick="switchView('frota');selectMachine('${m.id}')">Ver</button>
+          </td>
+        </tr>`;
+      }).join('')}
+    </tbody>
+  </table>`;
+}
+
+function sortConsultas(col) {
+  if (_consultaSortCol === col) {
+    _consultaSortDir *= -1;
+  } else {
+    _consultaSortCol = col;
+    _consultaSortDir = 1;
+  }
+  renderConsultas();
+}
+
+function resetConsultaFilters() {
+  document.querySelectorAll('#filt-maq-tipos input, #filt-hw-tipos input, #filt-unidades input')
+    .forEach(cb => { cb.checked = false; });
+  const s = document.getElementById('consultaSearch');
+  if (s) s.value = '';
+  renderConsultas();
+}
 </script>
 </body>
 </html>

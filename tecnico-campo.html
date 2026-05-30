@@ -166,7 +166,7 @@
   .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
 
   /* ── MAIN CONTENT ── */
-  .screen { display: none; padding: 20px 16px 100px; }
+  .screen { display: none; padding: 20px 16px calc(100px + env(safe-area-inset-bottom, 0px)); }
   .screen.active { display: block; }
 
   /* ── FORM ELEMENTS ── */
@@ -399,13 +399,13 @@
   .mo-id { font-size: 11px; font-family: 'JetBrains Mono', monospace; color: var(--text3); margin-top: 2px; }
 
   .mo-check {
-    width: 22px; height: 22px;
+    width: 28px; height: 28px;
     border-radius: 50%;
     border: 2px solid var(--border);
     display: flex; align-items: center; justify-content: center;
     flex-shrink: 0;
     transition: all 0.2s;
-    font-size: 11px;
+    font-size: 13px;
   }
 
   .machine-option.selected .mo-check {
@@ -486,7 +486,7 @@
   }
 
   .submit-btn:active { transform: scale(0.98); background: var(--accent2); }
-  .submit-btn:disabled { opacity: 0.4; pointer-events: none; }
+  .submit-btn:disabled { opacity: 0.6; pointer-events: none; cursor: not-allowed; }
 
   /* ── HISTORY SCREEN ── */
   .history-list { display: flex; flex-direction: column; gap: 10px; }
@@ -615,7 +615,7 @@
   /* ── TOAST ── */
   .toast {
     position: fixed;
-    top: 70px; left: 16px; right: 16px;
+    bottom: calc(90px + env(safe-area-inset-bottom, 0px)); left: 16px; right: 16px;
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 10px;
@@ -625,7 +625,7 @@
     gap: 10px;
     font-size: 13px;
     z-index: 200;
-    transform: translateY(-20px);
+    transform: translateY(20px);
     opacity: 0;
     transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
     pointer-events: none;
@@ -692,9 +692,9 @@
 </div>
 
 <!-- TABS -->
-<div class="tabs">
-  <div class="tab active" data-tab="novo">📋 Novo Registro</div>
-  <div class="tab" data-tab="historico">🕐 Histórico</div>
+<div class="tabs" role="tablist">
+  <div class="tab active" data-tab="novo" role="tab" aria-selected="true" aria-controls="screen-novo">📋 Novo Registro</div>
+  <div class="tab" data-tab="historico" role="tab" aria-selected="false" aria-controls="screen-historico">🕐 Histórico</div>
 </div>
 
 <!-- ══════════════ NOVO REGISTRO ══════════════ -->
@@ -733,12 +733,7 @@
       <div class="field">
         <label class="field-label">SEU NOME</label>
         <select class="field-select" id="techName">
-          <option value="">— Selecione —</option>
-          <option value="Anderson">Anderson</option>
-          <option value="Lucas">Lucas</option>
-          <option value="Kayky">Kayky</option>
-          <option value="Murilo">Murilo</option>
-          <option value="Isaac">Isaac</option>
+          <option value="">— Carregando... —</option>
         </select>
       </div>
     </div>
@@ -765,7 +760,7 @@
         <div class="field">
           <label class="field-label">TIPO DE HARDWARE</label>
           <select class="field-select" id="hwType" onchange="selectedHwId=null;setHwDropdownLabel(null);renderHwPicker();checkDisplacement()">
-            <option value="">— Selecione —</option>
+            <option value="" disabled selected hidden>— Selecione —</option>
           </select>
         </div>
       </div>
@@ -791,7 +786,7 @@
           <div class="field">
             <label class="field-label">TIPO DE HARDWARE</label>
             <select class="field-select" id="novoHwType" onchange="onNovoHwTypeChange()">
-              <option value="">— Selecione —</option>
+              <option value="" disabled selected hidden>— Selecione —</option>
             </select>
           </div>
         </div>
@@ -799,23 +794,23 @@
           <div class="field">
             <label class="field-label">MODELO</label>
             <select class="field-select" id="novoHwModelo">
-              <option value="">— Selecione o tipo primeiro —</option>
+              <option value="" disabled selected hidden>— Selecione o tipo primeiro —</option>
             </select>
           </div>
         </div>
         <div class="field-group">
           <div class="field">
-            <input type="text" class="field-input" id="novoHwSn" placeholder="Número de série (S/N)" oninput="this.value=this.value.toUpperCase()">
+            <input type="text" class="field-input" id="novoHwSn" placeholder="Nº Série — AUTO MAIÚSCULAS" oninput="this.value=this.value.toUpperCase()">
           </div>
           <div class="field">
-            <input type="text" class="field-input" id="novoHwPat" placeholder="Patrimônio" oninput="this.value=this.value.toUpperCase()">
+            <input type="text" class="field-input" id="novoHwPat" placeholder="Patrimônio — AUTO MAIÚSCULAS" oninput="this.value=this.value.toUpperCase()">
           </div>
         </div>
         <div class="field-group">
           <div class="field">
             <label class="field-label">FABRICANTE</label>
             <select class="field-select" id="novoHwFab">
-              <option value="">— Selecione —</option>
+              <option value="" disabled selected hidden>— Selecione —</option>
             </select>
           </div>
         </div>
@@ -902,6 +897,8 @@
 // CONFIGURAÇÃO — Supabase
 // ══════════════════════════════════════════
 const SUPABASE_URL = 'https://fevzqjeybsnjznespplr.supabase.co';
+// ATENÇÃO: chave pública (anon/publishable) — segura no frontend com RLS ativo no Supabase.
+// NUNCA use a service_role key aqui.
 const SUPABASE_KEY = 'sb_publishable_DIYe_vM9kLVk05PGjGrq9Q_Rr6n-mr9';
 const sbHeaders = {
   'apikey': SUPABASE_KEY,
@@ -1135,7 +1132,7 @@ function buildHwConfig(rawTipos) {
     const sel = document.getElementById(selId);
     if (!sel) return;
     const current = sel.value;
-    sel.innerHTML = '<option value="">— Selecione —</option>';
+    sel.innerHTML = '<option value="" disabled selected hidden>— Selecione —</option>';
     Object.entries(hwConfig).forEach(([id, cfg]) => {
       const opt = document.createElement('option');
       opt.value = id;
@@ -1152,7 +1149,7 @@ function onNovoHwTypeChange() {
   const modelSel = document.getElementById('novoHwModelo');
   const fabSel = document.getElementById('novoHwFab');
   modelSel.innerHTML = '<option value="">— Selecione o modelo —</option>';
-  fabSel.innerHTML = '<option value="">— Selecione —</option>';
+  fabSel.innerHTML = '<option value="" disabled selected hidden>— Selecione —</option>';
   if (!cfg) return;
   (cfg.modelos || []).forEach(m => { const o=document.createElement('option'); o.value=m; o.textContent=m; modelSel.appendChild(o); });
   const fabs = cfg.fabricantes?.length ? cfg.fabricantes : ['John Deere','Timple','Solinftec','Reven'];
@@ -1179,7 +1176,9 @@ function checkDisplacement() {
 
   const machineName = getMachineName(selectedMachineDestId);
   const names = existingHwToDisplace.map(h => `${h.name}${h.sn ? ' ('+h.sn+')' : ''}`).join(', ');
-  document.getElementById('displacementInfo').textContent = `${machineName} já possui: ${names}`;
+  const plural = existingHwToDisplace.length > 1 ? `${existingHwToDisplace.length} equipamentos` : '1 equipamento';
+  document.getElementById('displacementInfo').textContent =
+    `${machineName} já possui ${plural} do mesmo tipo: ${names}. Todos serão deslocados para o destino selecionado.`;
   section.style.display = 'block';
 }
 
@@ -1190,19 +1189,13 @@ function setDisplacementDest(dest) {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
-  // Preenche data/hora atual
+  // Preenche data/hora atual no fuso local (sem depender do UTC do toISOString)
   const now = new Date();
-  now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-  document.getElementById('serviceDateTime').value = now.toISOString().slice(0,16);
+  const pad = n => String(n).padStart(2, '0');
+  const localDT = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  document.getElementById('serviceDateTime').value = localDT;
 
-  // Carrega nome do técnico salvo
-  const savedName = localStorage.getItem('techName');
-  if (savedName) {
-    const sel = document.getElementById('techName');
-    if ([...sel.options].some(o => o.value === savedName)) sel.value = savedName;
-  }
-
-  // Carrega dados (tenta planilha, usa demo se falhar)
+  // Carrega dados — técnicos são populados dentro de loadData via populateTechSelect
   loadData();
 
   // Tabs
@@ -1237,22 +1230,56 @@ function mapHardwares(raw) {
   }));
 }
 
+const TECNICOS_FALLBACK = ['Anderson', 'Lucas', 'Kayky', 'Murilo', 'Isaac'];
+
+function populateTechSelect(nomes) {
+  const sel = document.getElementById('techName');
+  const saved = localStorage.getItem('techName');
+  sel.innerHTML = '<option value="" disabled selected hidden>— Selecione —</option>';
+  nomes.forEach(n => {
+    const opt = document.createElement('option');
+    opt.value = n; opt.textContent = n;
+    if (n === saved) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
 async function loadData() {
   try {
-    const [resMaq, resHw, resTipos] = await Promise.all([
+    const [resMaq, resHw, resTipos, resTecs] = await Promise.all([
       fetch(`${SUPABASE_URL}/rest/v1/maquinas?select=*&order=nome`, { headers: sbHeaders }),
       fetch(`${SUPABASE_URL}/rest/v1/hardwares?select=*`, { headers: sbHeaders }),
       fetch(`${SUPABASE_URL}/rest/v1/hw_tipos?select=*&order=id`, { headers: sbHeaders }),
+      fetch(`${SUPABASE_URL}/rest/v1/tecnicos?select=nome&order=nome`, { headers: sbHeaders }).catch(() => null),
     ]);
-    if (!resMaq.ok || !resHw.ok) throw new Error('Erro Supabase');
+    if (!resMaq.ok || !resHw.ok) throw new Error(`Erro Supabase: maquinas=${resMaq.status} hardwares=${resHw.status}`);
     const [rawMachines, rawHardwares, rawTipos] = await Promise.all([resMaq.json(), resHw.json(), resTipos.json()]);
+    if (!Array.isArray(rawMachines))  throw new Error('Resposta inválida: maquinas não é array');
+    if (!Array.isArray(rawHardwares)) throw new Error('Resposta inválida: hardwares não é array');
     if (Array.isArray(rawTipos) && rawTipos.length) buildHwConfig(rawTipos);
     machines  = rawMachines.length  ? mapMachines(rawMachines)  : demoMachines;
     hardwares = rawHardwares.length ? mapHardwares(rawHardwares) : demoHardwares;
+    // Carrega técnicos do Supabase se tabela existir, senão usa fallback
+    if (resTecs?.ok) {
+      const rawTecs = await resTecs.json();
+      const nomes = Array.isArray(rawTecs) && rawTecs.length ? rawTecs.map(t => t.nome).filter(Boolean) : TECNICOS_FALLBACK;
+      populateTechSelect(nomes);
+    } else {
+      populateTechSelect(TECNICOS_FALLBACK);
+    }
   } catch(e) {
+    console.error('loadData:', e);
+    showToast('err', '⚠️', 'Sem conexão — usando dados demo');
     machines  = demoMachines;
     hardwares = demoHardwares;
+    populateTechSelect(TECNICOS_FALLBACK);
   }
+}
+
+// Retorna data local YYYY-MM-DD (evita erro de timezone do toISOString)
+function localDateStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 
 async function sbFindHardware(record) {
@@ -1333,7 +1360,11 @@ async function saveRecord(record) {
 // TABS
 // ══════════════════════════════════════════
 function switchTab(tab) {
-  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+  document.querySelectorAll('.tab').forEach(t => {
+    const active = t.dataset.tab === tab;
+    t.classList.toggle('active', active);
+    t.setAttribute('aria-selected', active ? 'true' : 'false');
+  });
   document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id === `screen-${tab}`));
   document.getElementById('submitArea').style.display = tab === 'novo' && currentAction ? 'block' : 'none';
   if (tab === 'historico') renderHistory();
@@ -1474,8 +1505,8 @@ function renderMachinePicker() {
     div.innerHTML = `
       <div class="mo-icon">${machineEmojis[m.type] || '🚛'}</div>
       <div class="mo-info">
-        <div class="mo-name">${m.name}</div>
-        <div class="mo-id">${m.id}</div>
+        <div class="mo-name">${m.name} <span style="font-weight:400;font-size:11px;opacity:.5">#${m.id}</span></div>
+        <div class="mo-id">${m.type?.toUpperCase() || ''}</div>
       </div>
       <div class="mo-check">${selectedMachineId === m.id ? '✓' : ''}</div>
     `;
@@ -1506,8 +1537,8 @@ function renderMachinePickerDest() {
     div.innerHTML = `
       <div class="mo-icon">${machineEmojis[m.type] || '🚛'}</div>
       <div class="mo-info">
-        <div class="mo-name">${m.name}</div>
-        <div class="mo-id">${m.id}</div>
+        <div class="mo-name">${m.name} <span style="font-weight:400;font-size:11px;opacity:.5">#${m.id}</span></div>
+        <div class="mo-id">${m.type?.toUpperCase() || ''}</div>
       </div>
       <div class="mo-check">${selectedMachineDestId === m.id ? '✓' : ''}</div>
     `;
@@ -1544,13 +1575,23 @@ function closeHwDropdown() {
   document.getElementById('hwDropdownArrow').classList.remove('open');
 }
 
+function closeAllDropdowns() {
+  document.querySelectorAll('.machine-dropdown-panel').forEach(p => p.classList.remove('open'));
+  document.querySelectorAll('.machine-dropdown-btn').forEach(b => b.classList.remove('open'));
+  document.querySelectorAll('.dropdown-arrow').forEach(a => a.classList.remove('open'));
+}
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('.machine-dropdown')) closeAllDropdowns();
+});
+
 function setHwDropdownLabel(hw) {
   const el = document.getElementById('hwDropdownValue');
   if (!hw) {
     el.innerHTML = '<span class="dropdown-placeholder">— Selecione o equipamento —</span>';
   } else {
-    const pat = hw.patrimonio ? ` · Pat: ${hw.patrimonio}` : '';
-    el.innerHTML = `<span style="font-weight:600">${hw.name}</span> <span style="opacity:.6;font-size:12px">S/N: ${hw.sn || '—'}${pat}</span>`;
+    const pat = hw.patrimonio ? ` · Patrimônio: ${hw.patrimonio}` : '';
+    el.innerHTML = `<span style="font-weight:600">${hw.name}</span> <span style="opacity:.6;font-size:12px">Nº Série: ${hw.sn || '—'}${pat}</span>`;
   }
 }
 
@@ -1589,8 +1630,8 @@ function renderHwPicker() {
   container.innerHTML = '';
 
   if (filtered.length === 0) {
-    container.innerHTML = `<div class="machine-option" style="opacity:0.5;cursor:default;justify-content:center;font-size:13px">
-      Nenhum equipamento disponível nesta origem
+    container.innerHTML = `<div class="machine-option" style="opacity:0.5;cursor:default;justify-content:center;font-size:14px;padding:20px;text-align:center;line-height:1.5">
+      Nenhum equipamento disponível<br>nesta origem
     </div>`;
     return;
   }
@@ -1598,12 +1639,12 @@ function renderHwPicker() {
   filtered.forEach(hw => {
     const div = document.createElement('div');
     div.className = `machine-option${selectedHwId === hw.id ? ' selected' : ''}`;
-    const pat = hw.patrimonio ? ` · Pat: ${hw.patrimonio}` : '';
+    const pat = hw.patrimonio ? ` · Patrimônio: ${hw.patrimonio}` : '';
     div.innerHTML = `
       <div class="hw-type-dot" style="background:${hwColors[hw.type]||'#888'};width:10px;height:10px;border-radius:50%;flex-shrink:0"></div>
       <div class="mo-info">
         <div class="mo-name">${hw.name}</div>
-        <div class="mo-id">S/N: ${hw.sn || '—'}${pat}</div>
+        <div class="mo-id">Nº Série: ${hw.sn || '—'}${pat}</div>
       </div>
       <div class="mo-check">${selectedHwId === hw.id ? '✓' : ''}</div>
     `;
@@ -1629,6 +1670,9 @@ function getMachineName(id) {
 }
 
 function submitRecord() {
+  const btn = document.getElementById('submitBtn');
+  if (btn.disabled) return;
+
   if (!currentAction) { showToast('err','⚠️','Selecione o tipo de serviço'); return; }
   if (!currentOrigin)  { showToast('err','⚠️','Selecione a origem do equipamento'); return; }
 
@@ -1671,7 +1715,8 @@ function submitRecord() {
 
   // Valida deslocamento quando necessário
   if (existingHwToDisplace.length > 0 && !displacementDest) {
-    showToast('err','⚠️','Informe o destino do equipamento atual na máquina'); return;
+    const nomes = existingHwToDisplace.map(h => h.name).join(', ');
+    showToast('err','⚠️',`Destino necessário para: ${nomes}`); return;
   }
 
   const techName = document.getElementById('techName').value.trim() || 'Técnico';
@@ -1697,6 +1742,9 @@ function submitRecord() {
     synced: false,
     createdAt: new Date().toISOString(),
   };
+
+  btn.disabled = true;
+  btn.innerHTML = '<span>⏳</span> Registrando...';
 
   saveRecordLocal(record);
   if (navigator.onLine) syncRecord(record);
@@ -1733,7 +1781,22 @@ function submitRecord() {
 function saveRecordLocal(record) {
   const records = getLocalRecords();
   records.unshift(record);
-  localStorage.setItem('fleetRegistros', JSON.stringify(records));
+  try {
+    localStorage.setItem('fleetRegistros', JSON.stringify(records));
+  } catch(e) {
+    if (e.name === 'QuotaExceededError') {
+      // Remove registros já sincronizados para liberar espaço
+      const trimmed = [record, ...records.filter(r => !r.synced && r.id !== record.id).slice(0, 499)];
+      try {
+        localStorage.setItem('fleetRegistros', JSON.stringify(trimmed));
+      } catch(e2) {
+        console.error('saveRecordLocal: armazenamento cheio mesmo após limpeza', e2);
+        showToast('err', '⚠️', 'Armazenamento cheio — sincronize os registros pendentes');
+      }
+    } else {
+      throw e;
+    }
+  }
   updatePendingBanner();
 }
 
@@ -1751,13 +1814,20 @@ function markSynced(id) {
 // ══════════════════════════════════════════
 // SYNC
 // ══════════════════════════════════════════
-async function syncRecord(record) {
+async function syncRecord(record, attempt = 1) {
+  const MAX_ATTEMPTS = 3;
   if (syncingIds.has(record.id)) return;
   syncingIds.add(record.id);
   try {
     await saveRecord(record);
     markSynced(record.id);
   } catch(e) {
+    console.error(`syncRecord tentativa ${attempt}/${MAX_ATTEMPTS} para ${record.id}:`, e);
+    if (attempt < MAX_ATTEMPTS) {
+      const delay = Math.min(2000 * attempt, 10000);
+      setTimeout(() => { syncingIds.delete(record.id); syncRecord(record, attempt + 1); }, delay);
+      return;
+    }
   } finally {
     syncingIds.delete(record.id);
   }
@@ -1778,7 +1848,9 @@ async function trySyncAll() {
       await saveRecord(r);
       markSynced(r.id);
       ok++;
-    } catch(e) {}
+    } catch(e) {
+      console.error('trySyncAll falha em', r.id, e);
+    }
   }
   setSyncState(navigator.onLine ? 'online' : 'offline');
   showToast('ok','✅', ok > 0 ? `${ok} registro(s) sincronizado(s)` : 'Nenhum sincronizado');
@@ -1813,8 +1885,10 @@ function updatePendingBanner() {
 // HISTORY
 // ══════════════════════════════════════════
 const actionLabels = {
-  instalar:'INSTALAÇÃO', estoque:'→ ESTOQUE', manutencao:'MANUTENÇÃO', inativo:'⛔ INATIVO',
-  install:'INSTALAÇÃO', remove:'→ ESTOQUE', transfer:'TRANSFERÊNCIA',
+  instalar:  'INSTALAÇÃO',
+  estoque:   'ENV. ESTOQUE',
+  manutencao:'ENV. MANUTENÇÃO',
+  inativo:   'INATIVADO',
 };
 
 function renderHistory() {
@@ -1913,8 +1987,13 @@ function resetForm() {
   gpsCoords = null;
 
   const now = new Date();
-  now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-  document.getElementById('serviceDateTime').value = now.toISOString().slice(0,16);
+  const pad = n => String(n).padStart(2,'0');
+  document.getElementById('serviceDateTime').value =
+    `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = false;
+  btn.innerHTML = '<span>⬆</span> Registrar Serviço';
 
   window.scrollTo(0,0);
 }
@@ -1929,7 +2008,7 @@ function showToast(type, icon, msg) {
   document.getElementById('toastMsg').textContent = msg;
   el.className = `toast ${type} show`;
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 3500);
 }
 </script>
 </body>

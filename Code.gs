@@ -12,8 +12,19 @@ const ABA_REGISTROS = 'registros';
 
 // ══════════════════════════════════════════════════════════════════
 // SETUP INICIAL — rode esta função UMA vez para criar as abas
+// ⚠️  ATENÇÃO: clearContents() apaga TODOS os dados existentes.
+//     Execute apenas na primeira configuração do sistema.
+//     Para recriar os dados demo, use setupPlanilhaDemoApenas().
 // ══════════════════════════════════════════════════════════════════
 function setupPlanilha() {
+  const ui = SpreadsheetApp.getUi();
+  const resp = ui.alert(
+    '⚠️ ATENÇÃO — Operação destrutiva',
+    'Esta função apaga TODOS os dados das abas maquinas, hardwares e registros e recria com dados iniciais.\n\nContinuar?',
+    ui.ButtonSet.OK_CANCEL
+  );
+  if (resp !== ui.Button.OK) { Logger.log('setupPlanilha cancelado pelo usuário'); return; }
+
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   function getOrCreate(nome) {
     return ss.getSheetByName(nome) || ss.insertSheet(nome);

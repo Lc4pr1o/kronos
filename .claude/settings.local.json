@@ -2,6 +2,7 @@
   "permissions": {
     "allow": [
       "mcp__claude_ai_Google_Drive__read_file_content",
+      "Bash(*)",
       "Bash(ipconfig)",
       "Bash(netstat -ano)",
       "Bash(netsh advfirewall *)",
@@ -9,7 +10,9 @@
       "Bash(git -C \"c:\\\\Users\\\\lmalerbo\\\\Documents\\\\GitHub\\\\kronos\" status)",
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "PowerShell(Get-ChildItem -Path \"c:\\\\Users\\\\lmalerbo\\\\Documents\\\\GitHub\\\\kronos\" -Force | Select-Object Name, @{Name=\"Type\";Expression={if\\($_.PSIsContainer\\){\"Directory\"}else{\"File\"}}} | Format-Table -AutoSize)",
+      "PowerShell(\\(Get-Content \"c:/Users/lmalerbo/Documents/GitHub/kronos/fleet-hardware.html\" | Measure-Object -Line\\).Lines; \\(Get-Content \"c:/Users/lmalerbo/Documents/GitHub/kronos/tecnico-campo.html\" | Measure-Object -Line\\).Lines; \\(Get-Content \"c:/Users/lmalerbo/Documents/GitHub/kronos/Code.gs\" | Measure-Object -Line\\).Lines)"
     ]
   }
 }
