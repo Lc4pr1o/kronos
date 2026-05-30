@@ -2627,7 +2627,7 @@ function renderMachineList() {
     const mList = groups[unidade];
     if (!mList) return;
     const totalHw = mList.reduce((s, m) => s + m.hardware.length, 0);
-    const isOpen = _unidadeExpanded[unidade] !== false; // aberto por padrão
+    const isOpen = _unidadeExpanded[unidade] === true; // retraído por padrão
 
     const group = document.createElement('div');
     group.className = 'unidade-group';
