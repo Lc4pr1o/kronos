@@ -1747,6 +1747,7 @@ function submitRecord() {
   btn.innerHTML = '<span>⏳</span> Registrando...';
 
   saveRecordLocal(record);
+  applyRecordLocally(record);
   if (navigator.onLine) syncRecord(record);
 
   // Registros de deslocamento do equipamento que já estava na máquina
@@ -1769,10 +1770,36 @@ function submitRecord() {
       createdAt: new Date().toISOString(),
     };
     saveRecordLocal(dispRecord);
+    applyRecordLocally(dispRecord);
     if (navigator.onLine) syncRecord(dispRecord);
   });
 
   showSuccess(record);
+}
+
+// ══════════════════════════════════════════
+// OPTIMISTIC LOCAL STATE
+// ══════════════════════════════════════════
+function applyRecordLocally(record) {
+  const destId = record.machineDestId || '';
+  const idx = hardwares.findIndex(h =>
+    (record.hwId        && h.id        === record.hwId) ||
+    (record.hwSn        && record.hwSn !== ''        && h.sn        === record.hwSn) ||
+    (record.hwPatrimonio && record.hwPatrimonio !== '' && h.patrimonio === record.hwPatrimonio)
+  );
+  if (idx >= 0) {
+    hardwares[idx] = { ...hardwares[idx], machine: destId };
+  } else if (record.hwName) {
+    // Hardware novo (origem 'novo') — adiciona para ser encontrado em registros subsequentes
+    hardwares.push({
+      id:         record.hwId         || `HW-${Date.now()}`,
+      name:       record.hwName       || '',
+      type:       record.hwType       || '',
+      sn:         record.hwSn         || '',
+      machine:    destId,
+      patrimonio: record.hwPatrimonio || '',
+    });
+  }
 }
 
 // ══════════════════════════════════════════
