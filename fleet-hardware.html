@@ -3218,7 +3218,7 @@ async function addHardware() {
   }
 
   const m = machines.find(x => x.id === targetMachineId);
-  const conflicting = m.hardware.find(h => h.type === type);
+  const conflicting = !DEST_TYPES.includes(m.type) && m.hardware.find(h => h.type === type);
   if (conflicting) {
     _pendingHwInstall = { type, pat, model, sn, manuf, targetMachineId, hwUniqueId };
     openHwConflictModal(conflicting, m);
