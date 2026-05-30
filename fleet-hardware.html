@@ -1551,8 +1551,8 @@
 
   <!-- Nav — centro (igual ao sistema de referência) -->
   <nav class="header-nav" role="navigation" aria-label="Navegação principal">
-    <button class="hnav-tab" id="tab-dashboard" onclick="switchView('dashboard')" aria-controls="view-dashboard">Dashboards</button>
-    <button class="hnav-tab active" id="tab-frota" onclick="switchView('frota')" aria-controls="view-frota">Frota</button>
+    <button class="hnav-tab active" id="tab-dashboard" onclick="switchView('dashboard')" aria-controls="view-dashboard">Dashboards</button>
+    <button class="hnav-tab" id="tab-frota" onclick="switchView('frota')" aria-controls="view-frota">Frota</button>
     <button class="hnav-tab" id="tab-consultas" onclick="switchView('consultas')" aria-controls="view-consultas">Consultas</button>
   </nav>
 
@@ -1570,12 +1570,12 @@
 </header>
 
 <!-- VIEW: DASHBOARD -->
-<div class="view" id="view-dashboard" role="region" aria-label="Dashboard">
+<div class="view active" id="view-dashboard" role="region" aria-label="Dashboard">
   <div id="dashboardContent"></div>
 </div>
 
 <!-- VIEW: FROTA (conteúdo original) -->
-<div class="view active" id="view-frota" role="region" aria-label="Gestão de Frota">
+<div class="view" id="view-frota" role="region" aria-label="Gestão de Frota">
 <div class="app">
   <!-- SIDEBAR -->
   <aside class="sidebar">
@@ -3561,7 +3561,7 @@ loadFromSheets();
 // =========================================
 // VIEWS — navegação entre Dashboard / Frota / Consultas
 // =========================================
-let _currentView = 'frota';
+let _currentView = 'dashboard';
 
 function switchView(view) {
   _currentView = view;
@@ -4045,12 +4045,13 @@ function goToHw(machineId, hwId) {
   selectMachine(machineId);
   // Duplo requestAnimationFrame garante que o DOM do detalhe foi renderizado antes de scrollar
   requestAnimationFrame(() => requestAnimationFrame(() => {
+    document.querySelectorAll('.hw-card.selected-hw').forEach(c => c.classList.remove('selected-hw'));
     const card = document.querySelector(`[data-hw-id="${hwId}"]`);
     if (!card) return;
     card.scrollIntoView({ behavior: 'smooth', block: 'center' });
     card.classList.remove('search-found');
     void card.offsetWidth; // força reinício da animação CSS
-    card.classList.add('search-found');
+    card.classList.add('search-found', 'selected-hw');
   }));
 }
 
