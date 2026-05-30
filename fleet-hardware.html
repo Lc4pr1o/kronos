@@ -1404,72 +1404,82 @@
      CONSULTAS
   ══════════════════════════════════════ */
   #view-consultas {
-    grid-template-columns: 280px 1fr;
     overflow: hidden;
-  }
-  #view-consultas.active { display: grid; }
-
-  .consultas-filters {
-    border-right: 1px solid var(--border);
-    padding: 24px 20px;
-    overflow-y: auto;
-    display: flex;
     flex-direction: column;
-    gap: 20px;
   }
-
-  .filter-section-title {
-    font-size: 9px; font-weight: 700; letter-spacing: 2px; color: var(--text3);
-    margin-bottom: 10px;
-  }
-
-  .filter-chip-group { display: flex; flex-direction: column; gap: 6px; }
-
-  .filter-check-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 8px 10px;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: background 0.15s;
-    font-size: 12px;
-    color: var(--text2);
-    user-select: none;
-  }
-  .filter-check-item:hover { background: var(--surface2); color: var(--text); }
-  .filter-check-item input[type="checkbox"] {
-    width: 14px; height: 14px;
-    accent-color: var(--accent);
-  }
-
-  .filter-count {
-    margin-left: auto;
-    font-size: 10px;
-    font-family: 'JetBrains Mono', monospace;
-    color: var(--text3);
-  }
-
-  .consultas-results {
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
+  #view-consultas.active { display: flex; }
 
   .consultas-toolbar {
-    padding: 16px 24px;
+    padding: 14px 24px;
     border-bottom: 1px solid var(--border);
     display: flex;
-    align-items: center;
-    gap: 16px;
+    flex-direction: column;
+    gap: 10px;
     flex-shrink: 0;
   }
+
+  .consultas-toolbar-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* Filtros dropdown */
+  .filter-dropdown { position: relative; }
+
+  .filter-btn {
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 12px;
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text3);
+    font-size: 10px; font-weight: 700; letter-spacing: 1px;
+    font-family: 'JetBrains Mono', monospace;
+    cursor: pointer; white-space: nowrap;
+    transition: all 0.15s;
+  }
+  .filter-btn:hover { border-color: var(--border2); color: var(--text2); }
+  .filter-btn.has-active { border-color: var(--accent); color: var(--accent); background: rgba(245,166,35,0.06); }
+
+  .fbd-count {
+    background: var(--accent); color: #000;
+    font-size: 9px; font-weight: 800;
+    padding: 1px 5px; border-radius: 10px;
+    display: none;
+  }
+  .filter-btn.has-active .fbd-count { display: inline; }
+
+  .filter-dropdown-panel {
+    display: none;
+    position: absolute;
+    top: calc(100% + 6px); left: 0;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 10px;
+    padding: 6px;
+    z-index: 200;
+    min-width: 170px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  }
+  .filter-dropdown-panel.open { display: block; }
+
+  .fdp-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 10px;
+    border-radius: 6px;
+    cursor: pointer; font-size: 12px; color: var(--text2);
+    transition: background 0.12s; user-select: none;
+  }
+  .fdp-item:hover { background: var(--surface3); color: var(--text); }
+  .fdp-item input[type="checkbox"] { width: 13px; height: 13px; accent-color: var(--accent); flex-shrink: 0; }
 
   .consultas-count {
     font-size: 11px;
     font-family: 'JetBrains Mono', monospace;
     color: var(--text3);
     margin-left: auto;
+    white-space: nowrap;
   }
 
   .consultas-table-wrap { flex: 1; overflow-y: auto; }
@@ -1633,55 +1643,70 @@
 
 <!-- VIEW: CONSULTAS -->
 <div class="view" id="view-consultas" role="region" aria-label="Consultas">
-  <aside class="consultas-filters">
-    <div>
-      <div class="filter-section-title">TIPO DE MÁQUINA</div>
-      <div class="filter-chip-group" id="filt-maq-tipos"></div>
-    </div>
-    <div>
-      <div class="filter-section-title">TIPO DE HARDWARE</div>
-      <div class="filter-chip-group" id="filt-hw-tipos"></div>
-    </div>
-    <div>
-      <div class="filter-section-title">UNIDADE</div>
-      <div class="filter-chip-group" id="filt-unidades">
-        <label class="filter-check-item"><input type="checkbox" value="PEDRA" onchange="renderConsultas()"> PEDRA <span class="filter-count" id="fc-PEDRA"></span></label>
-        <label class="filter-check-item"><input type="checkbox" value="CEDRO" onchange="renderConsultas()"> CEDRO <span class="filter-count" id="fc-CEDRO"></span></label>
-        <label class="filter-check-item"><input type="checkbox" value="BURITI" onchange="renderConsultas()"> BURITI <span class="filter-count" id="fc-BURITI"></span></label>
-        <label class="filter-check-item"><input type="checkbox" value="IPÊ" onchange="renderConsultas()"> IPÊ <span class="filter-count" id="fc-IPÊ"></span></label>
-        <label class="filter-check-item"><input type="checkbox" value="PEDRA/LOCAÇÃO" onchange="renderConsultas()"> PEDRA/LOCAÇÃO <span class="filter-count" id="fc-PEDRA/LOCAÇÃO"></span></label>
-      </div>
-    </div>
-    <div>
-      <div class="filter-section-title">SITUAÇÃO</div>
-      <div class="filter-chip-group" id="filt-situacao">
-        <label class="filter-check-item"><input type="checkbox" value="campo"     onchange="renderConsultas()"> 🚜 Em Campo</label>
-        <label class="filter-check-item"><input type="checkbox" value="estoque"   onchange="renderConsultas()"> 📦 Estoque</label>
-        <label class="filter-check-item"><input type="checkbox" value="manutencao" onchange="renderConsultas()"> 🔧 Manutenção</label>
-        <label class="filter-check-item"><input type="checkbox" value="inativo"   onchange="renderConsultas()"> ⛔ Inativo</label>
-      </div>
-    </div>
-    <div style="margin-top:auto;padding-top:16px;border-top:1px solid var(--border)">
-      <button class="btn btn-ghost" style="width:100%;font-size:11px" onclick="resetConsultaFilters()">↺ Limpar filtros</button>
-    </div>
-  </aside>
 
-  <div class="consultas-results">
-    <div class="consultas-toolbar" style="flex-direction:column;align-items:stretch;gap:12px;padding:16px 24px 12px">
-      <div style="font-size:9px;font-weight:700;letter-spacing:2.5px;color:var(--text3)">BUSCA AVANÇADA</div>
-      <div style="display:flex;align-items:center;gap:16px">
-        <div class="search-box" style="flex:1">
-          <span class="search-icon" aria-hidden="true">🔍</span>
-          <input type="text" id="consultaSearch" placeholder="Buscar por nome, modelo, S/N, patrimônio, ID da máquina..." autocomplete="off" oninput="renderConsultas()">
+  <div class="consultas-toolbar">
+    <!-- Linha 1: label -->
+    <div style="font-size:9px;font-weight:700;letter-spacing:2.5px;color:var(--text3)">BUSCA AVANÇADA</div>
+
+    <!-- Linha 2: busca + filtros + count -->
+    <div class="consultas-toolbar-row">
+      <div class="search-box" style="flex:1;max-width:420px">
+        <span class="search-icon" aria-hidden="true">🔍</span>
+        <input type="text" id="consultaSearch" placeholder="Nome, modelo, S/N, patrimônio..." autocomplete="off" oninput="renderConsultas()">
+      </div>
+
+      <!-- Filtro: Situação -->
+      <div class="filter-dropdown" id="fd-situacao">
+        <button class="filter-btn" id="fb-situacao" onclick="toggleFD('situacao')">
+          SITUAÇÃO <span class="fbd-count" id="fbc-situacao"></span> ▾
+        </button>
+        <div class="filter-dropdown-panel" id="fdp-situacao">
+          <label class="fdp-item"><input type="checkbox" value="campo"      onchange="onFiltChange()"> 🚜 Em Campo</label>
+          <label class="fdp-item"><input type="checkbox" value="estoque"    onchange="onFiltChange()"> 📦 Estoque</label>
+          <label class="fdp-item"><input type="checkbox" value="manutencao" onchange="onFiltChange()"> 🔧 Manutenção</label>
+          <label class="fdp-item"><input type="checkbox" value="inativo"    onchange="onFiltChange()"> ⛔ Inativo</label>
         </div>
-        <span class="consultas-count" id="consultasCount">— resultados</span>
       </div>
+
+      <!-- Filtro: Tipo HW (populado por JS) -->
+      <div class="filter-dropdown" id="fd-hw">
+        <button class="filter-btn" id="fb-hw" onclick="toggleFD('hw')">
+          TIPO HW <span class="fbd-count" id="fbc-hw"></span> ▾
+        </button>
+        <div class="filter-dropdown-panel" id="fdp-hw" id="filt-hw-tipos"></div>
+      </div>
+
+      <!-- Filtro: Tipo Máquina (populado por JS) -->
+      <div class="filter-dropdown" id="fd-maq">
+        <button class="filter-btn" id="fb-maq" onclick="toggleFD('maq')">
+          MÁQUINA <span class="fbd-count" id="fbc-maq"></span> ▾
+        </button>
+        <div class="filter-dropdown-panel" id="fdp-maq" id="filt-maq-tipos"></div>
+      </div>
+
+      <!-- Filtro: Unidade -->
+      <div class="filter-dropdown" id="fd-unidade">
+        <button class="filter-btn" id="fb-unidade" onclick="toggleFD('unidade')">
+          UNIDADE <span class="fbd-count" id="fbc-unidade"></span> ▾
+        </button>
+        <div class="filter-dropdown-panel" id="fdp-unidade">
+          <label class="fdp-item"><input type="checkbox" value="PEDRA"         onchange="onFiltChange()"> PEDRA</label>
+          <label class="fdp-item"><input type="checkbox" value="CEDRO"         onchange="onFiltChange()"> CEDRO</label>
+          <label class="fdp-item"><input type="checkbox" value="BURITI"        onchange="onFiltChange()"> BURITI</label>
+          <label class="fdp-item"><input type="checkbox" value="IPÊ"           onchange="onFiltChange()"> IPÊ</label>
+          <label class="fdp-item"><input type="checkbox" value="PEDRA/LOCAÇÃO" onchange="onFiltChange()"> PEDRA/LOC.</label>
+        </div>
+      </div>
+
+      <button class="btn btn-ghost" style="font-size:10px;padding:6px 12px" onclick="resetConsultaFilters()">↺ Limpar</button>
+      <span class="consultas-count" id="consultasCount"></span>
     </div>
-    <div class="consultas-table-wrap" id="consultasTableWrap">
-      <div class="consultas-empty">
-        <div class="consultas-empty-icon">🔍</div>
-        <div class="consultas-empty-text">Aplique filtros ou busque por um equipamento</div>
-      </div>
+  </div>
+
+  <div class="consultas-table-wrap" id="consultasTableWrap" style="flex:1;overflow-y:auto">
+    <div class="consultas-empty">
+      <div class="consultas-empty-icon">🔍</div>
+      <div class="consultas-empty-text">Busque ou aplique um filtro para ver os resultados</div>
     </div>
   </div>
 </div>
@@ -3837,43 +3862,73 @@ function initConsultas() {
   renderConsultas();
 }
 
+function toggleFD(id) {
+  const panel = document.getElementById(`fdp-${id}`);
+  const isOpen = panel.classList.contains('open');
+  document.querySelectorAll('.filter-dropdown-panel').forEach(p => p.classList.remove('open'));
+  if (!isOpen) panel.classList.add('open');
+}
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('.filter-dropdown')) {
+    document.querySelectorAll('.filter-dropdown-panel').forEach(p => p.classList.remove('open'));
+  }
+});
+
+function onFiltChange() {
+  updateFiltBadges();
+  renderConsultas();
+}
+
+function updateFiltBadges() {
+  const groups = {
+    situacao: '#fdp-situacao',
+    hw:       '#fdp-hw',
+    maq:      '#fdp-maq',
+    unidade:  '#fdp-unidade',
+  };
+  Object.entries(groups).forEach(([key, sel]) => {
+    const n = document.querySelectorAll(`${sel} input:checked`).length;
+    const badge = document.getElementById(`fbc-${key}`);
+    const btn   = document.getElementById(`fb-${key}`);
+    if (badge) badge.textContent = n;
+    if (btn)   btn.classList.toggle('has-active', n > 0);
+  });
+}
+
 function buildConsultaFilters() {
-  // Tipos de máquina
-  const maqEl = document.getElementById('filt-maq-tipos');
+  // Tipos de máquina → dropdown fdp-maq
+  const maqEl = document.getElementById('fdp-maq');
   if (maqEl && !maqEl.dataset.built) {
     maqEl.dataset.built = '1';
     const tipos = [...new Set(machines.filter(m => !DEST_TYPES.includes(m.type)).map(m => m.type))];
     maqEl.innerHTML = tipos.map(t => {
       const cfg = machineConfig[t] || { label: t, emoji: '🚛' };
-      return `<label class="filter-check-item">
-        <input type="checkbox" value="${t}" data-group="maq" onchange="renderConsultas()">
+      return `<label class="fdp-item">
+        <input type="checkbox" value="${t}" onchange="onFiltChange()">
         ${cfg.emoji} ${cfg.label}
-        <span class="filter-count" id="fmc-${t}"></span>
       </label>`;
     }).join('');
   }
 
-  // Tipos de hardware
-  const hwEl = document.getElementById('filt-hw-tipos');
+  // Tipos de hardware → dropdown fdp-hw
+  const hwEl = document.getElementById('fdp-hw');
   if (hwEl && !hwEl.dataset.built) {
     hwEl.dataset.built = '1';
-    const tipos = Object.keys(hwConfig);
-    hwEl.innerHTML = tipos.map(t => {
-      const cfg = hwConfig[t];
-      return `<label class="filter-check-item">
-        <input type="checkbox" value="${t}" data-group="hw" onchange="renderConsultas()">
+    hwEl.innerHTML = Object.entries(hwConfig).map(([t, cfg]) =>
+      `<label class="fdp-item">
+        <input type="checkbox" value="${t}" onchange="onFiltChange()">
         ${cfg.emoji} ${cfg.label}
-        <span class="filter-count" id="fhc-${t}"></span>
-      </label>`;
-    }).join('');
+      </label>`
+    ).join('');
   }
 }
 
 function getConsultaRows() {
-  const checkedMaq = [...document.querySelectorAll('#filt-maq-tipos input:checked')].map(i => i.value);
-  const checkedHw  = [...document.querySelectorAll('#filt-hw-tipos input:checked')].map(i => i.value);
-  const checkedUnd = [...document.querySelectorAll('#filt-unidades input:checked')].map(i => i.value);
-  const checkedSit = [...document.querySelectorAll('#filt-situacao input:checked')].map(i => i.value);
+  const checkedMaq = [...document.querySelectorAll('#fdp-maq input:checked')].map(i => i.value);
+  const checkedHw  = [...document.querySelectorAll('#fdp-hw input:checked')].map(i => i.value);
+  const checkedUnd = [...document.querySelectorAll('#fdp-unidade input:checked')].map(i => i.value);
+  const checkedSit = [...document.querySelectorAll('#fdp-situacao input:checked')].map(i => i.value);
   const term = (document.getElementById('consultaSearch')?.value || '').toLowerCase().trim();
 
   const rows = [];
@@ -3993,10 +4048,11 @@ function sortConsultas(col) {
 }
 
 function resetConsultaFilters() {
-  document.querySelectorAll('#filt-maq-tipos input, #filt-hw-tipos input, #filt-unidades input')
+  document.querySelectorAll('#fdp-maq input, #fdp-hw input, #fdp-unidade input, #fdp-situacao input')
     .forEach(cb => { cb.checked = false; });
   const s = document.getElementById('consultaSearch');
   if (s) s.value = '';
+  updateFiltBadges();
   renderConsultas();
 }
 </script>
