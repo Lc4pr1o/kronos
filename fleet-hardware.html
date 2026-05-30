@@ -43,14 +43,49 @@
 
   /* HEADER */
   header {
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
     align-items: center;
-    justify-content: space-between;
-    padding: 18px 32px;
+    padding: 0 28px;
     border-bottom: 1px solid var(--border);
     background: var(--surface);
     flex-shrink: 0;
     z-index: 100;
+    height: 60px;
+  }
+
+  .header-nav {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .hnav-tab {
+    padding: 7px 20px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    color: var(--text3);
+    background: none;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.18s;
+  }
+  .hnav-tab:hover { color: var(--text2); border-color: var(--border2); }
+  .hnav-tab.active {
+    color: var(--accent);
+    border-color: var(--accent);
+    background: rgba(245,166,35,0.08);
+  }
+
+  .header-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    justify-content: flex-end;
   }
 
   .logo {
@@ -1104,39 +1139,7 @@
   .connection-pill.loading { border-color: rgba(245,166,35,0.4); }
   .connection-pill:hover { border-color: var(--accent); color: var(--accent); }
 
-  /* ══════════════════════════════════════
-     VIEW NAV
-  ══════════════════════════════════════ */
-  .view-nav {
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: stretch;
-    padding: 0 28px;
-    gap: 0;
-    flex-shrink: 0;
-    z-index: 90;
-  }
-
-  .view-tab {
-    padding: 14px 22px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 1.5px;
-    color: var(--text3);
-    background: none;
-    border: none;
-    border-bottom: 2px solid transparent;
-    cursor: pointer;
-    transition: all 0.18s;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: -1px;
-  }
-  .view-tab:hover { color: var(--text2); }
-  .view-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  /* ── view-nav removido: nav está agora dentro do header ── */
 
   /* ══════════════════════════════════════
      VIEW WRAPPERS
@@ -1404,11 +1407,24 @@
 
 <!-- HEADER -->
 <header>
+  <!-- Logo — esquerda -->
   <div class="logo">
     <div class="logo-icon">⚙️</div>
-    <div class="logo-text">KRO<span>NOS</span></div>
+    <div>
+      <div class="logo-text">KRO<span>NOS</span></div>
+      <div style="font-size:9px;letter-spacing:2px;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-top:2px">GESTÃO DE HARDWARE</div>
+    </div>
   </div>
-  <div class="header-stats">
+
+  <!-- Nav — centro (igual ao sistema de referência) -->
+  <nav class="header-nav" role="navigation" aria-label="Navegação principal">
+    <button class="hnav-tab" id="tab-dashboard" onclick="switchView('dashboard')" aria-controls="view-dashboard">Dashboards</button>
+    <button class="hnav-tab active" id="tab-frota" onclick="switchView('frota')" aria-controls="view-frota">Frota</button>
+    <button class="hnav-tab" id="tab-consultas" onclick="switchView('consultas')" aria-controls="view-consultas">Consultas</button>
+  </nav>
+
+  <!-- Ações — direita -->
+  <div class="header-actions">
     <div class="stat-pill"><div class="stat-dot green"></div><span id="stat-machines">0 Máquinas</span></div>
     <div class="stat-pill"><div class="stat-dot orange"></div><span id="stat-hw">0 Hardwares</span></div>
     <div class="stat-pill connection-pill" id="connectionPill" style="cursor:pointer" onclick="loadFromSheets()" title="Clique para atualizar">
@@ -1421,13 +1437,6 @@
     </div>
   </div>
 </header>
-
-<!-- NAV DE VIEWS -->
-<nav class="view-nav" role="navigation" aria-label="Navegação principal">
-  <button class="view-tab" id="tab-dashboard" onclick="switchView('dashboard')" aria-controls="view-dashboard">📊 Dashboard</button>
-  <button class="view-tab active" id="tab-frota" onclick="switchView('frota')" aria-controls="view-frota">🚛 Frota</button>
-  <button class="view-tab" id="tab-consultas" onclick="switchView('consultas')" aria-controls="view-consultas">🔍 Consultas</button>
-</nav>
 
 <!-- VIEW: DASHBOARD -->
 <div class="view" id="view-dashboard" role="region" aria-label="Dashboard">
@@ -3393,7 +3402,7 @@ let _currentView = 'frota';
 function switchView(view) {
   _currentView = view;
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-  document.querySelectorAll('.view-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.hnav-tab').forEach(t => t.classList.remove('active'));
   document.getElementById(`view-${view}`).classList.add('active');
   document.getElementById(`tab-${view}`).classList.add('active');
 
@@ -3431,33 +3440,53 @@ function getDashboardData() {
 function renderDashboard() {
   const d = getDashboardData();
   const el = document.getElementById('dashboardContent');
-  el.className = '';
   el.style.cssText = 'display:contents';
 
-  // ── KPI row ──
+  const now = new Date();
+  const updated = now.toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+
+  const totalHw = d.allHw.length || 1;
+  const pctCampo = Math.round(d.hwCampo.length / totalHw * 100);
+
   const kpis = [
-    { label: 'MÁQUINAS', value: d.realMachines.length, sub: 'na frota', color: 'var(--accent)' },
-    { label: 'HARDWARES', value: d.allHw.length, sub: 'cadastrados', color: 'var(--blue)' },
-    { label: 'EM CAMPO', value: d.hwCampo.length, sub: 'instalados', color: 'var(--green)' },
-    { label: 'EM MANUTENÇÃO', value: d.hwManutencao.length, sub: 'aguardando', color: 'var(--red)' },
-    { label: 'NO ESTOQUE', value: d.hwEstoque.length, sub: 'disponíveis', color: 'var(--blue)' },
-    { label: 'INATIVOS', value: d.hwInativo.length, sub: 'desativados', color: 'var(--text3)' },
+    { label: 'TOTAL MÁQUINAS',  value: d.realMachines.length, sub: 'na frota',      color: 'var(--accent)' },
+    { label: 'TOTAL HARDWARES', value: d.allHw.length,        sub: 'cadastrados',   color: 'var(--blue)' },
+    { label: 'EM CAMPO',        value: d.hwCampo.length,      sub: `${pctCampo}% do total`, color: 'var(--green)' },
+    { label: 'EM MANUTENÇÃO',   value: d.hwManutencao.length, sub: 'aguardando',    color: 'var(--red)' },
+    { label: 'NO ESTOQUE',      value: d.hwEstoque.length,    sub: 'disponíveis',   color: 'var(--blue)' },
+    { label: 'INATIVOS',        value: d.hwInativo.length,    sub: 'desativados',   color: 'var(--text3)' },
   ];
 
   el.innerHTML = `
-    <div>
-      <div class="dash-section-title">VISÃO GERAL</div>
-      <div class="kpi-row">
-        ${kpis.map(k => `
-          <div class="kpi-card" style="--kpi-accent:${k.color}">
-            <div class="kpi-label">${k.label}</div>
-            <div class="kpi-value">${k.value}</div>
-            <div class="kpi-sub">${k.sub}</div>
-          </div>
-        `).join('')}
+    <!-- Título + timestamp -->
+    <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:24px">
+      <div style="font-size:13px;font-weight:700;letter-spacing:2px;color:var(--text2)">PAINEL DE CONTROLE — KRONOS</div>
+      <div style="font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace">Atualizado em ${updated}</div>
+    </div>
+
+    <!-- KPI cards -->
+    <div class="kpi-row">
+      ${kpis.map(k => `
+        <div class="kpi-card" style="--kpi-accent:${k.color}">
+          <div class="kpi-label">${k.label}</div>
+          <div class="kpi-value">${k.value.toLocaleString('pt-BR')}</div>
+          <div class="kpi-sub">${k.sub}</div>
+        </div>
+      `).join('')}
+    </div>
+
+    <!-- Barra de progresso — % em campo -->
+    <div style="margin-top:4px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div style="font-size:9px;font-weight:700;letter-spacing:2px;color:var(--text3)">COBERTURA DE CAMPO</div>
+        <div style="font-size:12px;font-weight:700;color:var(--green);font-family:'JetBrains Mono',monospace">${pctCampo}%</div>
+      </div>
+      <div style="height:6px;background:var(--surface3);border-radius:4px;overflow:hidden">
+        <div style="height:100%;width:${pctCampo}%;background:var(--green);border-radius:4px;transition:width 0.6s ease"></div>
       </div>
     </div>
 
+    <!-- Gráficos: 2 colunas -->
     <div class="charts-row">
       <div class="chart-card">
         <div class="chart-card-title">HARDWARES POR SITUAÇÃO</div>
@@ -3468,17 +3497,18 @@ function renderDashboard() {
       </div>
       <div class="chart-card">
         <div class="chart-card-title">HARDWARES POR TIPO</div>
-        <canvas id="barsCanvas" width="600" height="220" style="width:100%;height:220px"></canvas>
+        <canvas id="barsCanvas" width="600" height="200" style="width:100%;height:200px"></canvas>
       </div>
     </div>
 
-    <div class="dash-bottom-row">
+    <!-- Tabelas: 2 colunas -->
+    <div class="dash-bottom-row" style="margin-bottom:8px">
       <div class="table-card">
-        <div class="chart-card-title">HARDWARES POR UNIDADE</div>
+        <div class="chart-card-title">DISTRIBUIÇÃO POR UNIDADE</div>
         <table class="mini-table" id="unidadeTable"></table>
       </div>
       <div class="table-card">
-        <div class="chart-card-title">TIPOS MAIS COMUNS</div>
+        <div class="chart-card-title">TIPOS MAIS FREQUENTES</div>
         <table class="mini-table" id="tiposTable"></table>
       </div>
     </div>
