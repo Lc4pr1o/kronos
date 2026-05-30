@@ -726,6 +726,13 @@
 
   .hw-card:hover { border-color: var(--border2); cursor: pointer; }
 
+  @keyframes hwPulse {
+    0%   { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(245,166,35,.35); }
+    60%  { border-color: var(--accent); box-shadow: 0 0 0 6px rgba(245,166,35,.1); }
+    100% { border-color: var(--border); box-shadow: none; }
+  }
+  .hw-card.search-found { animation: hwPulse 1.8s ease forwards; }
+
   .hw-mini-btn {
     width: 26px;
     height: 26px;
@@ -2237,6 +2244,7 @@ function renderDetail(id) {
       const badgeStyle = `background:${hcfg.color}22;color:${hcfg.color};border:1px solid ${hcfg.color}55;font-size:10px;font-weight:700;letter-spacing:1px;padding:3px 8px;border-radius:6px`;
       const card = document.createElement('div');
       card.className = 'hw-card animate-in';
+      card.dataset.hwId = hw.id;
       card.title = 'Clique duplo para ver detalhes';
       card.ondblclick = () => showHwDetail(m.id, hw.id);
       card.innerHTML = `
@@ -2375,7 +2383,8 @@ function showSearchResults(term) {
       const hwName = String(hw.name ?? '');
       const hwId   = String(hw.id   ?? '');
       if (hwName.toLowerCase().includes(t) || hwId.toLowerCase().includes(t) ||
-          (hw.sn||'').toLowerCase().includes(t) || (hw.manufacturer||'').toLowerCase().includes(t)) {
+          (hw.sn||'').toLowerCase().includes(t) || (hw.manufacturer||'').toLowerCase().includes(t) ||
+          (hw.patrimony||'').toLowerCase().includes(t)) {
         results.push({ kind: 'hw', machine: m, hw });
       }
     });
@@ -2399,13 +2408,27 @@ function showSearchResults(term) {
         `;
         item.onclick = () => { selectMachine(r.machine.id); };
       } else {
-        const hcfg = hwConfig[r.hw.type];
+        const hcfg = hwConfig[r.hw.type] || { emoji: '❓', label: r.hw.type };
+        const mcfg = machineConfig[r.machine.type] || { emoji: '🚛' };
+        const patDetail = r.hw.patrimony ? ` · Pat: ${highlight(r.hw.patrimony, term)}` : '';
         item.innerHTML = `
-          <div class="sri-type">${hcfg.emoji} ${hcfg.label} em ${machineConfig[r.machine.type].emoji} ${r.machine.id}</div>
+          <div class="sri-type">${hcfg.emoji} ${hcfg.label} em ${mcfg.emoji} ${r.machine.name}</div>
           <div class="sri-name">${highlight(r.hw.name, term)}</div>
-          <div class="sri-detail">${highlight(r.hw.id, term)} · S/N: ${highlight(r.hw.sn||'—', term)}</div>
+          <div class="sri-detail">S/N: ${highlight(r.hw.sn||'—', term)}${patDetail}</div>
         `;
-        item.onclick = () => { selectMachine(r.machine.id); };
+        item.onclick = () => {
+          selectMachine(r.machine.id);
+          // Rola e destaca o card após renderizar
+          requestAnimationFrame(() => {
+            const card = document.querySelector(`[data-hw-id="${r.hw.id}"]`);
+            if (card) {
+              card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              card.classList.remove('search-found');
+              void card.offsetWidth; // força reinício da animação
+              card.classList.add('search-found');
+            }
+          });
+        };
       }
       container.appendChild(item);
     });
