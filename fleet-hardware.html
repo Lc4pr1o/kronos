@@ -2062,6 +2062,33 @@
   </div>
 </div>
 
+<!-- HW CONFLICT RESOLUTION -->
+<div class="modal-overlay" id="hwConflictModal">
+  <div class="modal" style="max-width:460px" role="dialog" aria-modal="true">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">⚠️ Conflito de Tipo</div>
+        <div class="modal-sub" id="hwConflictSub">—</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('hwConflictModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:12px;color:var(--text2);margin-bottom:12px">Esta máquina já possui um equipamento deste tipo. Indique para onde vai o equipamento atual antes de instalar o novo.</div>
+      <div id="hwConflictInfo"></div>
+      <div class="form-group" style="margin-top:16px">
+        <label class="form-label">PARA ONDE VAI ESSE EQUIPAMENTO? <span class="req">*</span></label>
+        <select class="form-select" id="hwConflictDest">
+          <option value="" disabled selected hidden>— Selecione o destino —</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('hwConflictModal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmHwConflict()">Confirmar e Instalar</button>
+    </div>
+  </div>
+</div>
+
 <!-- HW DETAIL MODAL -->
 <div class="modal-overlay" id="hwDetailModal">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="hwDetailTitle">
@@ -2134,6 +2161,7 @@ let transferHwId = null;
 let transferSourceMachineId = null;
 let transferTargetMachineId = null;
 let isLoadingData = false;
+let _pendingHwInstall = null;
 
 // =========================================
 // LOAD DATA FROM SHEETS
@@ -3189,10 +3217,17 @@ async function addHardware() {
     return;
   }
 
+  const m = machines.find(x => x.id === targetMachineId);
+  const conflicting = m.hardware.find(h => h.type === type);
+  if (conflicting) {
+    _pendingHwInstall = { type, pat, model, sn, manuf, targetMachineId, hwUniqueId };
+    openHwConflictModal(conflicting, m);
+    return;
+  }
+
   const btn = document.getElementById('addHwBtn');
   btn.disabled = true; btn.textContent = 'Instalando...';
 
-  const m = machines.find(x => x.id === targetMachineId);
   const newHw = { id: hwUniqueId, name: model, type, sn, manufacturer: manuf, patrimony: pat, installedAt: localDateStr() };
   m.hardware.push(newHw);
 
@@ -3431,6 +3466,114 @@ async function confirmTransfer() {
     backup.forEach(m => machines.push(m));
     renderAll();
     showToast('error', '❌', 'Falha na transferência', 'Alteração desfeita — sem conexão');
+  }
+}
+
+// =========================================
+// HW CONFLICT RESOLUTION
+// =========================================
+function openHwConflictModal(existingHw, machine) {
+  const hcfg = hwConfig[existingHw.type] || { label: existingHw.type, color: '#888', emoji: '' };
+  const badgeStyle = `background:${hcfg.color}22;color:${hcfg.color};border:1px solid ${hcfg.color}55;font-size:10px;font-weight:700;letter-spacing:1px;padding:3px 8px;border-radius:6px`;
+
+  document.getElementById('hwConflictSub').textContent =
+    `Já existe um ${hcfg.label} instalado em ${machine.name}`;
+
+  document.getElementById('hwConflictInfo').innerHTML = `
+    <div style="background:var(--surface2);border:1px solid var(--border2);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:8px">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="${badgeStyle}">${hcfg.label}</span>
+        <span style="font-weight:700;color:var(--text);font-size:14px">${existingHw.name}</span>
+      </div>
+      ${existingHw.sn ? `<div style="font-size:12px;color:var(--text2)">Nº Série: <span style="font-family:'JetBrains Mono',monospace;color:var(--text);font-weight:600">${existingHw.sn}</span></div>` : ''}
+      ${existingHw.patrimony ? `<div style="font-size:12px;color:var(--text2)">Patrimônio: <span style="font-family:'JetBrains Mono',monospace;color:var(--text);font-weight:600">${existingHw.patrimony}</span></div>` : ''}
+    </div>`;
+
+  const sel = document.getElementById('hwConflictDest');
+  sel.innerHTML = '<option value="" disabled selected hidden>— Selecione o destino —</option>';
+  machines.filter(m => DEST_TYPES.includes(m.type)).forEach(dest => {
+    const cfg = machineConfig[dest.type] || { emoji: '📦', label: dest.type };
+    const opt = document.createElement('option');
+    opt.value = dest.id;
+    opt.textContent = `${cfg.emoji} ${cfg.label}`;
+    sel.appendChild(opt);
+  });
+
+  closeModal('addHwModal');
+  openModal('hwConflictModal');
+}
+
+async function confirmHwConflict() {
+  const destId = document.getElementById('hwConflictDest').value;
+  if (!destId) {
+    markFieldError('hwConflictDest');
+    showToast('warning', '⚠️', 'Campo obrigatório', 'Selecione o destino');
+    return;
+  }
+
+  const { type, pat, model, sn, manuf, targetMachineId, hwUniqueId } = _pendingHwInstall;
+  const m    = machines.find(x => x.id === targetMachineId);
+  const dest = machines.find(x => x.id === destId);
+  const conflicting = m.hardware.find(h => h.type === type);
+
+  const backup = machines.map(b => ({ ...b, hardware: [...b.hardware] }));
+
+  m.hardware = m.hardware.filter(h => h.id !== conflicting.id);
+  dest.hardware.push(conflicting);
+
+  const newHw = { id: hwUniqueId, name: model, type, sn, manufacturer: manuf, patrimony: pat, installedAt: localDateStr() };
+  m.hardware.push(newHw);
+
+  closeModal('hwConflictModal');
+  _pendingHwInstall = null;
+  renderAll();
+  showToast('success', '✅', 'Hardware instalado', `${model} em ${m.name} · ${conflicting.name} → ${dest.name}`);
+
+  try {
+    await saveRecord({
+      id: `REG-${Date.now()}`,
+      action: 'transferir',
+      techName: 'Analista',
+      machineId: targetMachineId,
+      machineName: m.name,
+      machineDestId: destId,
+      machineDestName: dest.name,
+      hwId: conflicting.id,
+      hwSn: conflicting.sn,
+      hwName: conflicting.name,
+      hwType: conflicting.type,
+      hwModelo: conflicting.name,
+      hwPatrimonio: conflicting.patrimony,
+      hwManuf: conflicting.manufacturer,
+      gpsLat: '', gpsLng: '', gpsAcc: '',
+      dateTime: new Date().toISOString().slice(0, 16),
+      notes: 'Desinstalado por conflito de tipo',
+    });
+    await saveRecord({
+      id: `REG-${Date.now() + 1}`,
+      action: 'instalar',
+      techName: 'Analista',
+      machineId: '',
+      machineName: '',
+      machineDestId: targetMachineId,
+      machineDestName: m.name,
+      hwId: hwUniqueId,
+      hwSn: sn,
+      hwName: model,
+      hwType: type,
+      hwModelo: model,
+      hwPatrimonio: pat,
+      hwManuf: manuf,
+      gpsLat: '', gpsLng: '', gpsAcc: '',
+      dateTime: new Date().toISOString().slice(0, 16),
+      notes: '',
+    });
+  } catch(e) {
+    console.error('confirmHwConflict sync:', e);
+    machines.length = 0;
+    backup.forEach(b => machines.push(b));
+    renderAll();
+    showToast('error', '❌', 'Falha na sincronização', 'Alteração desfeita — sem conexão');
   }
 }
 
