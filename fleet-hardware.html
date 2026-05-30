@@ -1652,6 +1652,15 @@
         <label class="filter-check-item"><input type="checkbox" value="PEDRA/LOCAÇÃO" onchange="renderConsultas()"> PEDRA/LOCAÇÃO <span class="filter-count" id="fc-PEDRA/LOCAÇÃO"></span></label>
       </div>
     </div>
+    <div>
+      <div class="filter-section-title">SITUAÇÃO</div>
+      <div class="filter-chip-group" id="filt-situacao">
+        <label class="filter-check-item"><input type="checkbox" value="campo"     onchange="renderConsultas()"> 🚜 Em Campo</label>
+        <label class="filter-check-item"><input type="checkbox" value="estoque"   onchange="renderConsultas()"> 📦 Estoque</label>
+        <label class="filter-check-item"><input type="checkbox" value="manutencao" onchange="renderConsultas()"> 🔧 Manutenção</label>
+        <label class="filter-check-item"><input type="checkbox" value="inativo"   onchange="renderConsultas()"> ⛔ Inativo</label>
+      </div>
+    </div>
     <div style="margin-top:auto;padding-top:16px;border-top:1px solid var(--border)">
       <button class="btn btn-ghost" style="width:100%;font-size:11px" onclick="resetConsultaFilters()">↺ Limpar filtros</button>
     </div>
@@ -3864,20 +3873,27 @@ function getConsultaRows() {
   const checkedMaq = [...document.querySelectorAll('#filt-maq-tipos input:checked')].map(i => i.value);
   const checkedHw  = [...document.querySelectorAll('#filt-hw-tipos input:checked')].map(i => i.value);
   const checkedUnd = [...document.querySelectorAll('#filt-unidades input:checked')].map(i => i.value);
+  const checkedSit = [...document.querySelectorAll('#filt-situacao input:checked')].map(i => i.value);
   const term = (document.getElementById('consultaSearch')?.value || '').toLowerCase().trim();
 
   const rows = [];
-  machines.filter(m => !DEST_TYPES.includes(m.type)).forEach(m => {
-    if (checkedMaq.length && !checkedMaq.includes(m.type)) return;
-    if (checkedUnd.length && !checkedUnd.includes(m.unidade)) return;
+  machines.forEach(m => {
+    const isDest = DEST_TYPES.includes(m.type);
+    const situacao = isDest ? m.type : 'campo';
+
+    if (checkedSit.length && !checkedSit.includes(situacao)) return;
+    if (!isDest) {
+      if (checkedMaq.length && !checkedMaq.includes(m.type)) return;
+      if (checkedUnd.length && !checkedUnd.includes(m.unidade)) return;
+    }
 
     m.hardware.forEach(hw => {
       if (checkedHw.length && !checkedHw.includes(hw.type)) return;
 
-      const searchTarget = [m.name, m.id, hw.name, hw.sn, hw.patrimony, m.unidade].join(' ').toLowerCase();
+      const searchTarget = [m.name, m.id, hw.name, hw.sn, hw.patrimony, m.unidade, situacao].join(' ').toLowerCase();
       if (term && !searchTarget.includes(term)) return;
 
-      rows.push({ machine: m, hw });
+      rows.push({ machine: m, hw, situacao, isDest });
     });
   });
   return rows;
@@ -3894,13 +3910,14 @@ function renderConsultas() {
   rows.sort((a, b) => {
     let va, vb;
     switch (_consultaSortCol) {
-      case 'machine': va = a.machine.name; vb = b.machine.name; break;
-      case 'unidade': va = a.machine.unidade || ''; vb = b.machine.unidade || ''; break;
-      case 'hwType':  va = hwConfig[a.hw.type]?.label || a.hw.type; vb = hwConfig[b.hw.type]?.label || b.hw.type; break;
-      case 'hwName':  va = a.hw.name; vb = b.hw.name; break;
-      case 'sn':      va = a.hw.sn || ''; vb = b.hw.sn || ''; break;
-      case 'pat':     va = a.hw.patrimony || ''; vb = b.hw.patrimony || ''; break;
-      case 'date':    va = a.hw.installedAt || ''; vb = b.hw.installedAt || ''; break;
+      case 'machine':  va = a.machine.name; vb = b.machine.name; break;
+      case 'situacao': va = a.situacao; vb = b.situacao; break;
+      case 'unidade':  va = a.machine.unidade || ''; vb = b.machine.unidade || ''; break;
+      case 'hwType':   va = hwConfig[a.hw.type]?.label || a.hw.type; vb = hwConfig[b.hw.type]?.label || b.hw.type; break;
+      case 'hwName':   va = a.hw.name; vb = b.hw.name; break;
+      case 'sn':       va = a.hw.sn || ''; vb = b.hw.sn || ''; break;
+      case 'pat':      va = a.hw.patrimony || ''; vb = b.hw.patrimony || ''; break;
+      case 'date':     va = a.hw.installedAt || ''; vb = b.hw.installedAt || ''; break;
       default: va = ''; vb = '';
     }
     return _consultaSortDir * va.localeCompare(vb, 'pt-BR', { numeric: true });
@@ -3920,28 +3937,37 @@ function renderConsultas() {
   const sortIcon = col => _consultaSortCol === col ? (_consultaSortDir === 1 ? ' ▲' : ' ▼') : '';
   const thClick = col => `onclick="sortConsultas('${col}')"`;
 
+  const sitLabel = { campo:'🚜 Campo', estoque:'📦 Estoque', manutencao:'🔧 Manutenção', inativo:'⛔ Inativo' };
+  const sitColor = { campo:'var(--green)', estoque:'var(--blue)', manutencao:'var(--red)', inativo:'var(--text3)' };
+
   wrap.innerHTML = `<table class="consultas-table">
     <thead>
       <tr>
-        <th ${thClick('machine')}>MÁQUINA${sortIcon('machine')}</th>
+        <th ${thClick('situacao')}>SITUAÇÃO${sortIcon('situacao')}</th>
+        <th ${thClick('machine')}>LOCALIZAÇÃO${sortIcon('machine')}</th>
         <th ${thClick('unidade')}>UNIDADE${sortIcon('unidade')}</th>
         <th ${thClick('hwType')}>TIPO HW${sortIcon('hwType')}</th>
         <th ${thClick('hwName')}>MODELO${sortIcon('hwName')}</th>
         <th ${thClick('sn')}>Nº SÉRIE${sortIcon('sn')}</th>
         <th ${thClick('pat')}>PATRIMÔNIO${sortIcon('pat')}</th>
-        <th ${thClick('date')}>INSTALADO EM${sortIcon('date')}</th>
+        <th ${thClick('date')}>DESDE${sortIcon('date')}</th>
         <th></th>
       </tr>
     </thead>
     <tbody>
-      ${rows.map(({ machine: m, hw }) => {
+      ${rows.map(({ machine: m, hw, situacao, isDest }) => {
         const hcfg = hwConfig[hw.type] || { emoji: '', label: hw.type, color: '#888' };
-        const mcfg = machineConfig[m.type] || { emoji: '🚛' };
-        const badgeStyle = `background:${hcfg.color}22;color:${hcfg.color};border:1px solid ${hcfg.color}44`;
+        const mcfg = machineConfig[m.type] || { emoji: isDest ? '' : '🚛' };
+        const hwBadge = `background:${hcfg.color}22;color:${hcfg.color};border:1px solid ${hcfg.color}44`;
+        const sitCol = sitColor[situacao] || 'var(--text3)';
+        const sitTxt = sitLabel[situacao] || situacao;
+        const locName = isDest ? (machineConfig[m.type]?.label || m.type) : `${mcfg.emoji} ${m.name}`;
+        const locId   = isDest ? '' : `<div style="font-size:10px;color:var(--text3)">${m.id}</div>`;
         return `<tr>
-          <td style="color:var(--text);font-weight:600">${mcfg.emoji} ${m.name}</td>
-          <td>${m.unidade || '—'}</td>
-          <td><span class="ct-badge" style="${badgeStyle}">${hcfg.emoji} ${hcfg.label}</span></td>
+          <td><span style="font-size:11px;font-weight:600;color:${sitCol}">${sitTxt}</span></td>
+          <td style="color:var(--text);font-weight:600">${locName}${locId}</td>
+          <td>${isDest ? '—' : (m.unidade || '—')}</td>
+          <td><span class="ct-badge" style="${hwBadge}">${hcfg.emoji} ${hcfg.label}</span></td>
           <td style="color:var(--text)">${hw.name}</td>
           <td style="font-family:'JetBrains Mono',monospace;font-size:11px">${hw.sn || '—'}</td>
           <td style="font-family:'JetBrains Mono',monospace;font-size:11px">${hw.patrimony || '—'}</td>
