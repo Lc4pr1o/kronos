@@ -1106,6 +1106,129 @@
   .add-hw-card .add-icon { font-size: 28px; }
   .add-hw-card span { font-size: 12px; font-weight: 600; letter-spacing: 0.5px; }
 
+  /* ── SIDEBAR HEADER (novo foco Frota) ── */
+  .sidebar-header {
+    padding: 16px 16px 10px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .sidebar-title {
+    font-size: 9px; font-weight: 700; letter-spacing: 2.5px; color: var(--text3);
+    margin-bottom: 10px;
+  }
+  .type-filter-row { display: flex; gap: 6px; flex-wrap: wrap; }
+  .type-filter-btn {
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: none;
+    font-size: 10px; font-weight: 600; font-family: 'JetBrains Mono', monospace;
+    color: var(--text3); cursor: pointer; transition: all 0.15s;
+    display: flex; align-items: center; gap: 4px;
+  }
+  .type-filter-btn:hover { border-color: var(--border2); color: var(--text2); }
+  .type-filter-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(245,166,35,0.08); }
+
+  /* ── UNIDADE GROUPS no sidebar ── */
+  .unidade-group { display: flex; flex-direction: column; }
+  .unidade-header {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 14px 10px 16px;
+    cursor: pointer; transition: background 0.15s;
+    border-bottom: 1px solid var(--border2);
+    flex-shrink: 0;
+  }
+  .unidade-header:hover { background: rgba(255,255,255,0.02); }
+  .unidade-name {
+    font-size: 10px; font-weight: 700; letter-spacing: 1.5px; color: var(--text2); flex: 1;
+  }
+  .unidade-count { font-size: 10px; color: var(--text3); font-family: 'JetBrains Mono', monospace; }
+  .unidade-arrow { font-size: 10px; color: var(--text3); transition: transform 0.2s; }
+  .unidade-arrow.open { transform: rotate(180deg); }
+  .unidade-machines { display: flex; flex-direction: column; }
+
+  /* ── machine item no sidebar (compacto) ── */
+  .mlist-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 14px 9px 24px;
+    cursor: pointer; transition: background 0.15s;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    border-left: 2px solid transparent;
+  }
+  .mlist-item:hover { background: rgba(255,255,255,0.03); }
+  .mlist-item.selected {
+    background: rgba(245,166,35,0.06);
+    border-left-color: var(--accent);
+  }
+  .mlist-icon { font-size: 14px; flex-shrink: 0; }
+  .mlist-info { flex: 1; min-width: 0; }
+  .mlist-name { font-size: 11px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mlist-id   { font-size: 10px; color: var(--text3); margin-top: 1px; }
+  .mlist-hw {
+    font-size: 10px; font-weight: 700; font-family: 'JetBrains Mono', monospace;
+    color: var(--accent); background: rgba(245,166,35,0.1);
+    padding: 2px 6px; border-radius: 10px; flex-shrink: 0;
+  }
+  .mlist-hw.zero { color: var(--text3); background: none; }
+
+  /* ── dest-strip (Estoque/Manutenção/Inativo compactos) ── */
+  .dest-strip { border-top: 1px solid var(--border); margin-top: 4px; padding: 8px 0; flex-shrink: 0; }
+  .dest-strip-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 16px; cursor: pointer; transition: background 0.15s;
+    border-left: 2px solid transparent;
+  }
+  .dest-strip-item:hover { background: rgba(255,255,255,0.02); }
+  .dest-strip-item.selected { border-left-color: var(--accent); background: rgba(245,166,35,0.04); }
+  .dest-strip-icon { font-size: 13px; }
+  .dest-strip-label { font-size: 11px; font-weight: 600; color: var(--text2); flex: 1; }
+  .dest-strip-count { font-size: 10px; color: var(--text3); font-family: 'JetBrains Mono', monospace; }
+
+  /* ── MACHINE GRID (painel principal sem seleção) ── */
+  .machine-grid-view {
+    flex: 1; overflow-y: auto; padding: 24px;
+    display: flex; flex-direction: column; gap: 0;
+  }
+  .mgv-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 18px;
+  }
+  .mgv-title { font-size: 11px; font-weight: 700; letter-spacing: 2px; color: var(--text3); }
+  .mgv-count { font-size: 11px; color: var(--text3); font-family: 'JetBrains Mono', monospace; }
+  .machine-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: 12px;
+  }
+  .mg-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-top: 3px solid var(--mg-color, var(--border));
+    border-radius: 12px;
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.18s;
+    display: flex; flex-direction: column; gap: 8px;
+    position: relative;
+  }
+  .mg-card:hover { border-color: var(--mg-color, var(--accent)); background: var(--surface2); transform: translateY(-1px); }
+  .mg-card-top { display: flex; align-items: center; justify-content: space-between; }
+  .mg-card-emoji { font-size: 20px; }
+  .mg-card-hw {
+    font-size: 10px; font-weight: 700; font-family: 'JetBrains Mono', monospace;
+    color: var(--mg-color, var(--accent));
+    background: color-mix(in srgb, var(--mg-color, var(--accent)) 12%, transparent);
+    padding: 2px 7px; border-radius: 10px;
+  }
+  .mg-card-name { font-size: 12px; font-weight: 700; color: var(--text); line-height: 1.3; }
+  .mg-card-frota { font-size: 10px; color: var(--text3); font-family: 'JetBrains Mono', monospace; }
+  .mg-card-unidade {
+    font-size: 9px; font-weight: 700; letter-spacing: 1px;
+    color: var(--text3); border: 1px solid var(--border);
+    padding: 2px 6px; border-radius: 4px; align-self: flex-start;
+  }
+
   /* MACHINE TYPES LEGEND */
   .type-legend {
     display: flex;
@@ -1425,15 +1548,13 @@
 
   <!-- Ações — direita -->
   <div class="header-actions">
-    <div class="stat-pill"><div class="stat-dot green"></div><span id="stat-machines">0 Máquinas</span></div>
-    <div class="stat-pill"><div class="stat-dot orange"></div><span id="stat-hw">0 Hardwares</span></div>
-    <div class="stat-pill connection-pill" id="connectionPill" style="cursor:pointer" onclick="loadFromSheets()" title="Clique para atualizar">
+    <div class="stat-pill connection-pill" id="connectionPill" style="cursor:pointer" onclick="loadFromSheets()" title="Clique para sincronizar">
       <div class="stat-dot orange" id="connectionDot"></div>
-      <span id="connectionLabel">Demo</span>
+      <span id="connectionLabel">Conectando...</span>
       <span style="font-size:10px;opacity:0.5">↺</span>
     </div>
-    <div class="stat-pill" style="cursor:pointer;gap:6px" onclick="openSettings()" title="Tipos de hardware">
-      <span style="font-size:13px">⚙️</span><span style="font-size:11px">Tipos</span>
+    <div class="stat-pill" style="cursor:pointer;gap:6px" onclick="openSettings()" title="Configurações de tipos">
+      <span style="font-size:13px">⚙️</span><span style="font-size:11px">Configurações</span>
     </div>
   </div>
 </header>
@@ -1448,22 +1569,13 @@
 <div class="app">
   <!-- SIDEBAR -->
   <aside class="sidebar">
-    <div class="search-container">
-      <label class="search-label" for="searchInput">BUSCA AVANÇADA</label>
-      <div class="search-box">
-        <span class="search-icon" aria-hidden="true">🔍</span>
-        <input type="text" id="searchInput" placeholder="Buscar por nome, ID, S/N ou patrimônio..." autocomplete="off" aria-label="Buscar máquina ou hardware">
-        <span id="clearSearch" style="cursor:pointer;color:var(--text3);font-size:12px;display:none;">✕</span>
-      </div>
-      <div class="search-filters" id="filterChipsBar">
-        <div class="filter-chip active" data-filter="all">Tudo</div>
-        <div id="machineTypeChips" style="display:contents"></div>
-        <div id="hwTypeChips" style="display:contents"></div>
+    <div class="sidebar-header">
+      <div class="sidebar-title">FROTA</div>
+      <div class="type-filter-row" id="typeFilterRow">
+        <button class="type-filter-btn active" data-type="all" onclick="setTypeFilter(this,'all')">Todas</button>
       </div>
     </div>
-
-    <div class="search-results" id="searchResults"></div>
-    <div class="machine-list" id="machineList"></div>
+    <div class="machine-list" id="machineList" style="flex:1;overflow-y:auto;display:flex;flex-direction:column"></div>
   </aside>
 
   <!-- MAIN PANEL -->
@@ -1472,24 +1584,21 @@
       <div class="breadcrumb">
         <span>Frota</span>
         <span class="sep">›</span>
-        <span class="current" id="breadcrumbCurrent">Selecione uma máquina</span>
+        <span class="current" id="breadcrumbCurrent">Visão Geral</span>
       </div>
       <div class="toolbar-actions">
-        <div class="type-legend">
-          <div class="tl-item"><div class="tl-dot" style="background:var(--trator)"></div>Trator</div>
-          <div class="tl-item"><div class="tl-dot" style="background:var(--motoniveladora)"></div>Motoniveladora</div>
-          <div class="tl-item"><div class="tl-dot" style="background:var(--colhedora)"></div>Colhedora</div>
-        </div>
         <button class="btn btn-ghost" onclick="openModal('addMachineModal')">+ Máquina</button>
         <button class="btn btn-primary" id="addHwBtn" onclick="openAddHwModal()" style="display:none">+ Hardware</button>
       </div>
     </div>
 
-    <!-- EMPTY STATE -->
-    <div id="emptyState" class="empty-state">
-      <div class="empty-icon">🚜</div>
-      <div class="empty-title">Nenhuma máquina selecionada</div>
-      <div class="empty-sub">Selecione uma máquina na lista ao lado para ver os hardwares instalados</div>
+    <!-- MACHINE GRID (padrão quando nenhuma máquina selecionada) -->
+    <div class="machine-grid-view" id="machineGridView">
+      <div class="mgv-header">
+        <div class="mgv-title">TODAS AS MÁQUINAS</div>
+        <div class="mgv-count" id="mgvCount"></div>
+      </div>
+      <div class="machine-grid" id="machineGrid"></div>
     </div>
 
     <!-- MACHINE DETAIL -->
@@ -1549,12 +1658,15 @@
   </aside>
 
   <div class="consultas-results">
-    <div class="consultas-toolbar">
-      <div class="search-box" style="flex:1;max-width:360px">
-        <span class="search-icon" aria-hidden="true">🔍</span>
-        <input type="text" id="consultaSearch" placeholder="Buscar por nome, S/N, patrimônio..." autocomplete="off" oninput="renderConsultas()">
+    <div class="consultas-toolbar" style="flex-direction:column;align-items:stretch;gap:12px;padding:16px 24px 12px">
+      <div style="font-size:9px;font-weight:700;letter-spacing:2.5px;color:var(--text3)">BUSCA AVANÇADA</div>
+      <div style="display:flex;align-items:center;gap:16px">
+        <div class="search-box" style="flex:1">
+          <span class="search-icon" aria-hidden="true">🔍</span>
+          <input type="text" id="consultaSearch" placeholder="Buscar por nome, modelo, S/N, patrimônio, ID da máquina..." autocomplete="off" oninput="renderConsultas()">
+        </div>
+        <span class="consultas-count" id="consultasCount">— resultados</span>
       </div>
-      <span class="consultas-count" id="consultasCount">— resultados</span>
     </div>
     <div class="consultas-table-wrap" id="consultasTableWrap">
       <div class="consultas-empty">
@@ -2160,7 +2272,7 @@ function buildHwConfig(rawTipos) {
     };
   });
   populateHwTypeSelects();
-  rebuildFilterChips();
+  /* rebuildFilterChips removido — chips substituídos por type-filter-row */
 }
 
 function populateHwTypeSelects() {
@@ -2310,7 +2422,7 @@ function buildMachineConfig(rawTipos) {
     };
     REAL_TYPES.add(t.id);
   });
-  rebuildFilterChips();
+  /* rebuildFilterChips removido — chips substituídos por type-filter-row */
   // Atualiza select de nova máquina
   const sel = document.getElementById('newMachineType');
   if (sel) {
@@ -2326,37 +2438,6 @@ function buildMachineConfig(rawTipos) {
   }
 }
 
-function chipLabel(raw) {
-  const s = raw.length > 9 ? raw.slice(0, 8) + '.' : raw;
-  return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
-}
-
-function rebuildFilterChips() {
-  const maqEl = document.getElementById('machineTypeChips');
-  const hwEl  = document.getElementById('hwTypeChips');
-  if (maqEl) {
-    maqEl.innerHTML = '';
-    REAL_TYPES.forEach(id => {
-      const cfg = machineConfig[id];
-      if (!cfg) return;
-      const chip = document.createElement('div');
-      chip.className = `filter-chip${activeFilter===id?' active':''}`;
-      chip.dataset.filter = id;
-      chip.textContent = chipLabel(cfg.label);
-      maqEl.appendChild(chip);
-    });
-  }
-  if (hwEl) {
-    hwEl.innerHTML = '';
-    Object.entries(hwConfig).forEach(([id, cfg]) => {
-      const chip = document.createElement('div');
-      chip.className = `filter-chip hw-chip${activeFilter===id?' active':''}`;
-      chip.dataset.filter = id;
-      chip.textContent = chipLabel(cfg.label);
-      hwEl.appendChild(chip);
-    });
-  }
-}
 
 // ── SETTINGS: TIPOS DE MÁQUINA ─────────────────
 let editingMaqTipoId = null;
@@ -2448,15 +2529,51 @@ async function reloadMaqTipos() {
   renderMaqTiposSettings();
   renderAll();
 }
-let campoExpanded = false;
+let _unidadeExpanded = {};
+let _activeTypeFilter = 'all';
+
+function setTypeFilter(btn, type) {
+  _activeTypeFilter = type;
+  document.querySelectorAll('.type-filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderMachineList();
+  if (!selectedMachineId) renderMachineGrid();
+}
+
+function rebuildTypeFilterButtons() {
+  const row = document.getElementById('typeFilterRow');
+  if (!row || row.dataset.built === '1') return;
+  row.dataset.built = '1';
+  const types = [...REAL_TYPES];
+  types.forEach(type => {
+    const cfg = machineConfig[type] || { emoji: '🚛', label: type };
+    const count = machines.filter(m => m.type === type).length;
+    if (!count) return;
+    const btn = document.createElement('button');
+    btn.className = 'type-filter-btn';
+    btn.dataset.type = type;
+    btn.innerHTML = `${cfg.emoji} ${cfg.label}`;
+    btn.onclick = () => setTypeFilter(btn, type);
+    row.appendChild(btn);
+  });
+}
 
 // =========================================
 // RENDER
 // =========================================
 function renderAll() {
   renderMachineList();
-  updateStats();
-  if (selectedMachineId) renderDetail(selectedMachineId);
+  rebuildTypeFilterButtons();
+  if (selectedMachineId) {
+    renderDetail(selectedMachineId);
+    document.getElementById('machineGridView').style.display = 'none';
+  } else {
+    renderMachineGrid();
+    document.getElementById('machineGridView').style.display = 'flex';
+    document.getElementById('machineDetail').classList.remove('active');
+    document.getElementById('addHwBtn').style.display = 'none';
+    document.getElementById('breadcrumbCurrent').textContent = 'Visão Geral';
+  }
   if (_currentView === 'dashboard') renderDashboard();
   if (_currentView === 'consultas') renderConsultas();
 }
@@ -2487,79 +2604,130 @@ function buildMachineCard(m, searchTerm) {
   return card;
 }
 
-function renderMachineList(searchTerm = '', filter = 'all') {
+function renderMachineList() {
   const list = document.getElementById('machineList');
   list.innerHTML = '';
 
-  // ── CAMPO (máquinas reais) ─────────────────
-  const realMachines = machines.filter(m => {
-    if (!REAL_TYPES.has(m.type)) return false;
-    return filter === 'all' || m.type === filter || m.hardware.some(h => h.type === filter);
+  const real = machines.filter(m =>
+    REAL_TYPES.has(m.type) && (_activeTypeFilter === 'all' || m.type === _activeTypeFilter)
+  );
+
+  // Agrupar por unidade
+  const groups = {};
+  real.forEach(m => {
+    const u = m.unidade || '—';
+    if (!groups[u]) groups[u] = [];
+    groups[u].push(m);
   });
 
-  const totalRealHw = realMachines.reduce((acc, m) => acc + m.hardware.length, 0);
-  const campoCard = document.createElement('div');
-  campoCard.className = 'campo-card';
-  campoCard.innerHTML = `
-    <div class="campo-card-icon">🚜</div>
-    <div class="campo-card-info">
-      <div class="campo-card-name">CAMPO</div>
-      <div class="campo-card-count">${realMachines.length} máquinas · ${totalRealHw} hw</div>
-    </div>
-    <span class="sgr-arrow${campoExpanded ? '' : ' closed'}" id="campoArrow">▾</span>
-  `;
-  list.appendChild(campoCard);
+  const unidadeOrder = ['PEDRA', 'CEDRO', 'BURITI', 'IPÊ', 'PEDRA/LOCAÇÃO', '—'];
+  const sorted = unidadeOrder.filter(u => groups[u]).concat(Object.keys(groups).filter(u => !unidadeOrder.includes(u)));
 
-  const campoBody = document.createElement('div');
-  campoBody.className = 'campo-machines';
-  campoBody.style.display = campoExpanded ? 'contents' : 'none';
-  campoBody.id = 'campoBody';
+  sorted.forEach(unidade => {
+    const mList = groups[unidade];
+    if (!mList) return;
+    const totalHw = mList.reduce((s, m) => s + m.hardware.length, 0);
+    const isOpen = _unidadeExpanded[unidade] !== false; // aberto por padrão
 
-  if (realMachines.length === 0) {
-    const empty = document.createElement('div');
-    empty.style.cssText = 'padding:12px 8px;color:var(--text3);font-size:12px;text-align:center;flex-shrink:0';
-    empty.textContent = 'Nenhuma máquina encontrada';
-    campoBody.appendChild(empty);
-  } else {
-    realMachines.forEach(m => campoBody.appendChild(buildMachineCard(m, searchTerm)));
-  }
-  list.appendChild(campoBody);
+    const group = document.createElement('div');
+    group.className = 'unidade-group';
 
-  campoCard.onclick = () => {
-    campoExpanded = !campoExpanded;
-    campoBody.style.display = campoExpanded ? 'contents' : 'none';
-    const arrow = document.getElementById('campoArrow');
-    if (arrow) arrow.className = `sgr-arrow${campoExpanded ? '' : ' closed'}`;
-  };
+    const header = document.createElement('div');
+    header.className = 'unidade-header';
+    header.innerHTML = `
+      <div class="unidade-name">${unidade}</div>
+      <div class="unidade-count">${mList.length} · ${totalHw}hw</div>
+      <div class="unidade-arrow${isOpen ? ' open' : ''}">▾</div>
+    `;
 
-  // ── DESTINOS (estoque, manutenção, inativo) ─
-  const divider = document.createElement('div');
-  divider.className = 'dest-divider';
-  list.appendChild(divider);
+    const body = document.createElement('div');
+    body.className = 'unidade-machines';
+    body.style.display = isOpen ? 'flex' : 'none';
+    body.style.flexDirection = 'column';
 
+    mList.forEach(m => {
+      const cfg = machineConfig[m.type] || { emoji: '🚛' };
+      const item = document.createElement('div');
+      item.className = `mlist-item${selectedMachineId === String(m.id) ? ' selected' : ''}`;
+      item.innerHTML = `
+        <div class="mlist-icon">${cfg.emoji}</div>
+        <div class="mlist-info">
+          <div class="mlist-name">${m.name}</div>
+          <div class="mlist-id">${m.id}${m.patrimony ? ' · ' + m.patrimony : ''}</div>
+        </div>
+        <div class="mlist-hw${m.hardware.length === 0 ? ' zero' : ''}">${m.hardware.length}</div>
+      `;
+      item.onclick = () => selectMachine(m.id);
+      body.appendChild(item);
+    });
+
+    header.onclick = () => {
+      _unidadeExpanded[unidade] = body.style.display === 'none';
+      body.style.display = _unidadeExpanded[unidade] ? 'flex' : 'none';
+      body.style.flexDirection = 'column';
+      header.querySelector('.unidade-arrow').classList.toggle('open', _unidadeExpanded[unidade]);
+    };
+
+    group.appendChild(header);
+    group.appendChild(body);
+    list.appendChild(group);
+  });
+
+  // Destinos — compactos no rodapé do sidebar
+  const strip = document.createElement('div');
+  strip.className = 'dest-strip';
   DEST_TYPES.forEach(type => {
     const m = machines.find(x => x.type === type);
     if (!m) return;
-    const cfg = machineConfig[type];
-    const card = document.createElement('div');
-    card.className = `dest-card ${type}${selectedMachineId === String(m.id) ? ' selected' : ''}`;
-    card.onclick = () => selectMachine(m.id);
-    const hwLabel = m.hardware.length === 1 ? '1 hardware' : `${m.hardware.length} hardwares`;
-    card.innerHTML = `
-      <div class="dest-card-icon">${cfg.emoji}</div>
-      <div class="dest-card-info">
-        <div class="dest-card-name">${cfg.label}</div>
-        <div class="dest-card-count">${hwLabel} armazenado${m.hardware.length !== 1 ? 's' : ''}</div>
-      </div>
+    const cfg = machineConfig[type] || { emoji: '📦', label: type };
+    const item = document.createElement('div');
+    item.className = `dest-strip-item${selectedMachineId === String(m.id) ? ' selected' : ''}`;
+    item.innerHTML = `
+      <div class="dest-strip-icon">${cfg.emoji}</div>
+      <div class="dest-strip-label">${cfg.label}</div>
+      <div class="dest-strip-count">${m.hardware.length}hw</div>
     `;
-    list.appendChild(card);
+    item.onclick = () => selectMachine(m.id);
+    strip.appendChild(item);
+  });
+  list.appendChild(strip);
+}
+
+function renderMachineGrid() {
+  const grid = document.getElementById('machineGrid');
+  const count = document.getElementById('mgvCount');
+  if (!grid) return;
+
+  const real = machines.filter(m =>
+    REAL_TYPES.has(m.type) && (_activeTypeFilter === 'all' || m.type === _activeTypeFilter)
+  );
+  if (count) count.textContent = `${real.length} máquinas`;
+
+  grid.innerHTML = '';
+  real.forEach(m => {
+    const cfg = machineConfig[m.type] || { emoji: '🚛', color: '#888' };
+    const card = document.createElement('div');
+    card.className = 'mg-card';
+    card.style.setProperty('--mg-color', cfg.color || 'var(--accent)');
+    card.innerHTML = `
+      <div class="mg-card-top">
+        <div class="mg-card-emoji">${cfg.emoji}</div>
+        <div class="mg-card-hw">${m.hardware.length} hw</div>
+      </div>
+      <div class="mg-card-name">${m.name}</div>
+      <div class="mg-card-frota">${m.id}${m.patrimony ? ' · ' + m.patrimony : ''}</div>
+      ${m.unidade ? `<div class="mg-card-unidade">${m.unidade}</div>` : ''}
+    `;
+    card.onclick = () => selectMachine(m.id);
+    grid.appendChild(card);
   });
 }
 
 function selectMachine(id) {
   selectedMachineId = id;
-  renderMachineList(document.getElementById('searchInput').value, getActiveFilter());
+  renderMachineList();
   renderDetail(id);
+  document.getElementById('machineGridView').style.display = 'none';
   document.getElementById('addHwBtn').style.display = 'flex';
 }
 
@@ -2568,7 +2736,7 @@ function renderDetail(id) {
   if (!m) return;
 
   const cfg = machineConfig[m.type] || { emoji: '🚛', label: m.type?.toUpperCase() || 'MÁQUINA', color: 'var(--text3)', cssClass: '' };
-  document.getElementById('emptyState').style.display = 'none';
+  document.getElementById('machineGridView').style.display = 'none';
   document.getElementById('machineDetail').style.display = 'flex';
   document.getElementById('machineDetail').className = 'machine-detail active';
 
@@ -2699,16 +2867,7 @@ function renderDetail(id) {
   }
 }
 
-function updateStats() {
-  const total = machines.length;
-  let hwTotal = 0;
-  let freeHw = 0;
-  machines.forEach(m => {
-    hwTotal += m.hardware.length;
-  });
-  document.getElementById('stat-machines').textContent = `${total} Máquinas`;
-  document.getElementById('stat-hw').textContent = `${hwTotal} Hardwares`;
-}
+function updateStats() { /* stats movidas para o Dashboard */ }
 
 // =========================================
 // SEARCH
@@ -2722,36 +2881,7 @@ function localDateStr() {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 
-function getActiveFilter() { return activeFilter; }
-
-document.getElementById('searchInput').addEventListener('input', function() {
-  const val = this.value.trim();
-  document.getElementById('clearSearch').style.display = val ? 'block' : 'none';
-  if (val.length >= 2) {
-    showSearchResults(val);
-  } else {
-    hideSearchResults();
-    renderMachineList(val, activeFilter);
-  }
-});
-
-document.getElementById('clearSearch').addEventListener('click', function() {
-  document.getElementById('searchInput').value = '';
-  this.style.display = 'none';
-  hideSearchResults();
-  renderMachineList('', activeFilter);
-});
-
-document.getElementById('filterChipsBar').addEventListener('click', function(e) {
-  const chip = e.target.closest('.filter-chip');
-  if (!chip) return;
-  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
-  chip.classList.add('active');
-  activeFilter = chip.dataset.filter;
-  const val = document.getElementById('searchInput').value.trim();
-  if (val.length >= 2) showSearchResults(val);
-  else renderMachineList(val, activeFilter);
-});
+function getActiveFilter() { return _activeTypeFilter; }
 
 function buildSearchResultItem(r, term) {
   const item = document.createElement('div');
@@ -3378,7 +3508,7 @@ async function saveMachineEdit() {
 // =========================================
 // Popula chips e select de máquina com os dados hardcoded (fallback antes do Supabase)
 (function initFromDefaults() {
-  rebuildFilterChips();
+  /* rebuildFilterChips removido — chips substituídos por type-filter-row */
   const sel = document.getElementById('newMachineType');
   if (!sel) return;
   sel.innerHTML = '<option value="">— Selecione —</option>';
