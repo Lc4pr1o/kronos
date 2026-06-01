@@ -524,11 +524,9 @@
     font-weight: 700;
   }
 
-  .breadcrumb-back {
-    cursor: pointer;
-    transition: color 0.15s;
-  }
-  .breadcrumb-back:hover { color: var(--accent); }
+  .breadcrumb-back { transition: color 0.15s; }
+  .breadcrumb-back.clickable { cursor: pointer; }
+  .breadcrumb-back.clickable:hover { color: var(--accent); }
 
   .toolbar-actions {
     display: flex;
@@ -2643,7 +2641,7 @@ function rebuildTypeFilterButtons() {
 function backToGrid() {
   if (!selectedMachineId) return;
   selectedMachineId = null;
-  document.getElementById('breadcrumbBack')?.classList.remove('breadcrumb-back');
+  document.getElementById('breadcrumbBack')?.classList.remove('clickable');
   renderAll();
 }
 
@@ -2656,10 +2654,12 @@ function renderAll() {
   } else {
     renderMachineGrid();
     document.getElementById('machineGridView').style.display = 'flex';
-    document.getElementById('machineDetail').classList.remove('active');
+    const detail = document.getElementById('machineDetail');
+    detail.classList.remove('active');
+    detail.style.display = 'none';
     document.getElementById('addHwBtn').style.display = 'none';
     document.getElementById('breadcrumbCurrent').textContent = 'Visão Geral';
-    document.getElementById('breadcrumbBack')?.classList.remove('breadcrumb-back');
+    document.getElementById('breadcrumbBack')?.classList.remove('clickable');
   }
   if (_currentView === 'dashboard') renderDashboard();
   if (_currentView === 'consultas') renderConsultas();
@@ -2816,7 +2816,7 @@ function selectMachine(id) {
   renderDetail(id);
   document.getElementById('machineGridView').style.display = 'none';
   document.getElementById('addHwBtn').style.display = 'flex';
-  document.getElementById('breadcrumbBack')?.classList.add('breadcrumb-back');
+  document.getElementById('breadcrumbBack')?.classList.add('clickable');
 }
 
 function renderDetail(id) {
