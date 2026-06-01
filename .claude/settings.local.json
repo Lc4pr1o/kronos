@@ -3,6 +3,7 @@
     "allow": [
       "mcp__claude_ai_Google_Drive__read_file_content",
       "Bash(*)",
+      "PowerShell(*)",
       "Bash(ipconfig)",
       "Bash(netstat -ano)",
       "Bash(netsh advfirewall *)",
