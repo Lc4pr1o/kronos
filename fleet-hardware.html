@@ -4136,6 +4136,17 @@ function getConsultaRows() {
       if (checkedUnd.length && !checkedUnd.includes(m.unidade)) return;
     }
 
+    if (m.hardware.length === 0) {
+      // Máquinas sem hardware: incluir apenas se não há filtro de tipo de HW ativo e o termo bate
+      if (checkedHw.length === 0) {
+        const searchTarget = [m.name, m.id, m.unidade || '', situacao].join(' ').toLowerCase();
+        if (!term || searchTarget.includes(term)) {
+          rows.push({ machine: m, hw: null, situacao, isDest });
+        }
+      }
+      return;
+    }
+
     m.hardware.forEach(hw => {
       if (checkedHw.length && !checkedHw.includes(hw.type)) return;
 
@@ -4162,11 +4173,11 @@ function renderConsultas() {
       case 'machine':  va = a.machine.name; vb = b.machine.name; break;
       case 'situacao': va = a.situacao; vb = b.situacao; break;
       case 'unidade':  va = a.machine.unidade || ''; vb = b.machine.unidade || ''; break;
-      case 'hwType':   va = hwConfig[a.hw.type]?.label || a.hw.type; vb = hwConfig[b.hw.type]?.label || b.hw.type; break;
-      case 'hwName':   va = a.hw.name; vb = b.hw.name; break;
-      case 'sn':       va = a.hw.sn || ''; vb = b.hw.sn || ''; break;
-      case 'pat':      va = a.hw.patrimony || ''; vb = b.hw.patrimony || ''; break;
-      case 'date':     va = a.hw.installedAt || ''; vb = b.hw.installedAt || ''; break;
+      case 'hwType':   va = a.hw ? (hwConfig[a.hw.type]?.label || a.hw.type) : ''; vb = b.hw ? (hwConfig[b.hw.type]?.label || b.hw.type) : ''; break;
+      case 'hwName':   va = a.hw?.name || ''; vb = b.hw?.name || ''; break;
+      case 'sn':       va = a.hw?.sn || ''; vb = b.hw?.sn || ''; break;
+      case 'pat':      va = a.hw?.patrimony || ''; vb = b.hw?.patrimony || ''; break;
+      case 'date':     va = a.hw?.installedAt || ''; vb = b.hw?.installedAt || ''; break;
       default: va = ''; vb = '';
     }
     return _consultaSortDir * va.localeCompare(vb, 'pt-BR', { numeric: true });
@@ -4204,15 +4215,30 @@ function renderConsultas() {
     </thead>
     <tbody>
       ${rows.map(({ machine: m, hw, situacao, isDest }) => {
-        const hcfg = hwConfig[hw.type] || { emoji: '', label: hw.type, color: '#888' };
         const mcfg = machineConfig[m.type] || { emoji: '🚛' };
-        const hwBadge = `background:${hcfg.color}22;color:${hcfg.color};border:1px solid ${hcfg.color}44`;
-        const sitCol  = sitColor[situacao] || 'var(--text3)';
-        const sitTxt  = sitLabel[situacao] || situacao;
-        // Se em campo: mostra sitLabel + nome da máquina abaixo; se destino: só sitLabel
+        const sitCol = sitColor[situacao] || 'var(--text3)';
+        const sitTxt = sitLabel[situacao] || situacao;
         const machineLine = isDest
           ? ''
           : `<div style="font-size:11px;font-weight:700;color:var(--text);margin-top:2px">${mcfg.emoji} ${m.name} <span style="font-weight:400;color:var(--text3)">${m.id}</span></div>`;
+
+        if (!hw) {
+          return `<tr style="opacity:.6">
+            <td>
+              <span style="font-size:10px;font-weight:700;color:${sitCol}">${sitTxt}</span>
+              ${machineLine}
+            </td>
+            <td>${isDest ? '—' : (m.unidade || '—')}</td>
+            <td colspan="4" style="font-size:11px;color:var(--text3);font-style:italic">Sem hardware instalado</td>
+            <td>
+              <button class="btn btn-ghost" style="padding:4px 10px;font-size:11px"
+                onclick="switchView('frota');selectMachine('${m.id}')">Ver</button>
+            </td>
+          </tr>`;
+        }
+
+        const hcfg = hwConfig[hw.type] || { emoji: '', label: hw.type, color: '#888' };
+        const hwBadge = `background:${hcfg.color}22;color:${hcfg.color};border:1px solid ${hcfg.color}44`;
         return `<tr>
           <td>
             <span style="font-size:10px;font-weight:700;color:${sitCol}">${sitTxt}</span>
