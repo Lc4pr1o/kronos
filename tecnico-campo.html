@@ -2117,6 +2117,22 @@ function markSynced(id) {
 // ══════════════════════════════════════════
 // SYNC
 // ══════════════════════════════════════════
+
+// Retorna registros pendentes ordenados do mais antigo para o mais novo.
+// Evita que registros mais antigos sobrescrevam o estado mais recente no banco.
+function pendingByAge() {
+  return getLocalRecords()
+    .filter(r => !r.synced && r.status !== 'draft')
+    .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+}
+
+// Sincroniza uma lista de registros sequencialmente (aguarda cada um antes do próximo)
+async function syncSequential(records) {
+  for (const r of records) {
+    await syncRecord(r);
+  }
+}
+
 async function syncRecord(record, attempt = 1) {
   const MAX_ATTEMPTS = 3;
   if (syncingIds.has(record.id)) return;
@@ -2141,8 +2157,8 @@ async function trySyncAll() {
     showToast('err','📡','Sem conexão');
     return;
   }
-  // Apenas registros confirmados (pending), não rascunhos
-  const pending = getLocalRecords().filter(r => !r.synced && r.status !== 'draft');
+  // Apenas registros confirmados (pending), do mais antigo para o mais novo
+  const pending = pendingByAge();
   if (pending.length === 0) { showToast('ok','✅','Tudo já sincronizado'); return; }
 
   setSyncState('syncing');
@@ -2166,9 +2182,9 @@ async function trySyncAll() {
 function checkOnline() {
   setSyncState(navigator.onLine ? 'online' : 'offline');
   if (navigator.onLine) {
-    // Auto-sincroniza apenas registros confirmados (não rascunhos)
-    const pending = getLocalRecords().filter(r => !r.synced && r.status !== 'draft' && !syncingIds.has(r.id));
-    if (pending.length > 0) pending.forEach(r => syncRecord(r));
+    // Auto-sincroniza sequencialmente do mais antigo — evita race condition
+    const pending = pendingByAge().filter(r => !syncingIds.has(r.id));
+    if (pending.length > 0) syncSequential(pending);
   }
 }
 
@@ -2484,7 +2500,8 @@ function confirmAllDrafts() {
   if (drafts.length === 0) return;
   drafts.forEach(r => { r.status = 'pending'; });
   localStorage.setItem('fleetRegistros', JSON.stringify(records));
-  if (navigator.onLine) drafts.forEach(r => syncRecord(r));
+  // Sincroniza sequencialmente do mais antigo — garante estado correto no banco
+  if (navigator.onLine) syncSequential(drafts.sort((a,b) => new Date(a.createdAt)-new Date(b.createdAt)));
   updatePendingBanner();
   renderRegistros();
   showToast('ok', '✅', `${drafts.length} registro${drafts.length > 1 ? 's' : ''} confirmado${drafts.length > 1 ? 's' : ''}`);
