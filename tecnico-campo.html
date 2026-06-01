@@ -1429,6 +1429,8 @@ async function loadData() {
     } catch {}
     // Re-aplica registros não sincronizados sobre o estado fresco
     reapplyLocalRecords();
+    // Injeta máquinas referenciadas por hardwares mas ausentes na tabela
+    reconcileMachinesFromHardwares();
     // Carrega técnicos do Supabase se tabela existir, senão usa fallback
     if (resTecs?.ok) {
       const rawTecs = await resTecs.json();
@@ -1446,6 +1448,7 @@ async function loadData() {
         machines  = mapMachines(cachedMaq);
         hardwares = mapHardwares(cachedHw);
         reapplyLocalRecords();
+        reconcileMachinesFromHardwares();
         showToast('err', '📡', 'Offline — usando dados em cache');
       } else {
         machines  = demoMachines;
@@ -1746,13 +1749,26 @@ function closeMachineDropdown(which) {
 // ══════════════════════════════════════════
 // MACHINE PICKER
 // ══════════════════════════════════════════
-const VIRTUAL_TYPES = new Set(['estoque','manutencao','inativo']);
+// Filtra por ID — mais seguro que por tipo, pois o campo tipo pode variar no banco
+const VIRTUAL_IDS = new Set(['ESTOQUE','MANUTENCAO','INATIVO','OUTRA_UNIDADE']);
+const VIRTUAL_TYPES = new Set(['estoque','manutencao','inativo']); // mantido para compatibilidade
+
+// Garante que toda máquina referenciada por um hardware aparece no picker
+function reconcileMachinesFromHardwares() {
+  const known = new Set(machines.map(m => m.id));
+  hardwares.forEach(h => {
+    if (h.machine && !VIRTUAL_IDS.has(h.machine) && !known.has(h.machine)) {
+      machines.push({ id: h.machine, name: `Frota ${h.machine}`, type: 'trator' });
+      known.add(h.machine);
+    }
+  });
+}
 
 function renderMachinePicker() {
   const container = document.getElementById('machinePicker');
   container.innerHTML = '';
   const term = (document.getElementById('machineSearchInput')?.value || '').toLowerCase().trim();
-  const real = machines.filter(m => !VIRTUAL_TYPES.has(m.type));
+  const real = machines.filter(m => !VIRTUAL_IDS.has(m.id));
   const list = term
     ? real.filter(m => m.name.toLowerCase().includes(term) || m.id.toLowerCase().includes(term))
     : real;
@@ -1785,7 +1801,7 @@ function renderMachinePickerDest() {
   const container = document.getElementById('machinePickerDest');
   container.innerHTML = '';
   const term = (document.getElementById('machineSearchDestInput')?.value || '').toLowerCase().trim();
-  const real = machines.filter(m => !VIRTUAL_TYPES.has(m.type));
+  const real = machines.filter(m => !VIRTUAL_IDS.has(m.id));
   const list = term
     ? real.filter(m => m.name.toLowerCase().includes(term) || m.id.toLowerCase().includes(term))
     : real;
