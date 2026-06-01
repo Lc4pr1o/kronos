@@ -2655,8 +2655,8 @@ function renderAll() {
     renderMachineGrid();
     document.getElementById('machineGridView').style.display = 'flex';
     const detail = document.getElementById('machineDetail');
-    detail.classList.remove('active');
-    detail.style.display = 'none';
+    detail.style.display = '';
+    detail.className = 'machine-detail';
     document.getElementById('addHwBtn').style.display = 'none';
     document.getElementById('breadcrumbCurrent').textContent = 'Visão Geral';
     document.getElementById('breadcrumbBack')?.classList.remove('clickable');
