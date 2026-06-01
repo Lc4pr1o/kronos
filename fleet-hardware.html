@@ -2643,24 +2643,23 @@ function rebuildTypeFilterButtons() {
 function backToGrid() {
   if (!selectedMachineId) return;
   selectedMachineId = null;
+  document.getElementById('breadcrumbBack')?.classList.remove('breadcrumb-back');
   renderAll();
 }
 
 function renderAll() {
   renderMachineList();
   rebuildTypeFilterButtons();
-  const backEl = document.getElementById('breadcrumbBack');
   if (selectedMachineId) {
     renderDetail(selectedMachineId);
     document.getElementById('machineGridView').style.display = 'none';
-    if (backEl) backEl.classList.add('breadcrumb-back');
   } else {
     renderMachineGrid();
     document.getElementById('machineGridView').style.display = 'flex';
     document.getElementById('machineDetail').classList.remove('active');
     document.getElementById('addHwBtn').style.display = 'none';
     document.getElementById('breadcrumbCurrent').textContent = 'Visão Geral';
-    if (backEl) backEl.classList.remove('breadcrumb-back');
+    document.getElementById('breadcrumbBack')?.classList.remove('breadcrumb-back');
   }
   if (_currentView === 'dashboard') renderDashboard();
   if (_currentView === 'consultas') renderConsultas();
@@ -2817,6 +2816,7 @@ function selectMachine(id) {
   renderDetail(id);
   document.getElementById('machineGridView').style.display = 'none';
   document.getElementById('addHwBtn').style.display = 'flex';
+  document.getElementById('breadcrumbBack')?.classList.add('breadcrumb-back');
 }
 
 function renderDetail(id) {
