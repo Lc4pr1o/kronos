@@ -2214,6 +2214,7 @@ async function loadFromSheets() {
     machines = sheetsToMachines(rawMachines, rawHardwares);
     setConnectionStatus('online');
     showToast('success', '☁️', 'Dados atualizados', `${machines.length} máquinas carregadas`);
+    retryPendingMachines();
   } catch(e) {
     console.error('loadFromSheets:', e);
     machines = sheetsToMachines(DEMO_DATA.machines, DEMO_DATA.hardwares);
@@ -3097,6 +3098,7 @@ async function addMachine() {
   const btn = document.getElementById('addMachineBtn');
   btn.disabled = true; btn.textContent = 'Cadastrando...';
 
+  const sbPayload = { id, nome: name, tipo: type, ano: year, unidade, chassi, patrimonio: pat, centroCusto: '', criadoEm: localDateStr() };
   machines.push({ id, name, type, year, unidade, chassi, patrimony: pat, createdAt: localDateStr(), hardware: [] });
   closeModal('addMachineModal');
   ['newMachineId','newMachineName','newMachineYear','newMachinePatrimony','newMachineChassi'].forEach(f => document.getElementById(f).value = '');
@@ -3106,21 +3108,57 @@ async function addMachine() {
   showToast('success', '✅', 'Máquina cadastrada', `${name} adicionada à frota`);
   selectMachine(id);
 
+  const saved = await sbSaveMachine(sbPayload);
+  if (!saved) {
+    queuePendingMachine(sbPayload);
+    showToast('warning', '⚠️', 'Sem conexão', 'Máquina na fila — será enviada quando online');
+  }
+}
+
+// ── Persistência offline de máquinas ──────────────────────
+function queuePendingMachine(payload) {
+  try {
+    const q = JSON.parse(localStorage.getItem('pendingMachines') || '[]');
+    if (!q.find(m => m.id === payload.id)) q.push(payload);
+    localStorage.setItem('pendingMachines', JSON.stringify(q));
+  } catch {}
+}
+
+function dequeuePendingMachine(id) {
+  try {
+    const q = JSON.parse(localStorage.getItem('pendingMachines') || '[]');
+    localStorage.setItem('pendingMachines', JSON.stringify(q.filter(m => m.id !== id)));
+  } catch {}
+}
+
+async function sbSaveMachine(payload) {
   try {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/maquinas`, {
       method: 'POST',
       headers: { ...sbHeaders, 'Prefer': 'return=minimal' },
-      body: JSON.stringify({ id, nome: name, tipo: type, ano: year, unidade, chassi, patrimonio: pat, centroCusto: '', criadoEm: localDateStr() }),
+      body: JSON.stringify(payload),
     });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      showToast('warning', '⚠️', 'Erro ao salvar no banco', err.message || `HTTP ${res.status}`);
-      console.error('addMachine Supabase error:', err);
-    }
+    if (res.ok || res.status === 409) return true; // 409 = já existe, trata como sucesso
+    const err = await res.json().catch(() => ({}));
+    console.error('sbSaveMachine error:', err);
+    return false;
   } catch(e) {
-    console.error('addMachine:', e);
-    showToast('warning', '⚠️', 'Sem conexão', 'Máquina salva localmente apenas');
+    console.error('sbSaveMachine:', e);
+    return false;
   }
+}
+
+async function retryPendingMachines() {
+  const q = JSON.parse(localStorage.getItem('pendingMachines') || '[]');
+  if (!q.length) return;
+  let saved = 0;
+  for (const payload of q) {
+    if (await sbSaveMachine(payload)) {
+      dequeuePendingMachine(payload.id);
+      saved++;
+    }
+  }
+  if (saved > 0) showToast('success', '✅', `${saved} máquina(s) sincronizada(s)`, 'Registros pendentes enviados');
 }
 
 function openAddHwModal() {

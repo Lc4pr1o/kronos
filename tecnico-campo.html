@@ -1263,7 +1263,14 @@ const demoHardwares = [
 // ══════════════════════════════════════════
 // INIT
 // ══════════════════════════════════════════
-const machineEmojis = { trator:'🚜', motoniveladora:'🚧', colhedora:'🌾', estoque:'📦', manutencao:'🔧', inativo:'⛔' };
+let machineEmojis = { trator:'🚜', motoniveladora:'🚧', colhedora:'🌾', transbordo:'🚛', estoque:'📦', manutencao:'🔧', inativo:'⛔' };
+
+function buildMachineConfig(rawTipos) {
+  if (!Array.isArray(rawTipos) || !rawTipos.length) return;
+  rawTipos.forEach(t => {
+    if (t.id && t.emoji) machineEmojis[t.id] = t.emoji;
+  });
+}
 let hwColors = { monitor:'#f97316', receptor:'#c084fc', radio:'#60a5fa', tela:'#fbbf24', bordo:'#4ade80' };
 let hwConfig = {
   monitor:  { color:'#f97316', modelos: ['RAVEN','CFX 750','EZ GUIDE','OMNI','PRO 700','GS3','GS4','XCN 1050','XCN 1060'] },
@@ -1409,10 +1416,11 @@ function populateTechSelect(nomes) {
 
 async function loadData() {
   try {
-    const [resMaq, resHw, resTipos, resTecs] = await Promise.all([
+    const [resMaq, resHw, resTipos, resMaqTipos, resTecs] = await Promise.all([
       fetch(`${SUPABASE_URL}/rest/v1/maquinas?select=*&order=nome`, { headers: sbHeaders }),
       fetch(`${SUPABASE_URL}/rest/v1/hardwares?select=*`, { headers: sbHeaders }),
       fetch(`${SUPABASE_URL}/rest/v1/hw_tipos?select=*&order=id`, { headers: sbHeaders }),
+      fetch(`${SUPABASE_URL}/rest/v1/maq_tipos?select=*&order=id`, { headers: sbHeaders }).catch(() => null),
       fetch(`${SUPABASE_URL}/rest/v1/tecnicos?select=nome&order=nome`, { headers: sbHeaders }).catch(() => null),
     ]);
     if (!resMaq.ok || !resHw.ok) throw new Error(`Erro Supabase: maquinas=${resMaq.status} hardwares=${resHw.status}`);
@@ -1420,6 +1428,7 @@ async function loadData() {
     if (!Array.isArray(rawMachines))  throw new Error('Resposta inválida: maquinas não é array');
     if (!Array.isArray(rawHardwares)) throw new Error('Resposta inválida: hardwares não é array');
     if (Array.isArray(rawTipos) && rawTipos.length) buildHwConfig(rawTipos);
+    if (resMaqTipos?.ok) { const rt = await resMaqTipos.json(); buildMachineConfig(rt); }
     machines  = rawMachines.length  ? mapMachines(rawMachines)  : demoMachines;
     hardwares = rawHardwares.length ? mapHardwares(rawHardwares) : demoHardwares;
     // Persiste cache para uso offline
