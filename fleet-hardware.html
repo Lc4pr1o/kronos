@@ -524,6 +524,12 @@
     font-weight: 700;
   }
 
+  .breadcrumb-back {
+    cursor: pointer;
+    transition: color 0.15s;
+  }
+  .breadcrumb-back:hover { color: var(--accent); }
+
   .toolbar-actions {
     display: flex;
     gap: 10px;
@@ -1592,7 +1598,7 @@
   <main class="main-panel">
     <div class="panel-toolbar">
       <div class="breadcrumb">
-        <span>Frota</span>
+        <span class="breadcrumb-back" id="breadcrumbBack" onclick="backToGrid()" title="Voltar para Frota">Frota</span>
         <span class="sep">›</span>
         <span class="current" id="breadcrumbCurrent">Visão Geral</span>
       </div>
@@ -2634,18 +2640,27 @@ function rebuildTypeFilterButtons() {
 // =========================================
 // RENDER
 // =========================================
+function backToGrid() {
+  if (!selectedMachineId) return;
+  selectedMachineId = null;
+  renderAll();
+}
+
 function renderAll() {
   renderMachineList();
   rebuildTypeFilterButtons();
+  const backEl = document.getElementById('breadcrumbBack');
   if (selectedMachineId) {
     renderDetail(selectedMachineId);
     document.getElementById('machineGridView').style.display = 'none';
+    if (backEl) backEl.classList.add('breadcrumb-back');
   } else {
     renderMachineGrid();
     document.getElementById('machineGridView').style.display = 'flex';
     document.getElementById('machineDetail').classList.remove('active');
     document.getElementById('addHwBtn').style.display = 'none';
     document.getElementById('breadcrumbCurrent').textContent = 'Visão Geral';
+    if (backEl) backEl.classList.remove('breadcrumb-back');
   }
   if (_currentView === 'dashboard') renderDashboard();
   if (_currentView === 'consultas') renderConsultas();
