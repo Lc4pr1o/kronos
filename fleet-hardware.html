@@ -2170,6 +2170,34 @@ let _pendingHwInstall = null;
 // =========================================
 // LOAD DATA FROM SHEETS
 // =========================================
+// Garante que ESTOQUE/MANUTENCAO/INATIVO sempre aparecem em `machines`,
+// mesmo que não estejam cadastrados na tabela maquinas do Supabase.
+function injectVirtualMachines(rawHardwares) {
+  const VIRTUAL_DESTS = [
+    { id: 'ESTOQUE',    name: 'Estoque',    type: 'estoque'    },
+    { id: 'MANUTENCAO', name: 'Manutenção', type: 'manutencao' },
+    { id: 'INATIVO',    name: 'Inativo',    type: 'inativo'    },
+  ];
+  VIRTUAL_DESTS.forEach(vd => {
+    if (machines.find(m => m.id === vd.id)) return;
+    machines.push({
+      id: vd.id, name: vd.name, type: vd.type,
+      year: '', unidade: '', chassi: '', patrimony: '', createdAt: null,
+      hardware: rawHardwares
+        .filter(h => String(h.maquinaAtual ?? '') === vd.id)
+        .map(h => ({
+          id:           String(h.id            ?? ''),
+          name:         String(h.nome          ?? ''),
+          type:         String(h.tipo          ?? ''),
+          sn:           String(h.numeroDeSerie || ''),
+          manufacturer: h.fabricante           || '',
+          patrimony:    String(h.patrimonio    || ''),
+          installedAt:  h.instaladoEm,
+        }))
+    });
+  });
+}
+
 function sheetsToMachines(rawMachines, rawHardwares) {
   return rawMachines.map(m => {
     const id = String(m.id ?? '');
@@ -2216,12 +2244,14 @@ async function loadFromSheets() {
     if (!Array.isArray(rawMachines))  throw new Error('Resposta inválida: maquinas não é array');
     if (!Array.isArray(rawHardwares)) throw new Error('Resposta inválida: hardwares não é array');
     machines = sheetsToMachines(rawMachines, rawHardwares);
+    injectVirtualMachines(rawHardwares);
     setConnectionStatus('online');
     showToast('success', '☁️', 'Dados atualizados', `${machines.length} máquinas carregadas`);
     retryPendingMachines();
   } catch(e) {
     console.error('loadFromSheets:', e);
     machines = sheetsToMachines(DEMO_DATA.machines, DEMO_DATA.hardwares);
+    injectVirtualMachines(DEMO_DATA.hardwares);
     setConnectionStatus('error');
     showToast('warning', '⚠️', 'Sem conexão', 'Exibindo dados demo');
   }
@@ -3413,24 +3443,33 @@ async function saveEditHw() {
 
 async function removeHardware(machineId, hwId) {
   const m = machines.find(x => x.id === machineId);
+  if (!m) { showToast('warning', '⚠️', 'Erro', 'Máquina não encontrada'); return; }
   const hw = m.hardware.find(h => h.id === hwId);
-  if (!confirm(`Remover ${hw.name} (${hw.id}) de ${m.name}?`)) return;
+  if (!hw) { showToast('warning', '⚠️', 'Erro', 'Hardware não encontrado'); return; }
+  if (!confirm(`Remover ${hw.name} (${hw.id}) de ${m.name}?\n\nEsta ação é permanente.`)) return;
 
   const backup = [...m.hardware];
   m.hardware = m.hardware.filter(h => h.id !== hwId);
   renderAll();
-  showToast('success', '🗑️', 'Hardware removido', `${hw.name} removido de ${m.name}`);
 
   try {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/hardwares?id=eq.${encodeURIComponent(hwId)}`, {
-      method: 'DELETE', headers: sbHeaders,
+      method: 'DELETE',
+      headers: { ...sbHeaders, 'Prefer': 'count=exact' },
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    // RLS pode retornar 204 mas sem apagar nada (count=0); detectamos pelo header
+    const range = res.headers.get('Content-Range') || '';
+    if (range.endsWith('/0')) throw new Error('RLS bloqueou a exclusão');
+    showToast('success', '🗑️', 'Hardware excluído', `${hw.name} removido permanentemente`);
   } catch(e) {
-    console.error('removeHardware sync:', e);
+    console.error('removeHardware:', e);
     m.hardware = backup;
     renderAll();
-    showToast('warning', '⚠️', 'Erro ao sincronizar', 'Remoção revertida — sem conexão');
+    const msg = String(e.message).includes('RLS')
+      ? 'Sem permissão para excluir — execute o SQL de permissões'
+      : 'Falha na conexão — remoção revertida';
+    showToast('warning', '⚠️', 'Não foi possível excluir', msg);
   }
 }
 
