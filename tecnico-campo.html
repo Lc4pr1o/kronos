@@ -1461,7 +1461,9 @@ let machineEmojis = { trator:'🚜', motoniveladora:'🚧', colhedora:'🌾', tr
 function buildMachineConfig(rawTipos) {
   if (!Array.isArray(rawTipos) || !rawTipos.length) return;
   rawTipos.forEach(t => {
-    if (t.id && t.emoji) machineEmojis[t.id] = t.emoji;
+    if (!t.id) return;
+    // Usa o emoji do banco se existir, senão mantém o que já tinha (hardcoded ou anterior)
+    machineEmojis[t.id] = t.emoji || machineEmojis[t.id] || '🚜';
   });
 }
 let hwColors = { monitor:'#f97316', receptor:'#c084fc', radio:'#60a5fa', tela:'#fbbf24', bordo:'#4ade80' };
@@ -2893,18 +2895,28 @@ async function submitCadastroEquip() {
 // ══════════════════════════════════════════
 // CADASTRO DE MÁQUINA
 // ══════════════════════════════════════════
-function openCadastroMaquina() {
+async function openCadastroMaquina() {
+  document.getElementById('cadMaqId').value = '';
+  document.getElementById('cadMaqNome').value = '';
+  document.getElementById('cadMaquinaOverlay').classList.add('open');
+
+  // Sempre busca maq_tipos frescos para garantir que tipos adicionados
+  // pela plataforma após o app ter aberto apareçam aqui
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/maq_tipos?select=*&order=id`, { headers: sbHeaders });
+    if (res.ok) { const rt = await res.json(); buildMachineConfig(rt); }
+  } catch(e) { /* usa o que já está em machineEmojis */ }
+
   const sel = document.getElementById('cadMaqTipo');
+  const prev = sel.value;
   sel.innerHTML = '<option value="" disabled selected hidden>— Selecione —</option>';
   Object.entries(machineEmojis).forEach(([type, emoji]) => {
     if (VIRTUAL_IDS.has(type) || VIRTUAL_TYPES.has(type)) return;
     const o = document.createElement('option'); o.value = type;
     o.textContent = `${emoji} ${type.toUpperCase()}`;
+    if (type === prev) o.selected = true;
     sel.appendChild(o);
   });
-  document.getElementById('cadMaqId').value = '';
-  document.getElementById('cadMaqNome').value = '';
-  document.getElementById('cadMaquinaOverlay').classList.add('open');
 }
 function closeCadastroMaquina() { document.getElementById('cadMaquinaOverlay').classList.remove('open'); }
 
