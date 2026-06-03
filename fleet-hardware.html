@@ -655,6 +655,47 @@
   .hero-icon-wrap.manutencao { background: rgba(224, 82, 82, 0.12);  border: 1px solid rgba(224,82,82,0.3); }
   .hero-icon-wrap.inativo    { background: rgba(74, 84, 104, 0.12);  border: 1px solid rgba(74,84,104,0.3); }
 
+  /* ── ICON PICKER ── */
+  .icon-picker-btn {
+    width: 42px; height: 42px;
+    border-radius: 8px; background: var(--surface2);
+    border: 1px solid var(--border); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: border-color 0.15s; flex-shrink: 0;
+  }
+  .icon-picker-btn:hover { border-color: var(--accent); }
+  .icon-picker-popover {
+    position: fixed; z-index: 9999;
+    background: var(--surface);
+    border: 1px solid var(--border); border-radius: 12px;
+    padding: 12px; box-shadow: 0 8px 32px rgba(0,0,0,.5);
+    width: 290px; display: none;
+  }
+  .icon-picker-popover.open { display: block; }
+  .icon-picker-search {
+    width: 100%; background: var(--surface2);
+    border: 1px solid var(--border); border-radius: 8px;
+    padding: 8px 10px; color: var(--text);
+    font-family: 'JetBrains Mono', monospace; font-size: 12px;
+    margin-bottom: 8px; outline: none;
+  }
+  .icon-grid {
+    display: grid; grid-template-columns: repeat(5, 1fr);
+    gap: 4px; max-height: 220px; overflow-y: auto;
+  }
+  .icon-grid-item {
+    display: flex; flex-direction: column; align-items: center;
+    padding: 8px 4px; border-radius: 8px; cursor: pointer;
+    border: 1px solid transparent; transition: all 0.1s; color: var(--text2);
+  }
+  .icon-grid-item:hover { background: var(--surface2); border-color: var(--border); color: var(--text); }
+  .icon-grid-item.selected { background: rgba(245,166,35,.12); border-color: var(--accent); color: var(--accent); }
+  .icon-grid-item .ig-label {
+    font-size: 8px; color: inherit; margin-top: 3px;
+    text-align: center; overflow: hidden; text-overflow: ellipsis;
+    white-space: nowrap; max-width: 100%; opacity: .7;
+  }
+
   .hero-info { display: flex; flex-direction: column; gap: 4px; }
   .hero-type { font-size: 10px; letter-spacing: 2px; color: var(--text3); font-weight: 600; }
   .hero-name { font-size: 22px; font-weight: 800; }
@@ -1721,6 +1762,12 @@
   </div>
 </div>
 
+<!-- ICON PICKER POPOVER -->
+<div id="iconPickerPopover" class="icon-picker-popover">
+  <input class="icon-picker-search" id="iconPickerSearch" placeholder="🔍 Buscar ícone..." oninput="filterIconPicker()">
+  <div class="icon-grid" id="iconPickerGrid"></div>
+</div>
+
 <!-- ===================== MODALS ===================== -->
 
 <!-- BATCH IMPORT -->
@@ -1806,8 +1853,12 @@
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label">EMOJI</label>
-            <input type="text" class="form-input" id="tipoEmoji" placeholder="📡" style="font-size:18px">
+            <label class="form-label">ÍCONE</label>
+            <div style="display:flex;gap:8px;align-items:center">
+              <div class="icon-picker-btn" id="tipoEmojiPreview" onclick="openIconPicker('tipoEmoji','tipoEmojiPreview',event)" title="Escolher ícone">?</div>
+              <input type="hidden" id="tipoEmoji">
+              <button class="btn btn-ghost" style="flex:1;font-size:11px" onclick="openIconPicker('tipoEmoji','tipoEmojiPreview',event)">Escolher ícone →</button>
+            </div>
           </div>
           <div class="form-group">
             <label class="form-label">COR</label>
@@ -1849,8 +1900,12 @@
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label">EMOJI</label>
-            <input type="text" class="form-input" id="maqTipoEmoji" placeholder="🚜" style="font-size:18px">
+            <label class="form-label">ÍCONE</label>
+            <div style="display:flex;gap:8px;align-items:center">
+              <div class="icon-picker-btn" id="maqTipoEmojiPreview" onclick="openIconPicker('maqTipoEmoji','maqTipoEmojiPreview',event)" title="Escolher ícone">?</div>
+              <input type="hidden" id="maqTipoEmoji">
+              <button class="btn btn-ghost" style="flex:1;font-size:11px" onclick="openIconPicker('maqTipoEmoji','maqTipoEmojiPreview',event)">Escolher ícone →</button>
+            </div>
           </div>
           <div class="form-group">
             <label class="form-label">COR</label>
@@ -2509,7 +2564,7 @@ function renderTiposSettings() {
     const row = document.createElement('div');
     row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;margin-bottom:6px';
     row.innerHTML = `
-      <span style="width:26px;text-align:center;font-size:16px">${cfg.emoji}</span>
+      <span style="width:26px;display:flex;align-items:center;justify-content:center;color:${cfg.color||'currentColor'}">${renderIcon(cfg.emoji, 20, cfg.color || 'currentColor')}</span>
       <span style="flex:1;font-weight:600;font-size:13px;letter-spacing:.5px">${cfg.label}</span>
       <span style="font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace">${cfg.modelos.length} mod · ${cfg.fabricantes?.length || 0} fab</span>
       <div style="width:14px;height:14px;border-radius:50%;background:${cfg.color};flex-shrink:0"></div>
@@ -2527,6 +2582,7 @@ function editTipo(id) {
   document.getElementById('tipoId').disabled = true;
   document.getElementById('tipoLabel').value = cfg.label;
   document.getElementById('tipoEmoji').value = cfg.emoji;
+  _setIconPreview('tipoEmojiPreview', cfg.emoji);
   document.getElementById('tipoCor').value = cfg.color || '#888888';
   document.getElementById('tipoModelos').value = cfg.modelos.join('\n');
   document.getElementById('tipoFabricantes').value = (cfg.fabricantes || []).join('\n');
@@ -2539,6 +2595,7 @@ function clearSettingsForm() {
   document.getElementById('tipoId').disabled = false;
   document.getElementById('tipoLabel').value = '';
   document.getElementById('tipoEmoji').value = '';
+  _setIconPreview('tipoEmojiPreview', '');
   document.getElementById('tipoCor').value = '#888888';
   document.getElementById('tipoModelos').value = '';
   document.getElementById('tipoFabricantes').value = '';
@@ -2596,15 +2653,15 @@ async function reloadTipos() {
 }
 
 const VIRTUAL_CONFIG = {
-  estoque:    { emoji: '📦', label: 'ESTOQUE',    color: 'var(--blue)' },
-  manutencao: { emoji: '🔧', label: 'MANUTENÇÃO', color: 'var(--red)' },
-  inativo:    { emoji: '⛔', label: 'INATIVO',    color: 'var(--text3)' },
+  estoque:    { emoji: 'estoque',    label: 'ESTOQUE',    color: 'var(--blue)' },
+  manutencao: { emoji: 'manutencao', label: 'MANUTENÇÃO', color: 'var(--red)' },
+  inativo:    { emoji: 'inativo',    label: 'INATIVO',    color: 'var(--text3)' },
 };
 
 let machineConfig = {
-  trator:        { emoji: '🚜', label: 'TRATOR',        color: 'var(--trator)' },
-  motoniveladora:{ emoji: '🚧', label: 'MOTONIVELADORA', color: 'var(--motoniveladora)' },
-  colhedora:     { emoji: '🌾', label: 'COLHEDORA',     color: 'var(--colhedora)' },
+  trator:        { emoji: 'trator',         label: 'TRATOR',         color: 'var(--trator)' },
+  motoniveladora:{ emoji: 'motoniveladora', label: 'MOTONIVELADORA', color: 'var(--motoniveladora)' },
+  colhedora:     { emoji: 'colhedora',      label: 'COLHEDORA',      color: 'var(--colhedora)' },
   ...VIRTUAL_CONFIG,
 };
 
@@ -2616,7 +2673,7 @@ function buildMachineConfig(rawTipos) {
   REAL_TYPES = new Set();
   rawTipos.forEach(t => {
     machineConfig[t.id] = {
-      emoji: t.emoji || '🚛',
+      emoji: t.emoji || 'trator',
       label: t.label || t.id.toUpperCase(),
       color: t.cor || '#888888',
     };
@@ -2652,7 +2709,7 @@ function renderMaqTiposSettings() {
     const row = document.createElement('div');
     row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;margin-bottom:6px';
     row.innerHTML = `
-      <span style="width:26px;text-align:center;font-size:16px">${cfg.emoji}</span>
+      <span style="width:26px;display:flex;align-items:center;justify-content:center;color:${cfg.color||'currentColor'}">${renderIcon(cfg.emoji, 20, cfg.color || 'currentColor')}</span>
       <span style="flex:1;font-weight:600;font-size:13px;letter-spacing:.5px">${cfg.label}</span>
       <div style="width:14px;height:14px;border-radius:50%;background:${cfg.color};flex-shrink:0"></div>
       <button class="btn btn-ghost" style="padding:4px 10px;font-size:11px" onclick="editMaqTipo('${id}')">Editar</button>
@@ -2669,6 +2726,7 @@ function editMaqTipo(id) {
   document.getElementById('maqTipoId').disabled = true;
   document.getElementById('maqTipoLabel').value = cfg.label;
   document.getElementById('maqTipoEmoji').value = cfg.emoji;
+  _setIconPreview('maqTipoEmojiPreview', cfg.emoji);
   document.getElementById('maqTipoCor').value = cfg.color?.startsWith('#') ? cfg.color : '#888888';
   document.getElementById('maqFormSubTitle').textContent = `EDITAR: ${cfg.label}`;
 }
@@ -2679,6 +2737,7 @@ function clearMaqTipoForm() {
   document.getElementById('maqTipoId').disabled = false;
   document.getElementById('maqTipoLabel').value = '';
   document.getElementById('maqTipoEmoji').value = '';
+  _setIconPreview('maqTipoEmojiPreview', '');
   document.getElementById('maqTipoCor').value = '#888888';
   document.getElementById('maqFormSubTitle').textContent = 'ADICIONAR NOVO TIPO';
 }
@@ -2860,7 +2919,7 @@ function renderMachineList() {
       const item = document.createElement('div');
       item.className = `mlist-item${selectedMachineId === String(m.id) ? ' selected' : ''}`;
       item.innerHTML = `
-        <div class="mlist-icon">${cfg.emoji}</div>
+        <div class="mlist-icon">${renderIcon(cfg.emoji, 16, cfg.color || 'currentColor')}</div>
         <div class="mlist-info">
           <div class="mlist-name">${m.name}</div>
           <div class="mlist-id">${m.id}${m.patrimony ? ' · ' + m.patrimony : ''}</div>
@@ -2893,7 +2952,7 @@ function renderMachineList() {
     const item = document.createElement('div');
     item.className = `dest-strip-item${selectedMachineId === String(m.id) ? ' selected' : ''}`;
     item.innerHTML = `
-      <div class="dest-strip-icon">${cfg.emoji}</div>
+      <div class="dest-strip-icon">${renderIcon(cfg.emoji, 18, cfg.color || 'currentColor')}</div>
       <div class="dest-strip-label">${cfg.label}</div>
       <div class="dest-strip-count">${m.hardware.length}hw</div>
     `;
@@ -2921,7 +2980,7 @@ function renderMachineGrid() {
     card.style.setProperty('--mg-color', cfg.color || 'var(--accent)');
     card.innerHTML = `
       <div class="mg-card-top">
-        <div class="mg-card-emoji">${cfg.emoji}</div>
+        <div class="mg-card-emoji">${renderIcon(cfg.emoji, 28, cfg.color || 'currentColor')}</div>
         <div class="mg-card-hw">${m.hardware.length} hw</div>
       </div>
       <div class="mg-card-name">${m.name}</div>
@@ -2952,7 +3011,7 @@ function renderDetail(id) {
   document.getElementById('machineDetail').className = 'machine-detail active';
 
   document.getElementById('breadcrumbCurrent').textContent = `${m.name} (${m.id})`;
-  document.getElementById('heroEmoji').textContent = cfg.emoji;
+  document.getElementById('heroEmoji').innerHTML = renderIcon(cfg.emoji, 34, cfg.color || 'currentColor');
   document.getElementById('heroIcon').className = `hero-icon-wrap ${m.type}`;
   document.getElementById('heroCard').setAttribute('data-emoji', cfg.emoji);
 
@@ -4563,6 +4622,108 @@ function sortConsultas(col) {
   renderConsultas();
 }
 
+// =========================================
+// ICON SYSTEM
+// =========================================
+const KRONOS_ICONS = {
+  // ── Tipos de máquina ──────────────────────
+  trator:       `<circle cx="16" cy="15" r="4"/><circle cx="7" cy="16" r="2.5"/><path d="M10 16V9l3-5h5l4 5v4"/><path d="M4 14h6"/>`,
+  colhedora:    `<circle cx="17" cy="15" r="3"/><circle cx="7" cy="16" r="2"/><path d="M9 16V8h9l3 4v4"/><path d="M2 8h7M2 11h7"/>`,
+  motoniveladora:`<circle cx="4" cy="17" r="2"/><circle cx="20" cy="17" r="2"/><path d="M6 17V9h12v8"/><path d="M2 13h20M3 9l3-5h12l3 5"/>`,
+  transbordo:   `<circle cx="6" cy="17" r="2"/><circle cx="18" cy="17" r="2"/><path d="M2 17h2M8 17h8M20 17h2M1 9l3-4h16l3 4v6H1z"/>`,
+  caminhao:     `<path d="M1 3h15v13H1zM16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>`,
+  pulverizador: `<path d="M7 16.3c2.2 0 4-1.83 4-4.05 0-1.16-.57-2.26-1.71-3.19S7.29 7.5 7 5.28C6.71 7.5 5.53 8.1 4.34 9.06 3.16 10 2.5 11.11 2.5 12.25c0 2.22 1.8 4.05 4 4.05z"/><path d="M20 9l-3 10M17 9l3 10M12 7V4M14 7V4M10 4h6"/>`,
+  plantadeira:  `<path d="M12 22V12M12 12C12 7 17 2 22 2c0 5-5 10-10 10M12 12C12 7 7 2 2 2c0 5 5 10 10 10"/>`,
+  // ── Tipos de hardware ─────────────────────
+  receptor:     `<path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/>`,
+  radio:        `<path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5"/><circle cx="12" cy="12" r="2"/><path d="M16.2 16.2c2.3-2.3 2.3-6.1 0-8.5M19.1 19.1C23 15.2 23 8.8 19.1 4.9"/>`,
+  tela:         `<rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>`,
+  bordo:        `<rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M1 9h3M1 15h3M20 9h3M20 15h3"/>`,
+  monitor:      `<rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4M7 7h10M7 11h7"/>`,
+  sensor:       `<circle cx="12" cy="12" r="4"/><path d="M2 12h3M19 12h3M12 2v3M12 19v3M4.93 4.93l2.12 2.12M16.95 16.95l2.12 2.12M16.95 7.05l2.12-2.12M4.93 19.07l2.12-2.12"/>`,
+  antena:       `<path d="M2 17l10-5 10 5M6 15V8l6-3 6 3v7M12 12v10M8 19h8"/>`,
+  // ── Locais virtuais ───────────────────────
+  estoque:      `<path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/>`,
+  manutencao:   `<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>`,
+  inativo:      `<circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>`,
+  // ── Extras ────────────────────────────────
+  gauge:        `<path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M19.07 4.93A10 10 0 1 1 4.93 4.93"/><path d="M7 12l3 3"/>`,
+  mapa:         `<path d="M1 6l7-4 8 4 7-4v16l-7 4-8-4-7 4V6z"/><path d="M8 2v16M16 6v16"/>`,
+  engrenagem:   `<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>`,
+  sinal:        `<path d="M2 20h.01M7 20v-4M12 20v-8M17 20V8M22 4v16"/>`,
+  localizacao:  `<circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 6.9 8 11.7z"/>`,
+};
+
+// Renderiza um ícone SVG ou cai em emoji/texto como fallback
+function renderIcon(nameOrEmoji, size = 18, color = 'currentColor') {
+  const body = KRONOS_ICONS[nameOrEmoji];
+  if (body) {
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="${size}" height="${size}" stroke="${color}" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0">${body}</svg>`;
+  }
+  return `<span style="font-size:${Math.round(size * 0.85)}px;line-height:1;display:inline-block;vertical-align:middle">${nameOrEmoji || '?'}</span>`;
+}
+
+// ─── Icon Picker ─────────────────────────────
+let _ipTarget = null;
+let _ipPreview = null;
+
+function openIconPicker(inputId, previewId, e) {
+  _ipTarget = inputId; _ipPreview = previewId;
+  const pop = document.getElementById('iconPickerPopover');
+  pop.classList.add('open');
+  document.getElementById('iconPickerSearch').value = '';
+  _renderIconGrid('');
+  const rect = e.currentTarget.getBoundingClientRect();
+  let left = rect.left, top = rect.bottom + 6;
+  if (left + 292 > window.innerWidth) left = window.innerWidth - 300;
+  if (top + 300 > window.innerHeight) top = rect.top - 306;
+  pop.style.left = `${Math.max(4, left)}px`;
+  pop.style.top  = `${Math.max(4, top)}px`;
+  e.stopPropagation();
+}
+
+function closeIconPicker() {
+  document.getElementById('iconPickerPopover')?.classList.remove('open');
+}
+
+function filterIconPicker() {
+  _renderIconGrid(document.getElementById('iconPickerSearch').value.toLowerCase().trim());
+}
+
+function _renderIconGrid(filter) {
+  const current = document.getElementById(_ipTarget)?.value || '';
+  const grid = document.getElementById('iconPickerGrid');
+  grid.innerHTML = Object.keys(KRONOS_ICONS)
+    .filter(name => !filter || name.includes(filter))
+    .map(name => `
+      <div class="icon-grid-item${name === current ? ' selected' : ''}" onclick="selectIcon('${name}')">
+        ${renderIcon(name, 22, 'currentColor')}
+        <span class="ig-label">${name}</span>
+      </div>`)
+    .join('');
+}
+
+function selectIcon(name) {
+  const input = document.getElementById(_ipTarget);
+  if (input) input.value = name;
+  const preview = document.getElementById(_ipPreview);
+  if (preview) preview.innerHTML = renderIcon(name, 22, 'currentColor');
+  closeIconPicker();
+}
+
+document.addEventListener('click', e => {
+  const pop = document.getElementById('iconPickerPopover');
+  if (pop?.classList.contains('open') && !pop.contains(e.target)) closeIconPicker();
+});
+
+// Atualiza preview do ícone nos formulários de tipo
+function _setIconPreview(previewId, iconName) {
+  const el = document.getElementById(previewId);
+  if (!el) return;
+  el.innerHTML = iconName ? renderIcon(iconName, 22, 'currentColor') : '?';
+}
+
+// =========================================
 function resetConsultaFilters() {
   document.querySelectorAll('#fdp-maq input, #fdp-hw input, #fdp-unidade input, #fdp-situacao input')
     .forEach(cb => { cb.checked = false; });
