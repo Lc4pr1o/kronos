@@ -820,6 +820,131 @@
     gap: 10px;
   }
   .confirm-all-btn:active { transform: scale(0.98); opacity: 0.9; }
+
+  /* ── CONFIG BUTTON ── */
+  .config-btn {
+    width: 34px; height: 34px;
+    border-radius: 8px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text2);
+    font-size: 16px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+    flex-shrink: 0;
+  }
+  .config-btn:active { opacity: 0.7; transform: scale(0.95); }
+
+  /* ── CONFIG BOTTOM SHEET ── */
+  .cfg-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 200;
+    display: none; align-items: flex-end;
+    backdrop-filter: blur(4px);
+  }
+  .cfg-overlay.open { display: flex; }
+  .cfg-sheet {
+    width: 100%; max-width: 480px; margin: 0 auto;
+    background: var(--surface);
+    border-radius: 18px 18px 0 0;
+    border: 1px solid var(--border);
+    padding: 20px 20px 40px;
+  }
+  .cfg-title {
+    font-size: 10px; font-weight: 800; letter-spacing: 2px;
+    color: var(--text3); margin-bottom: 16px; text-align: center;
+  }
+  .cfg-sheet-btn {
+    width: 100%; padding: 16px 18px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px; font-weight: 600;
+    cursor: pointer; text-align: left;
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 10px;
+    transition: all 0.15s;
+  }
+  .cfg-sheet-btn:active { opacity: 0.7; transform: scale(0.98); }
+  .cfg-sheet-btn .csb-icon { font-size: 20px; }
+  .cfg-sheet-btn .csb-sub { font-size: 10px; color: var(--text3); font-weight: 400; letter-spacing: 0.5px; margin-top: 2px; }
+
+  /* ── CADASTRO MODALS ── */
+  .cad-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 210;
+    display: none; align-items: flex-end;
+    backdrop-filter: blur(4px);
+  }
+  .cad-overlay.open { display: flex; }
+  .cad-modal {
+    width: 100%; max-width: 480px; margin: 0 auto;
+    background: var(--surface);
+    border-radius: 18px 18px 0 0;
+    border: 1px solid var(--border);
+    max-height: 90dvh; overflow-y: auto;
+    padding: 20px 20px 48px;
+  }
+  .cad-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 18px;
+  }
+  .cad-title { font-size: 14px; font-weight: 800; letter-spacing: 1px; }
+  .cad-close {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text2);
+    font-size: 14px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .cad-submit-btn {
+    width: 100%; padding: 16px;
+    background: var(--accent);
+    border: none; border-radius: 12px;
+    color: #000;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px; font-weight: 800; letter-spacing: 1px;
+    cursor: pointer; margin-top: 20px;
+    transition: all 0.15s;
+  }
+  .cad-submit-btn:active { transform: scale(0.98); opacity: 0.9; }
+  .dest-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+  .dest-chip {
+    flex: 1; min-width: 80px; padding: 10px 8px;
+    border-radius: 10px; border: 1px solid var(--border);
+    background: var(--surface2); color: var(--text2);
+    font-size: 10px; font-weight: 700; letter-spacing: 0.5px;
+    cursor: pointer; text-align: center; transition: all 0.15s;
+  }
+  .dest-chip.sel-estoque  { border-color: var(--accent);  background: rgba(245,166,35,.1);  color: var(--accent); }
+  .dest-chip.sel-manut    { border-color: var(--red);     background: rgba(224,82,82,.08);  color: var(--red);    }
+  .dest-chip.sel-machine  { border-color: var(--green);   background: rgba(46,204,138,.1);  color: var(--green);  }
+
+  /* ── VIRTUAL SECTION LABEL ── */
+  .picker-section-label {
+    font-size: 9px; font-weight: 700; letter-spacing: 1.5px;
+    color: var(--text3); padding: 8px 12px 4px;
+  }
+
+  /* ── HW NOT FOUND ── */
+  .hw-not-found {
+    display: none;
+    margin-top: 12px; padding: 14px 16px;
+    background: rgba(224,82,82,.06);
+    border: 1px solid rgba(224,82,82,.2);
+    border-radius: 10px; font-size: 12px; color: var(--text2);
+  }
+  .hw-not-found strong { color: var(--red); display: block; margin-bottom: 4px; }
+  .hw-not-found span.cfg-link {
+    color: var(--accent); font-weight: 700; cursor: pointer; text-decoration: underline;
+  }
 </style>
 </head>
 <body>
@@ -835,6 +960,96 @@
       <div class="sync-dot"></div>
       <span id="syncLabel">Offline</span>
     </div>
+    <button class="config-btn" onclick="openConfigMenu()" title="Configurações">⚙</button>
+  </div>
+</div>
+
+<!-- CONFIG SHEET -->
+<div class="cfg-overlay" id="configOverlay" onclick="closeConfigMenu()">
+  <div class="cfg-sheet" onclick="event.stopPropagation()">
+    <div class="cfg-title">CONFIGURAÇÕES</div>
+    <button class="cfg-sheet-btn" onclick="closeConfigMenu();openCadastroEquip()">
+      <span class="csb-icon">📦</span>
+      <div>
+        <div>Cadastrar Equipamento</div>
+        <div class="csb-sub">Registrar novo hardware no sistema</div>
+      </div>
+    </button>
+    <button class="cfg-sheet-btn" onclick="closeConfigMenu();openCadastroMaquina()">
+      <span class="csb-icon">🚜</span>
+      <div>
+        <div>Cadastrar Máquina</div>
+        <div class="csb-sub">Adicionar máquina à frota</div>
+      </div>
+    </button>
+  </div>
+</div>
+
+<!-- CADASTRO EQUIPAMENTO -->
+<div class="cad-overlay" id="cadEquipOverlay" onclick="closeCadastroEquip()">
+  <div class="cad-modal" onclick="event.stopPropagation()">
+    <div class="cad-header">
+      <div class="cad-title">CADASTRAR EQUIPAMENTO</div>
+      <button class="cad-close" onclick="closeCadastroEquip()">✕</button>
+    </div>
+    <div class="section-title">TIPO</div>
+    <select class="field-select" id="cadHwType" onchange="onCadHwTypeChange()">
+      <option value="" disabled selected hidden>— Selecione —</option>
+    </select>
+    <div class="section-title" style="margin-top:14px">MODELO</div>
+    <select class="field-select" id="cadHwModelo">
+      <option value="" disabled selected hidden>— Selecione o tipo primeiro —</option>
+    </select>
+    <div id="cadBordoVersaoRow" style="display:none;margin-top:14px">
+      <div class="section-title">VERSÃO</div>
+      <input type="text" class="field-input" id="cadBordoVersao" placeholder="Ex: V2.3" oninput="this.value=this.value.toUpperCase()">
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px">
+      <div>
+        <div class="section-title">Nº SÉRIE</div>
+        <input type="text" class="field-input" id="cadHwSn" placeholder="S/N" oninput="this.value=this.value.toUpperCase()">
+      </div>
+      <div>
+        <div class="section-title">PATRIMÔNIO</div>
+        <input type="text" class="field-input" id="cadHwPat" placeholder="Pat." oninput="this.value=this.value.toUpperCase()">
+      </div>
+    </div>
+    <div class="section-title" style="margin-top:14px">FABRICANTE</div>
+    <select class="field-select" id="cadHwFab">
+      <option value="" disabled selected hidden>— Selecione —</option>
+    </select>
+    <div class="section-title" style="margin-top:14px">DESTINO</div>
+    <div class="dest-chips">
+      <div class="dest-chip sel-estoque" id="cadDestEstoque" onclick="setCadDest('ESTOQUE')">📦 ESTOQUE</div>
+      <div class="dest-chip" id="cadDestManut" onclick="setCadDest('MANUTENCAO')">🔧 MANUTENÇÃO</div>
+      <div class="dest-chip" id="cadDestMaquina" onclick="setCadDest('MAQUINA')">🚜 MÁQUINA...</div>
+    </div>
+    <div id="cadMachinePickerRow" style="display:none;margin-top:10px">
+      <input type="text" class="field-input" id="cadMachineSearch" placeholder="Buscar máquina..." oninput="renderCadMachinePicker()">
+      <div style="max-height:160px;overflow-y:auto;margin-top:6px;border-radius:8px;border:1px solid var(--border)">
+        <div id="cadMachinePicker"></div>
+      </div>
+    </div>
+    <button class="cad-submit-btn" onclick="submitCadastroEquip()">💾 Cadastrar Equipamento</button>
+  </div>
+</div>
+
+<!-- CADASTRO MÁQUINA -->
+<div class="cad-overlay" id="cadMaquinaOverlay" onclick="closeCadastroMaquina()">
+  <div class="cad-modal" onclick="event.stopPropagation()">
+    <div class="cad-header">
+      <div class="cad-title">CADASTRAR MÁQUINA</div>
+      <button class="cad-close" onclick="closeCadastroMaquina()">✕</button>
+    </div>
+    <div class="section-title">FROTA / ID</div>
+    <input type="text" class="field-input" id="cadMaqId" placeholder="Ex: 72249" oninput="this.value=this.value.toUpperCase()">
+    <div class="section-title" style="margin-top:14px">NOME</div>
+    <input type="text" class="field-input" id="cadMaqNome" placeholder="Ex: GRUNNER 72249">
+    <div class="section-title" style="margin-top:14px">TIPO</div>
+    <select class="field-select" id="cadMaqTipo">
+      <option value="" disabled selected hidden>— Selecione —</option>
+    </select>
+    <button class="cad-submit-btn" onclick="submitCadastroMaquina()">💾 Cadastrar Máquina</button>
   </div>
 </div>
 
@@ -919,41 +1134,19 @@
         style="text-transform:uppercase">
       <div id="hwSearchResults" style="display:none;margin-top:8px"></div>
       <div id="hwSelectedCard" style="display:none;margin-top:10px"></div>
-      <!-- Novo equipamento (quando não encontrado) -->
-      <div id="novoHwFields" style="display:none;margin-top:16px">
-        <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--text3);margin-bottom:12px;padding:8px 12px;background:var(--surface2);border-radius:8px;border:1px solid var(--border)">✨ NOVO EQUIPAMENTO — não encontrado no banco</div>
-        <div class="field-group">
-          <div class="field">
-            <label class="field-label">TIPO</label>
-            <select class="field-select" id="novoHwType" onchange="onNovoHwTypeChange();checkDisplacement()">
-              <option value="" disabled selected hidden>— Selecione —</option>
-            </select>
-          </div>
-        </div>
-        <div class="field-group" style="margin-top:12px">
-          <div class="field">
-            <label class="field-label">MODELO</label>
-            <select class="field-select" id="novoHwModelo">
-              <option value="" disabled selected hidden>— Selecione o tipo primeiro —</option>
-            </select>
-          </div>
-        </div>
-        <div class="field-group" style="margin-top:12px">
-          <div class="field">
-            <input type="text" class="field-input" id="novoHwSn" placeholder="Nº Série (AUTO MAIÚSCULAS)" oninput="this.value=this.value.toUpperCase()">
-          </div>
-          <div class="field">
-            <input type="text" class="field-input" id="novoHwPat" placeholder="Patrimônio (AUTO MAIÚSCULAS)" oninput="this.value=this.value.toUpperCase()">
-          </div>
-        </div>
-        <div class="field-group" style="margin-top:12px">
-          <div class="field">
-            <label class="field-label">FABRICANTE</label>
-            <select class="field-select" id="novoHwFab">
-              <option value="" disabled selected hidden>— Selecione —</option>
-            </select>
-          </div>
-        </div>
+      <!-- Não encontrado: redireciona para Config -->
+      <div class="hw-not-found" id="hwNotFound">
+        <strong>❌ Não encontrado no banco</strong>
+        Para registrar um novo equipamento, acesse
+        <span class="cfg-link" onclick="openConfigMenu()">⚙ Config → Cadastrar Equipamento</span>
+      </div>
+      <!-- Campos legados (nunca visíveis, usados como fallback de reset) -->
+      <div id="novoHwFields" style="display:none">
+        <select class="field-select" id="novoHwType" style="display:none"></select>
+        <select class="field-select" id="novoHwModelo" style="display:none"></select>
+        <input type="text" id="novoHwSn" style="display:none">
+        <input type="text" id="novoHwPat" style="display:none">
+        <select class="field-select" id="novoHwFab" style="display:none"></select>
       </div>
     </div>
 
@@ -1616,6 +1809,7 @@ function selectAction(action) {
   document.getElementById('hwSearchResults').style.display = 'none';
   document.getElementById('hwSelectedCard').style.display = 'none';
   document.getElementById('novoHwFields').style.display = 'none';
+  document.getElementById('hwNotFound').style.display = 'none';
 
   ['remEstoqueBtn','remManutencaoBtn','remInativoBtn'].forEach(id => {
     const el = document.getElementById(id); if (el) el.className = 'action-btn';
@@ -1636,6 +1830,7 @@ function searchHwBySnOrPat() {
   selectedHwId = null; selectedHwObj = null;
   document.getElementById('hwSelectedCard').style.display = 'none';
   document.getElementById('novoHwFields').style.display = 'none';
+  document.getElementById('hwNotFound').style.display = 'none';
   document.getElementById('hwSearchResults').style.display = 'none';
   checkDisplacement();
   if (term.length < 2) return;
@@ -1647,7 +1842,7 @@ function searchHwBySnOrPat() {
 
   const resultsEl = document.getElementById('hwSearchResults');
   if (results.length === 0) {
-    document.getElementById('novoHwFields').style.display = 'block';
+    document.getElementById('hwNotFound').style.display = 'block';
     return;
   }
   resultsEl.style.display = 'block';
@@ -1670,6 +1865,7 @@ function selectHwFromSearch(hw) {
   const loc = { ESTOQUE:'📦 Estoque', MANUTENCAO:'🔧 Manutenção', INATIVO:'⛔ Inativo' }[hw.machine]
              || (hw.machine ? `🚜 Frota ${hw.machine}` : '—');
   document.getElementById('hwSearchResults').style.display = 'none';
+  document.getElementById('hwNotFound').style.display = 'none';
   document.getElementById('hwSnInput').value = hw.sn || hw.patrimonio || '';
   const card = document.getElementById('hwSelectedCard');
   card.style.display = 'block';
@@ -1781,29 +1977,53 @@ function renderMachinePicker() {
   const list = term
     ? real.filter(m => m.name.toLowerCase().includes(term) || m.id.toLowerCase().includes(term))
     : real;
-  list.forEach(m => {
-    const div = document.createElement('div');
-    div.className = `machine-option${selectedMachineId === m.id ? ' selected' : ''}`;
-    div.innerHTML = `
-      <div class="mo-icon">${machineEmojis[m.type] || '🚛'}</div>
-      <div class="mo-info">
-        <div class="mo-name">${m.name} <span style="font-weight:400;font-size:11px;opacity:.5">#${m.id}</span></div>
-        <div class="mo-id">${m.type?.toUpperCase() || ''}</div>
-      </div>
-      <div class="mo-check">${selectedMachineId === m.id ? '✓' : ''}</div>
-    `;
-    div.onclick = () => {
-      selectedMachineId = m.id;
-      setMachineDropdownLabel('origin', m);
-      closeMachineDropdown('origin');
-      renderMachinePicker();
-      selectedHwId = null; selectedHwObj = null;
-      setHwDropdownLabel(null);
-      document.getElementById('hwPickerSection').style.display = 'block';
-      renderHwPicker();
-    };
-    container.appendChild(div);
-  });
+
+  // Para "Transferir", permite selecionar locais virtuais como origem
+  if (currentAction === 'transferir') {
+    const virtuals = [
+      { id:'MANUTENCAO', name:'Manutenção', type:'manutencao' },
+      { id:'ESTOQUE',    name:'Estoque',    type:'estoque'    },
+      { id:'INATIVO',    name:'Inativo',    type:'inativo'    },
+    ].filter(v => !term || v.name.toLowerCase().includes(term) || v.id.toLowerCase().includes(term));
+
+    if (virtuals.length) {
+      const lbl = document.createElement('div');
+      lbl.className = 'picker-section-label';
+      lbl.textContent = 'LOCAIS VIRTUAIS';
+      container.appendChild(lbl);
+      virtuals.forEach(v => container.appendChild(buildMachineOptionEl(v, selectedMachineId)));
+      const lbl2 = document.createElement('div');
+      lbl2.className = 'picker-section-label';
+      lbl2.textContent = 'FROTA';
+      container.appendChild(lbl2);
+    }
+  }
+
+  list.forEach(m => container.appendChild(buildMachineOptionEl(m, selectedMachineId)));
+}
+
+function buildMachineOptionEl(m, currentSelected) {
+  const div = document.createElement('div');
+  div.className = `machine-option${currentSelected === m.id ? ' selected' : ''}`;
+  div.innerHTML = `
+    <div class="mo-icon">${machineEmojis[m.type] || '🚛'}</div>
+    <div class="mo-info">
+      <div class="mo-name">${m.name} <span style="font-weight:400;font-size:11px;opacity:.5">#${m.id}</span></div>
+      <div class="mo-id">${m.type?.toUpperCase() || ''}</div>
+    </div>
+    <div class="mo-check">${currentSelected === m.id ? '✓' : ''}</div>
+  `;
+  div.onclick = () => {
+    selectedMachineId = m.id;
+    setMachineDropdownLabel('origin', m);
+    closeMachineDropdown('origin');
+    renderMachinePicker();
+    selectedHwId = null; selectedHwObj = null;
+    setHwDropdownLabel(null);
+    document.getElementById('hwPickerSection').style.display = 'block';
+    renderHwPicker();
+  };
+  return div;
 }
 
 function renderMachinePickerDest() {
@@ -1814,6 +2034,47 @@ function renderMachinePickerDest() {
   const list = term
     ? real.filter(m => m.name.toLowerCase().includes(term) || m.id.toLowerCase().includes(term))
     : real;
+
+  // Para "Transferir", permite ESTOQUE/MANUTENCAO como destino também
+  if (currentAction === 'transferir') {
+    const virtuals = [
+      { id:'ESTOQUE',    name:'Estoque',    type:'estoque'    },
+      { id:'MANUTENCAO', name:'Manutenção', type:'manutencao' },
+      { id:'INATIVO',    name:'Inativo',    type:'inativo'    },
+    ].filter(v => v.id !== selectedMachineId)
+     .filter(v => !term || v.name.toLowerCase().includes(term) || v.id.toLowerCase().includes(term));
+
+    if (virtuals.length) {
+      const lbl = document.createElement('div');
+      lbl.className = 'picker-section-label';
+      lbl.textContent = 'LOCAIS VIRTUAIS';
+      container.appendChild(lbl);
+      virtuals.forEach(v => {
+        const div = document.createElement('div');
+        div.className = `machine-option${selectedMachineDestId === v.id ? ' selected' : ''}`;
+        div.innerHTML = `
+          <div class="mo-icon">${machineEmojis[v.type] || '📦'}</div>
+          <div class="mo-info">
+            <div class="mo-name">${v.name}</div>
+            <div class="mo-id">${v.type.toUpperCase()}</div>
+          </div>
+          <div class="mo-check">${selectedMachineDestId === v.id ? '✓' : ''}</div>`;
+        div.onclick = () => {
+          selectedMachineDestId = v.id;
+          setMachineDropdownLabel('dest', v);
+          closeMachineDropdown('dest');
+          renderMachinePickerDest();
+          checkDisplacement();
+        };
+        container.appendChild(div);
+      });
+      const lbl2 = document.createElement('div');
+      lbl2.className = 'picker-section-label';
+      lbl2.textContent = 'FROTA';
+      container.appendChild(lbl2);
+    }
+  }
+
   list.forEach(m => {
     const div = document.createElement('div');
     div.className = `machine-option${selectedMachineDestId === m.id ? ' selected' : ''}`;
@@ -1946,16 +2207,7 @@ function submitRecord() {
   if (currentAction === 'instalar') {
     finalMachineDestId = selectedMachineDestId;
     if (!finalMachineDestId) { showToast('err','⚠️','Selecione a máquina de destino'); return; }
-    const novoVisible = document.getElementById('novoHwFields').style.display !== 'none';
-    if (!selectedHwId && !novoVisible) { showToast('err','⚠️','Busque o equipamento pelo S/N'); return; }
-    if (!selectedHwId && novoVisible) {
-      const t = document.getElementById('novoHwType').value;
-      const m = document.getElementById('novoHwModelo').value;
-      const s = document.getElementById('novoHwSn').value.trim();
-      const p = document.getElementById('novoHwPat').value.trim();
-      if (!t||!m) { showToast('err','⚠️','Preencha tipo e modelo'); return; }
-      if (!s&&!p) { showToast('err','⚠️','Informe S/N ou Patrimônio'); return; }
-    }
+    if (!selectedHwId) { showToast('err','⚠️','Busque o equipamento pelo S/N'); return; }
   } else if (currentAction === 'remover') {
     finalMachineId = selectedMachineId;
     if (!finalMachineId) { showToast('err','⚠️','Selecione a máquina'); return; }
@@ -1977,15 +2229,7 @@ function submitRecord() {
   }
 
   let hwId, hwSn, hwName, hwType, hwModelo, hwPatrimonio;
-  const novoVisible = document.getElementById('novoHwFields').style.display !== 'none';
-  if (novoVisible && !selectedHwObj) {
-    hwType = document.getElementById('novoHwType').value;
-    hwName = document.getElementById('novoHwModelo').value;
-    hwSn = document.getElementById('novoHwSn').value.trim().toUpperCase();
-    hwPatrimonio = document.getElementById('novoHwPat').value.trim().toUpperCase();
-    hwId = hwPatrimonio || `HW-${Date.now()}`;
-    hwModelo = hwName;
-  } else {
+  {
     const hw = selectedHwObj || hardwares.find(h => h.id === selectedHwId);
     if (!hw) { showToast('err','⚠️','Equipamento não encontrado'); return; }
     hwId = hw.id; hwSn = hw.sn||''; hwName = hw.name||'';
@@ -2322,7 +2566,7 @@ function resetForm() {
   ids.forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
   ['novoHwType','novoHwModelo','novoHwFab'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
 
-  ['hwSearchResults','hwSelectedCard','novoHwFields','hwPickerSection','displacementSection'].forEach(id => {
+  ['hwSearchResults','hwSelectedCard','novoHwFields','hwNotFound','hwPickerSection','displacementSection'].forEach(id => {
     const el=document.getElementById(id); if(el) el.style.display='none';
   });
 
@@ -2416,7 +2660,9 @@ function buildDraftCard(r) {
   const ac = actionCfg[r.action] || { label: r.action.toUpperCase(), color:'var(--text2)' };
   const dt = r.dateTime ? new Date(r.dateTime).toLocaleString('pt-BR') : '—';
   const dest = r.machineDestName || r.machineDestId || '—';
-  const origin = r.machineName || r.machineId || '';
+  const originName = r.machineName || r.machineId || '';
+  const originId   = (r.machineId && r.machineId !== r.machineName) ? ` <span style="opacity:.5;font-size:11px;font-weight:400">#${r.machineId}</span>` : '';
+  const origin = originName ? originName + originId : '';
   const autoTag = r.autoDisplacement ? `<span class="draft-auto-badge">AUTO</span>` : '';
 
   card.innerHTML = `
@@ -2518,6 +2764,177 @@ function deleteDraft(id) {
   updatePendingBanner();
   renderRegistros();
   showToast('ok', '🗑️', 'Rascunho excluído');
+}
+
+// ══════════════════════════════════════════
+// CONFIG MENU
+// ══════════════════════════════════════════
+function openConfigMenu()  { document.getElementById('configOverlay').classList.add('open'); }
+function closeConfigMenu() { document.getElementById('configOverlay').classList.remove('open'); }
+
+// ══════════════════════════════════════════
+// CADASTRO DE EQUIPAMENTO
+// ══════════════════════════════════════════
+let _cadDestId     = 'ESTOQUE';
+let _cadMachineId  = null;
+
+function openCadastroEquip() {
+  const typeSel = document.getElementById('cadHwType');
+  typeSel.innerHTML = '<option value="" disabled selected hidden>— Selecione —</option>';
+  Object.entries(hwConfig).forEach(([id, cfg]) => {
+    const o = document.createElement('option'); o.value = id; o.textContent = cfg.label || id.toUpperCase(); typeSel.appendChild(o);
+  });
+  document.getElementById('cadHwModelo').innerHTML = '<option value="" disabled selected hidden>— Selecione o tipo primeiro —</option>';
+  const fabSel = document.getElementById('cadHwFab');
+  fabSel.innerHTML = '<option value="" disabled selected hidden>— Selecione —</option>';
+  ['John Deere','Timple','Solinftec','Reven'].forEach(f => { const o=document.createElement('option'); o.value=f; o.textContent=f; fabSel.appendChild(o); });
+  document.getElementById('cadHwSn').value = '';
+  document.getElementById('cadHwPat').value = '';
+  document.getElementById('cadBordoVersao').value = '';
+  document.getElementById('cadBordoVersaoRow').style.display = 'none';
+  document.getElementById('cadMachinePickerRow').style.display = 'none';
+  _cadDestId = 'ESTOQUE'; _cadMachineId = null;
+  document.getElementById('cadDestEstoque').className  = 'dest-chip sel-estoque';
+  document.getElementById('cadDestManut').className    = 'dest-chip';
+  document.getElementById('cadDestMaquina').className  = 'dest-chip';
+  document.getElementById('cadDestMaquina').textContent = '🚜 MÁQUINA...';
+  document.getElementById('cadEquipOverlay').classList.add('open');
+}
+function closeCadastroEquip() { document.getElementById('cadEquipOverlay').classList.remove('open'); }
+
+function onCadHwTypeChange() {
+  const type = document.getElementById('cadHwType').value;
+  const cfg = hwConfig[type];
+  const modelSel = document.getElementById('cadHwModelo');
+  modelSel.innerHTML = '<option value="">— Selecione o modelo —</option>';
+  if (cfg) (cfg.modelos || []).forEach(m => { const o=document.createElement('option'); o.value=m; o.textContent=m; modelSel.appendChild(o); });
+  const fabSel = document.getElementById('cadHwFab');
+  const fabs = cfg?.fabricantes?.length ? cfg.fabricantes : ['John Deere','Timple','Solinftec','Reven'];
+  fabSel.innerHTML = '<option value="" disabled selected hidden>— Selecione —</option>';
+  fabs.forEach(f => { const o=document.createElement('option'); o.value=f; o.textContent=f; fabSel.appendChild(o); });
+  document.getElementById('cadBordoVersaoRow').style.display = type === 'bordo' ? 'block' : 'none';
+}
+
+function setCadDest(dest) {
+  _cadDestId = dest; _cadMachineId = null;
+  document.getElementById('cadDestEstoque').className  = `dest-chip${dest==='ESTOQUE'    ? ' sel-estoque' : ''}`;
+  document.getElementById('cadDestManut').className    = `dest-chip${dest==='MANUTENCAO' ? ' sel-manut'   : ''}`;
+  document.getElementById('cadDestMaquina').className  = `dest-chip${dest==='MAQUINA'    ? ' sel-machine' : ''}`;
+  document.getElementById('cadMachinePickerRow').style.display = dest === 'MAQUINA' ? 'block' : 'none';
+  if (dest === 'MAQUINA') renderCadMachinePicker();
+}
+
+function renderCadMachinePicker() {
+  const container = document.getElementById('cadMachinePicker');
+  const term = (document.getElementById('cadMachineSearch')?.value || '').toLowerCase().trim();
+  const list = machines.filter(m => !VIRTUAL_IDS.has(m.id))
+    .filter(m => !term || m.name.toLowerCase().includes(term) || m.id.toLowerCase().includes(term));
+  container.innerHTML = '';
+  list.forEach(m => {
+    const div = document.createElement('div');
+    div.className = `machine-option${_cadMachineId === m.id ? ' selected' : ''}`;
+    div.innerHTML = `
+      <div class="mo-icon">${machineEmojis[m.type]||'🚛'}</div>
+      <div class="mo-info">
+        <div class="mo-name">${m.name} <span style="opacity:.5;font-size:11px">#${m.id}</span></div>
+        <div class="mo-id">${m.type?.toUpperCase()||''}</div>
+      </div>
+      <div class="mo-check">${_cadMachineId === m.id ? '✓' : ''}</div>`;
+    div.onclick = () => {
+      _cadMachineId = m.id;
+      document.getElementById('cadDestMaquina').textContent = `🚜 ${m.name}`;
+      renderCadMachinePicker();
+    };
+    container.appendChild(div);
+  });
+}
+
+async function submitCadastroEquip() {
+  const type  = document.getElementById('cadHwType').value;
+  const model = document.getElementById('cadHwModelo').value;
+  const sn    = document.getElementById('cadHwSn').value.trim().toUpperCase();
+  const pat   = document.getElementById('cadHwPat').value.trim().toUpperCase();
+  const fab   = document.getElementById('cadHwFab').value;
+  const vers  = document.getElementById('cadBordoVersao').value.trim().toUpperCase();
+
+  if (!type)       { showToast('err','⚠️','Selecione o tipo'); return; }
+  if (!model)      { showToast('err','⚠️','Selecione o modelo'); return; }
+  if (!sn && !pat) { showToast('err','⚠️','Informe S/N ou Patrimônio'); return; }
+
+  let destId = _cadDestId;
+  if (_cadDestId === 'MAQUINA') {
+    if (!_cadMachineId) { showToast('err','⚠️','Selecione a máquina'); return; }
+    destId = _cadMachineId;
+  }
+
+  const hwId = pat || `HW-${Date.now()}`;
+  hardwares.push({ id: hwId, name: model, type, sn, machine: destId, patrimonio: pat });
+  closeCadastroEquip();
+  showToast('ok','✅','Equipamento cadastrado', `${model} → ${getMachineName(destId)}`);
+
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/hardwares`, {
+      method: 'POST',
+      headers: { ...sbHeaders, 'Prefer': 'return=minimal' },
+      body: JSON.stringify({
+        id: hwId, nome: model, tipo: type, modelo: model,
+        numeroDeSerie: sn, patrimonio: pat, fabricante: fab,
+        firmware: vers || '',
+        maquinaAtual: destId,
+        instaladoEm: new Date().toISOString().slice(0, 16),
+      }),
+    });
+    if (!res.ok) showToast('err','⚠️','Erro ao salvar', `HTTP ${res.status}`);
+  } catch(e) {
+    showToast('err','📡','Sem conexão', 'Equipamento salvo apenas localmente');
+  }
+}
+
+// ══════════════════════════════════════════
+// CADASTRO DE MÁQUINA
+// ══════════════════════════════════════════
+function openCadastroMaquina() {
+  const sel = document.getElementById('cadMaqTipo');
+  sel.innerHTML = '<option value="" disabled selected hidden>— Selecione —</option>';
+  Object.entries(machineEmojis).forEach(([type, emoji]) => {
+    if (VIRTUAL_IDS.has(type) || VIRTUAL_TYPES.has(type)) return;
+    const o = document.createElement('option'); o.value = type;
+    o.textContent = `${emoji} ${type.toUpperCase()}`;
+    sel.appendChild(o);
+  });
+  document.getElementById('cadMaqId').value = '';
+  document.getElementById('cadMaqNome').value = '';
+  document.getElementById('cadMaquinaOverlay').classList.add('open');
+}
+function closeCadastroMaquina() { document.getElementById('cadMaquinaOverlay').classList.remove('open'); }
+
+async function submitCadastroMaquina() {
+  const id   = document.getElementById('cadMaqId').value.trim().toUpperCase();
+  const nome = document.getElementById('cadMaqNome').value.trim();
+  const tipo = document.getElementById('cadMaqTipo').value;
+
+  if (!id)   { showToast('err','⚠️','Informe o ID/Frota'); return; }
+  if (!nome) { showToast('err','⚠️','Informe o nome'); return; }
+  if (!tipo) { showToast('err','⚠️','Selecione o tipo'); return; }
+
+  if (machines.find(m => m.id === id)) {
+    showToast('err','⚠️','ID já existe', `Frota ${id} já está cadastrada`); return;
+  }
+
+  machines.push({ id, name: nome, type: tipo });
+  closeCadastroMaquina();
+  showToast('ok','✅','Máquina cadastrada', `${nome} (${id})`);
+
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/maquinas`, {
+      method: 'POST',
+      headers: { ...sbHeaders, 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ id, nome, tipo }),
+    });
+    if (!res.ok) showToast('err','⚠️','Erro ao salvar', `HTTP ${res.status}`);
+  } catch(e) {
+    showToast('err','📡','Sem conexão', 'Máquina salva apenas localmente');
+  }
 }
 </script>
 </body>
