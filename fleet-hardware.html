@@ -1601,6 +1601,7 @@
         <span class="current" id="breadcrumbCurrent">Visão Geral</span>
       </div>
       <div class="toolbar-actions">
+        <button class="btn btn-ghost" onclick="openModal('batchModal')" title="Importar em lote">⬆ Lote</button>
         <button class="btn btn-ghost" onclick="openModal('addMachineModal')">+ Máquina</button>
         <button class="btn btn-primary" id="addHwBtn" onclick="openAddHwModal()" style="display:none">+ Hardware</button>
       </div>
@@ -1705,6 +1706,7 @@
       <button class="btn btn-ghost" style="font-size:10px;padding:6px 12px" onclick="resetConsultaFilters()">↺ Limpar</button>
       <span class="consultas-count" id="consultasCount"></span>
       <div style="margin-left:auto;display:flex;gap:8px;flex-shrink:0">
+        <button class="btn btn-ghost" onclick="openModal('batchModal')" title="Importar em lote">⬆ Lote</button>
         <button class="btn btn-ghost" onclick="openModal('addMachineModal')">+ Máquina</button>
         <button class="btn btn-primary" onclick="openAddHwModal()">+ Hardware</button>
       </div>
@@ -1720,6 +1722,46 @@
 </div>
 
 <!-- ===================== MODALS ===================== -->
+
+<!-- BATCH IMPORT -->
+<div class="modal-overlay" id="batchModal">
+  <div class="modal" style="max-width:620px" role="dialog" aria-modal="true" aria-labelledby="batchModalTitle">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="batchModalTitle">⬆ Importação em Lote</div>
+        <div class="modal-sub">Cole os dados em CSV. Coluna de destino = ID da máquina ou ESTOQUE/MANUTENCAO/INATIVO.</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('batchModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">MODO</label>
+        <select class="form-select" id="batchMode">
+          <option value="hardwares">Hardwares</option>
+          <option value="maquinas">Máquinas</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">FORMATO CSV (sem cabeçalho)</label>
+        <div id="batchHwHelp" style="font-size:10px;color:var(--text3);margin-bottom:6px;font-family:'JetBrains Mono',monospace">
+          tipo, modelo, nSerie, patrimônio, fabricante, destino<br>
+          <span style="opacity:.6">Ex: receptor,Trimble AG-372,SN-001,PAT-001,Trimble,72249</span>
+        </div>
+        <div id="batchMaqHelp" style="display:none;font-size:10px;color:var(--text3);margin-bottom:6px;font-family:'JetBrains Mono',monospace">
+          id, nome, tipo, unidade<br>
+          <span style="opacity:.6">Ex: 72999,TRATOR JD 6195J,trator,PEDRA</span>
+        </div>
+        <textarea class="form-select" id="batchCsv" rows="8" style="font-family:'JetBrains Mono',monospace;font-size:11px;resize:vertical;min-height:140px" placeholder="Cole o CSV aqui..."></textarea>
+      </div>
+      <div id="batchPreview" style="display:none;margin-top:8px;padding:10px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--text2);max-height:120px;overflow-y:auto"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('batchModal')">Cancelar</button>
+      <button class="btn btn-ghost" onclick="previewBatch()">Visualizar</button>
+      <button class="btn btn-primary" onclick="submitBatch()">⬆ Importar</button>
+    </div>
+  </div>
+</div>
 
 <!-- SETTINGS -->
 <div class="modal-overlay" id="settingsModal">
@@ -1977,6 +2019,24 @@
           <option value="Reven">Reven</option>
         </select>
       </div>
+      <!-- Campos de licença — visíveis apenas para MONITOR -->
+      <div id="addHwLicFields" style="display:none;border-top:1px solid var(--border);margin-top:8px;padding-top:12px">
+        <div style="font-size:9px;font-weight:700;letter-spacing:1.5px;color:var(--accent);margin-bottom:10px">🔑 LICENÇA DE SINAL</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="newHwLicAtivada">ATIVADA EM</label>
+            <input type="date" class="form-input" id="newHwLicAtivada">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="newHwLicExpira">EXPIRA EM</label>
+            <input type="date" class="form-input" id="newHwLicExpira">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="newHwLicCodigo">CÓDIGO DA LICENÇA</label>
+          <input type="text" class="form-input" id="newHwLicCodigo" placeholder="Ex: LIC-XXXXXXXX" oninput="this.value=this.value.toUpperCase()">
+        </div>
+      </div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('addHwModal')">Cancelar</button>
@@ -2025,6 +2085,24 @@
           <option value="Solinftec">Solinftec</option>
           <option value="Reven">Reven</option>
         </select>
+      </div>
+      <!-- Campos de licença — visíveis apenas para MONITOR -->
+      <div id="editHwLicFields" style="display:none;border-top:1px solid var(--border);margin-top:8px;padding-top:12px">
+        <div style="font-size:9px;font-weight:700;letter-spacing:1.5px;color:var(--accent);margin-bottom:10px">🔑 LICENÇA DE SINAL</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">ATIVADA EM</label>
+            <input type="date" class="form-input" id="editHwLicAtivada">
+          </div>
+          <div class="form-group">
+            <label class="form-label">EXPIRA EM</label>
+            <input type="date" class="form-input" id="editHwLicExpira">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">CÓDIGO DA LICENÇA</label>
+          <input type="text" class="form-input" id="editHwLicCodigo" placeholder="Ex: LIC-XXXXXXXX" oninput="this.value=this.value.toUpperCase()">
+        </div>
       </div>
     </div>
     <div class="modal-footer">
@@ -2170,6 +2248,22 @@ let _pendingHwInstall = null;
 // =========================================
 // LOAD DATA FROM SHEETS
 // =========================================
+// Mapeia uma linha bruta de hardware para o objeto interno
+function mapRawHw(h) {
+  return {
+    id:           String(h.id            ?? ''),
+    name:         String(h.nome          ?? ''),
+    type:         String(h.tipo          ?? ''),
+    sn:           String(h.numeroDeSerie || ''),
+    manufacturer: h.fabricante           || '',
+    patrimony:    String(h.patrimonio    || ''),
+    installedAt:  h.instaladoEm,
+    licAtivadaEm: h.licencaAtivadaEm || '',
+    licExpiraEm:  h.licencaExpiraEm  || '',
+    licCodigo:    h.codigoLicenca    || '',
+  };
+}
+
 // Garante que ESTOQUE/MANUTENCAO/INATIVO sempre aparecem em `machines`,
 // mesmo que não estejam cadastrados na tabela maquinas do Supabase.
 function injectVirtualMachines(rawHardwares) {
@@ -2185,15 +2279,7 @@ function injectVirtualMachines(rawHardwares) {
       year: '', unidade: '', chassi: '', patrimony: '', createdAt: null,
       hardware: rawHardwares
         .filter(h => String(h.maquinaAtual ?? '') === vd.id)
-        .map(h => ({
-          id:           String(h.id            ?? ''),
-          name:         String(h.nome          ?? ''),
-          type:         String(h.tipo          ?? ''),
-          sn:           String(h.numeroDeSerie || ''),
-          manufacturer: h.fabricante           || '',
-          patrimony:    String(h.patrimonio    || ''),
-          installedAt:  h.instaladoEm,
-        }))
+        .map(mapRawHw)
     });
   });
 }
@@ -2212,15 +2298,7 @@ function sheetsToMachines(rawMachines, rawHardwares) {
       createdAt: m.criadoEm,
       hardware: rawHardwares
         .filter(h => String(h.maquinaAtual ?? '') === id)
-        .map(h => ({
-          id: String(h.id ?? ''),
-          name: String(h.nome ?? ''),
-          type: String(h.tipo ?? ''),
-          sn: String(h.numeroDeSerie || ''),
-          manufacturer: h.fabricante || '',
-          patrimony: String(h.patrimonio || ''),
-          installedAt: h.instaladoEm,
-        }))
+        .map(mapRawHw)
     };
   });
 }
@@ -2325,7 +2403,10 @@ async function saveRecord(record) {
         numeroDeSerie: record.hwSn || '',
         patrimonio: record.hwPatrimonio || '',
         fabricante: record.hwManuf || '',
-        firmware: '',
+        firmware: record.hwFirmware || '',
+        licencaAtivadaEm: record.hwLicAtivada || null,
+        licencaExpiraEm:  record.hwLicExpira  || null,
+        codigoLicenca:    record.hwLicCodigo  || null,
         maquinaAtual: destId,
         instaladoEm: record.dateTime || new Date().toISOString(),
       }),
@@ -3216,7 +3297,15 @@ function openAddHwModal() {
     document.getElementById('addHwModalSub').textContent = 'Selecione a máquina de destino';
     machineRow.style.display = 'block';
     const sel = document.getElementById('newHwMachineId');
-    sel.innerHTML = '<option value="" disabled selected hidden>— Selecione a máquina —</option>';
+    sel.innerHTML = '<option value="" disabled selected hidden>— Selecione a máquina ou local —</option>';
+    // Locais virtuais primeiro
+    const virts = machines.filter(m => DEST_TYPES.includes(m.type));
+    if (virts.length) {
+      const grp = document.createElement('optgroup'); grp.label = '— LOCAIS VIRTUAIS —';
+      virts.forEach(m => { const o=document.createElement('option'); o.value=m.id; o.textContent=m.name; grp.appendChild(o); });
+      sel.appendChild(grp);
+    }
+    const grp2 = document.createElement('optgroup'); grp2.label = '— FROTA —';
     machines
       .filter(m => !DEST_TYPES.includes(m.type))
       .sort((a, b) => a.name.localeCompare(b.name))
@@ -3224,8 +3313,9 @@ function openAddHwModal() {
         const opt = document.createElement('option');
         opt.value = m.id;
         opt.textContent = `${m.name} #${m.id}`;
-        sel.appendChild(opt);
+        grp2.appendChild(opt);
       });
+    sel.appendChild(grp2);
   }
   openModal('addHwModal');
 }
@@ -3238,6 +3328,7 @@ function onAddHwMachineChange() {
 
 function updateHwModels() {
   const type = document.getElementById('newHwType').value;
+  document.getElementById('addHwLicFields').style.display = type === 'monitor' ? 'block' : 'none';
   const cfg = hwConfig[type];
 
   const modelSel = document.getElementById('newHwModel');
@@ -3317,22 +3408,30 @@ async function addHardware() {
     return;
   }
 
+  const licAtivada = document.getElementById('newHwLicAtivada')?.value || '';
+  const licExpira  = document.getElementById('newHwLicExpira')?.value  || '';
+  const licCodigo  = document.getElementById('newHwLicCodigo')?.value.trim().toUpperCase() || '';
+
   const btn = document.getElementById('addHwBtn');
   btn.disabled = true; btn.textContent = 'Instalando...';
 
-  const newHw = { id: hwUniqueId, name: model, type, sn, manufacturer: manuf, patrimony: pat, installedAt: localDateStr() };
+  const newHw = {
+    id: hwUniqueId, name: model, type, sn, manufacturer: manuf, patrimony: pat,
+    installedAt: localDateStr(),
+    licAtivadaEm: licAtivada, licExpiraEm: licExpira, licCodigo,
+  };
   m.hardware.push(newHw);
 
   closeModal('addHwModal');
   ['newHwId','newHwSn'].forEach(f => document.getElementById(f).value = '');
-  document.getElementById('newHwModel').value = '';
-  document.getElementById('newHwManuf').value = '';
-  document.getElementById('newHwType').value = '';
+  ['newHwModel','newHwManuf','newHwType'].forEach(f => document.getElementById(f).value = '');
+  ['newHwLicAtivada','newHwLicExpira','newHwLicCodigo'].forEach(f => { const el=document.getElementById(f); if(el) el.value=''; });
+  document.getElementById('addHwLicFields').style.display = 'none';
   const mSel = document.getElementById('newHwMachineId');
   if (mSel) mSel.value = '';
   btn.disabled = false; btn.textContent = 'Instalar';
   renderAll();
-  showToast('success', '✅', 'Hardware instalado', `${model} instalado em ${m.name}`);
+  showToast('success', '✅', 'Hardware cadastrado', `${model} adicionado em ${m.name}`);
 
   try {
     await saveRecord({
@@ -3350,6 +3449,9 @@ async function addHardware() {
       hwModelo: model,
       hwPatrimonio: pat,
       hwManuf: manuf,
+      hwLicAtivada: licAtivada,
+      hwLicExpira:  licExpira,
+      hwLicCodigo:  licCodigo,
       gpsLat: '', gpsLng: '', gpsAcc: '',
       dateTime: new Date().toISOString().slice(0,16),
       notes: '',
@@ -3375,11 +3477,16 @@ function openEditHw(machineId, hwId) {
   document.getElementById('editHwPat').value = hw.patrimony || '';
   document.getElementById('editHwSn').value = hw.sn || '';
   updateEditHwModels(hw.name, hw.manufacturer || '');
+  // Licença (monitor)
+  document.getElementById('editHwLicAtivada').value = hw.licAtivadaEm || '';
+  document.getElementById('editHwLicExpira').value  = hw.licExpiraEm  || '';
+  document.getElementById('editHwLicCodigo').value  = hw.licCodigo    || '';
   openModal('editHwModal');
 }
 
 function updateEditHwModels(currentModel, currentManuf) {
   const type = document.getElementById('editHwType').value;
+  document.getElementById('editHwLicFields').style.display = type === 'monitor' ? 'block' : 'none';
   const cfg = hwConfig[type];
 
   const modelSel = document.getElementById('editHwModel');
@@ -3407,34 +3514,29 @@ async function saveEditHw() {
   const hw = m.hardware.find(h => h.id === editingHwId);
 
   const type  = document.getElementById('editHwType').value;
-  const model = document.getElementById('editHwModel').value;
-  const sn    = document.getElementById('editHwSn').value.trim().toUpperCase();
-  const pat   = document.getElementById('editHwPat').value.trim().toUpperCase();
-  const manuf = document.getElementById('editHwManuf').value;
+  const model     = document.getElementById('editHwModel').value;
+  const sn        = document.getElementById('editHwSn').value.trim().toUpperCase();
+  const pat       = document.getElementById('editHwPat').value.trim().toUpperCase();
+  const manuf     = document.getElementById('editHwManuf').value;
+  const licAtivada = document.getElementById('editHwLicAtivada')?.value || '';
+  const licExpira  = document.getElementById('editHwLicExpira')?.value  || '';
+  const licCodigo  = document.getElementById('editHwLicCodigo')?.value.trim().toUpperCase() || '';
 
   // Atualiza estado local
-  hw.type = type;
-  hw.name = model;
-  hw.sn = sn;
-  hw.patrimony = pat;
-  hw.manufacturer = manuf;
+  hw.type = type; hw.name = model; hw.sn = sn; hw.patrimony = pat; hw.manufacturer = manuf;
+  if (type === 'monitor') { hw.licAtivadaEm = licAtivada; hw.licExpiraEm = licExpira; hw.licCodigo = licCodigo; }
 
   closeModal('editHwModal');
   renderAll();
   showToast('success', '✅', 'Hardware atualizado', model);
 
   try {
+    const payload = { nome: model, tipo: type, modelo: model, numeroDeSerie: sn, patrimonio: pat, fabricante: manuf };
+    if (type === 'monitor') { payload.licencaAtivadaEm = licAtivada || null; payload.licencaExpiraEm = licExpira || null; payload.codigoLicenca = licCodigo || null; }
     await fetch(`${SUPABASE_URL}/rest/v1/hardwares?id=eq.${encodeURIComponent(editingHwId)}`, {
       method: 'PATCH',
       headers: { ...sbHeaders, 'Prefer': 'return=minimal' },
-      body: JSON.stringify({
-        nome: model,
-        tipo: type,
-        modelo: model,
-        numeroDeSerie: sn,
-        patrimonio: pat,
-        fabricante: manuf,
-      }),
+      body: JSON.stringify(payload),
     });
   } catch(e) {
     showToast('warning', '⚠️', 'Sem conexão', 'Alteração salva localmente apenas');
@@ -3697,23 +3799,50 @@ function showHwDetail(machineId, hwId) {
   document.getElementById('hwDetailTitle').textContent = `${hw.name}`;
   document.getElementById('hwDetailSub').textContent = `${hcfg.label} em ${mcfg.emoji} ${m.name}`;
 
+  const baseFields = [
+    ['Tipo', `<span style="${badgeStyle}">${hcfg.label}</span>`],
+    ['Modelo', hw.name || '—'],
+    ['Número de Série', hw.sn || '—'],
+    ['Fabricante', hw.manufacturer || '—'],
+    ['Patrimônio', hw.patrimony || '—'],
+    ['Instalado em', hw.installedAt || '—'],
+    ['Máquina', `${mcfg.emoji} ${m.name} (${m.id})`],
+    ['Chassi', m.chassi || '—'],
+  ];
+
+  // Bloco de licença para monitor
+  let licBlock = '';
+  if (hw.type === 'monitor') {
+    const expDate = hw.licExpiraEm ? new Date(hw.licExpiraEm) : null;
+    const today   = new Date();
+    const daysLeft = expDate ? Math.ceil((expDate - today) / 86400000) : null;
+    const expColor = daysLeft === null ? 'var(--text3)' : daysLeft <= 30 ? 'var(--red)' : daysLeft <= 90 ? 'var(--accent)' : 'var(--green)';
+    const expLabel = daysLeft === null ? '—' : daysLeft <= 0 ? `⚠️ EXPIRADA há ${Math.abs(daysLeft)} dia(s)` : `${hw.licExpiraEm} (${daysLeft}d)`;
+    licBlock = `
+      <div style="grid-column:1/-1;background:rgba(245,166,35,.06);border:1px solid rgba(245,166,35,.25);border-radius:8px;padding:12px;margin-top:4px">
+        <div style="font-size:9px;font-weight:800;letter-spacing:1.5px;color:var(--accent);margin-bottom:10px">🔑 LICENÇA DE SINAL</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          ${[
+            ['Código', hw.licCodigo || '—'],
+            ['Ativada em', hw.licAtivadaEm || '—'],
+          ].map(([l,v]) => `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px"><div style="font-size:9px;letter-spacing:1.5px;color:var(--text3);margin-bottom:4px">${l}</div><div style="font-family:'JetBrains Mono',monospace;font-size:11px">${v}</div></div>`).join('')}
+          <div style="grid-column:1/-1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px">
+            <div style="font-size:9px;letter-spacing:1.5px;color:var(--text3);margin-bottom:4px">EXPIRAÇÃO</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:${expColor};font-weight:700">${expLabel}</div>
+          </div>
+        </div>
+      </div>`;
+  }
+
   document.getElementById('hwDetailBody').innerHTML = `
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-      ${[
-        ['Tipo', `<span style="${badgeStyle}">${hcfg.label}</span>`],
-        ['Modelo', hw.name || '—'],
-        ['Número de Série', hw.sn || '—'],
-        ['Fabricante', hw.manufacturer || '—'],
-        ['Patrimônio', hw.patrimony || '—'],
-        ['Instalado em', hw.installedAt || '—'],
-        ['Máquina', `${mcfg.emoji} ${m.name} (${m.id})`],
-        ['Chassi', m.chassi || '—'],
-      ].map(([l,v]) => `
+      ${baseFields.map(([l,v]) => `
         <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px">
           <div style="font-size:9px;letter-spacing:1.5px;color:var(--text3);margin-bottom:6px">${l}</div>
           <div style="font-family:'JetBrains Mono',monospace;font-size:12px">${v}</div>
         </div>
       `).join('')}
+      ${licBlock}
     </div>
   `;
 
@@ -3924,6 +4053,41 @@ function renderDashboard() {
         </div>
       `).join('')}
     </div>
+
+    <!-- Alertas de licença de monitores -->
+    ${(() => {
+      const today = new Date();
+      const monitors = d.allHw.filter(h => h.type === 'monitor' && h.licExpiraEm);
+      const expiring = monitors
+        .map(h => {
+          const exp = new Date(h.licExpiraEm);
+          const days = Math.ceil((exp - today) / 86400000);
+          const owner = machines.find(m => m.hardware.some(x => x.id === h.id));
+          return { h, days, owner };
+        })
+        .filter(({ days }) => days <= 90)
+        .sort((a, b) => a.days - b.days);
+
+      if (!expiring.length) return '';
+
+      const rows = expiring.map(({ h, days, owner }) => {
+        const color = days <= 0 ? 'var(--red)' : days <= 30 ? '#f97316' : 'var(--accent)';
+        const label = days <= 0 ? `Expirada há ${Math.abs(days)}d` : `${days}d restantes`;
+        const mName = owner?.name || '?';
+        return `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
+          <div>
+            <div style="font-size:12px;font-weight:600">${h.name}</div>
+            <div style="font-size:10px;color:var(--text3)">em ${mName} · cód: ${h.licCodigo || '—'}</div>
+          </div>
+          <div style="font-size:10px;font-weight:800;color:${color};font-family:'JetBrains Mono',monospace">${label}</div>
+        </div>`;
+      }).join('');
+
+      return `<div style="background:rgba(249,115,22,.07);border:1px solid rgba(249,115,22,.3);border-radius:12px;padding:16px;margin-bottom:20px">
+        <div style="font-size:9px;font-weight:800;letter-spacing:2px;color:#f97316;margin-bottom:10px">⚠️ ALERTAS DE LICENÇA — MONITORES (${expiring.length})</div>
+        ${rows}
+      </div>`;
+    })()}
 
     <!-- Barra de progresso — % em campo -->
     <div style="margin-top:4px">
@@ -4323,8 +4487,10 @@ function renderConsultas() {
             <td>${isDest ? '—' : (m.unidade || '—')}</td>
             <td colspan="4" style="font-size:11px;color:var(--text3);font-style:italic">Sem hardware instalado</td>
             <td>
-              <button class="btn btn-ghost" style="padding:4px 10px;font-size:11px"
-                onclick="switchView('frota');selectMachine('${m.id}')">Ver</button>
+              <div style="display:flex;gap:4px">
+                <button class="btn btn-ghost" style="padding:4px 8px;font-size:10px"
+                  onclick="switchView('frota');selectMachine('${m.id}')">Ver</button>
+              </div>
             </td>
           </tr>`;
         }
@@ -4343,8 +4509,16 @@ function renderConsultas() {
           <td style="font-family:'JetBrains Mono',monospace;font-size:11px">${hw.patrimony || '—'}</td>
           <td style="font-size:11px;color:var(--text3)">${hw.installedAt || '—'}</td>
           <td>
-            <button class="btn btn-ghost" style="padding:4px 10px;font-size:11px"
-              onclick="goToHw('${m.id}','${hw.id}')">Ver</button>
+            <div style="display:flex;gap:4px;flex-wrap:nowrap">
+              <button class="btn btn-ghost" style="padding:4px 8px;font-size:10px" title="Ver detalhe"
+                onclick="goToHw('${m.id}','${hw.id}')">👁</button>
+              <button class="btn btn-ghost" style="padding:4px 8px;font-size:10px" title="Editar hardware"
+                onclick="openEditHw('${m.id}','${hw.id}')">✏️</button>
+              <button class="btn btn-ghost" style="padding:4px 8px;font-size:10px" title="Transferir hardware"
+                onclick="openTransfer('${m.id}','${hw.id}')">🔄</button>
+              <button class="btn btn-ghost" style="padding:4px 8px;font-size:10px;color:var(--red);border-color:rgba(224,82,82,.3)" title="Remover hardware"
+                onclick="removeHardware('${m.id}','${hw.id}')">🗑</button>
+            </div>
           </td>
         </tr>`;
       }).join('')}
@@ -4384,6 +4558,81 @@ function resetConsultaFilters() {
   if (s) s.value = '';
   updateFiltBadges();
   renderConsultas();
+}
+
+// =========================================
+// BATCH IMPORT
+// =========================================
+document.getElementById('batchMode')?.addEventListener('change', function() {
+  document.getElementById('batchHwHelp').style.display  = this.value === 'hardwares' ? 'block' : 'none';
+  document.getElementById('batchMaqHelp').style.display = this.value === 'maquinas'  ? 'block' : 'none';
+  document.getElementById('batchPreview').style.display = 'none';
+});
+
+function parseBatchCsv() {
+  const mode = document.getElementById('batchMode').value;
+  const raw  = document.getElementById('batchCsv').value.trim();
+  if (!raw) return [];
+  return raw.split('\n').map(line => {
+    const cols = line.split(',').map(c => c.trim());
+    if (mode === 'hardwares') {
+      const [tipo, modelo, sn, pat, fab, dest] = cols;
+      if (!tipo || !modelo) return null;
+      return {
+        id: pat || `HW-${Date.now()}-${Math.random().toString(36).slice(2,6)}`,
+        nome: modelo, tipo, modelo,
+        numeroDeSerie: sn || '', patrimonio: pat || '', fabricante: fab || '',
+        firmware: '', maquinaAtual: dest || 'ESTOQUE',
+        instaladoEm: localDateStr(),
+      };
+    } else {
+      const [id, nome, tipo, unidade] = cols;
+      if (!id || !nome) return null;
+      return { id: id.toUpperCase(), nome, tipo: tipo || 'trator', unidade: unidade || '' };
+    }
+  }).filter(Boolean);
+}
+
+function previewBatch() {
+  const rows = parseBatchCsv();
+  const el = document.getElementById('batchPreview');
+  el.style.display = 'block';
+  if (!rows.length) { el.textContent = 'Nenhuma linha válida encontrada.'; return; }
+  el.innerHTML = `<strong style="color:var(--green)">${rows.length} linha(s) válidas:</strong><br>` +
+    rows.map(r => {
+      const mode = document.getElementById('batchMode').value;
+      return mode === 'hardwares'
+        ? `${r.tipo} · ${r.nome} · S/N:${r.numeroDeSerie||'—'} · ${r.maquinaAtual}`
+        : `${r.id} · ${r.nome} · ${r.tipo}`;
+    }).join('<br>');
+}
+
+async function submitBatch() {
+  const mode = document.getElementById('batchMode').value;
+  const rows = parseBatchCsv();
+  if (!rows.length) { showToast('warning','⚠️','Nada a importar','Verifique o CSV'); return; }
+
+  const btn = document.querySelector('#batchModal .btn-primary');
+  btn.disabled = true; btn.textContent = 'Importando...';
+  let ok = 0, fail = 0;
+
+  const table = mode === 'hardwares' ? 'hardwares' : 'maquinas';
+  for (const row of rows) {
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
+        method: 'POST',
+        headers: { ...sbHeaders, 'Prefer': 'return=minimal' },
+        body: JSON.stringify(row),
+      });
+      if (res.ok) { ok++; } else { fail++; }
+    } catch(e) { fail++; }
+  }
+
+  btn.disabled = false; btn.textContent = '⬆ Importar';
+  closeModal('batchModal');
+  showToast(fail ? 'warning' : 'success', fail ? '⚠️' : '✅',
+    `${ok} importado(s)`, fail ? `${fail} falha(s)` : 'Sincronize para ver os novos registros');
+  if (ok) await loadFromSheets();
 }
 </script>
 </body>
