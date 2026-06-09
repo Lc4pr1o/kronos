@@ -70,6 +70,11 @@ CREATE TABLE IF NOT EXISTS hw_tipos (
 -- Se a tabela já existia sem a coluna fabricantes:
 ALTER TABLE hw_tipos ADD COLUMN IF NOT EXISTS fabricantes JSONB DEFAULT '[]';
 
+-- Colunas de licença para monitores (adicionadas após o schema inicial):
+ALTER TABLE hardwares ADD COLUMN IF NOT EXISTS "licencaAtivadaEm" TEXT;
+ALTER TABLE hardwares ADD COLUMN IF NOT EXISTS "licencaExpiraEm"  TEXT;
+ALTER TABLE hardwares ADD COLUMN IF NOT EXISTS "codigoLicenca"    TEXT;
+
 CREATE TABLE IF NOT EXISTS maq_tipos (
   id    TEXT PRIMARY KEY,
   label TEXT NOT NULL,

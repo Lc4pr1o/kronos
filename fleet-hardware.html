@@ -2480,24 +2480,25 @@ async function saveRecord(record) {
     if (!resHw.ok) throw new Error(`Falha ao atualizar hardware: HTTP ${resHw.status}`);
   } else {
     const newId = record.hwId || record.hwPatrimonio || record.hwSn;
+    const hwPayload = {
+      id: newId,
+      nome: record.hwName || '',
+      tipo: record.hwType || '',
+      modelo: record.hwModelo || '',
+      numeroDeSerie: record.hwSn || '',
+      patrimonio: record.hwPatrimonio || '',
+      fabricante: record.hwManuf || '',
+      firmware: record.hwFirmware || '',
+      maquinaAtual: destId,
+      instaladoEm: record.dateTime || new Date().toISOString(),
+    };
+    if (record.hwLicAtivada) hwPayload.licencaAtivadaEm = record.hwLicAtivada;
+    if (record.hwLicExpira)  hwPayload.licencaExpiraEm  = record.hwLicExpira;
+    if (record.hwLicCodigo)  hwPayload.codigoLicenca    = record.hwLicCodigo;
     const resHw = await fetch(`${SUPABASE_URL}/rest/v1/hardwares`, {
       method: 'POST',
       headers: { ...sbHeaders, 'Prefer': 'return=minimal' },
-      body: JSON.stringify({
-        id: newId,
-        nome: record.hwName || '',
-        tipo: record.hwType || '',
-        modelo: record.hwModelo || '',
-        numeroDeSerie: record.hwSn || '',
-        patrimonio: record.hwPatrimonio || '',
-        fabricante: record.hwManuf || '',
-        firmware: record.hwFirmware || '',
-        licencaAtivadaEm: record.hwLicAtivada || null,
-        licencaExpiraEm:  record.hwLicExpira  || null,
-        codigoLicenca:    record.hwLicCodigo  || null,
-        maquinaAtual: destId,
-        instaladoEm: record.dateTime || new Date().toISOString(),
-      }),
+      body: JSON.stringify(hwPayload),
     });
     if (!resHw.ok) throw new Error(`Falha ao criar hardware: HTTP ${resHw.status}`);
   }
