@@ -1828,11 +1828,25 @@
     <div class="modal-header">
       <div>
         <div class="modal-title" id="settingsModalTitle">⚙️ Configurações</div>
-        <div class="modal-sub">Tipos de hardware e de máquina</div>
+        <div class="modal-sub">Perfil, tipos de hardware e de máquina</div>
       </div>
       <button class="modal-close" onclick="closeModal('settingsModal')">✕</button>
     </div>
     <div class="modal-body" style="max-height:70vh;overflow-y:auto;display:flex;flex-direction:column;gap:0">
+
+      <!-- ══ PERFIL ══ -->
+      <div style="font-size:11px;font-weight:800;letter-spacing:2px;color:var(--green);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid rgba(46,204,138,.2)">
+        PERFIL
+      </div>
+      <div style="background:var(--surface3);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:24px">
+        <div class="form-group">
+          <label class="form-label">SEU NOME <span style="font-size:9px;opacity:.6">(registrado nas ações)</span></label>
+          <div style="display:flex;gap:8px">
+            <input type="text" class="form-input" id="analystNameInput" placeholder="ex: João Silva" style="flex:1">
+            <button class="btn btn-primary" onclick="saveAnalystName()">Salvar</button>
+          </div>
+        </div>
+      </div>
 
       <!-- ══ TIPOS DE HARDWARE ══ -->
       <div style="font-size:11px;font-weight:800;letter-spacing:2px;color:var(--accent);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid rgba(245,166,35,.2)">
@@ -2302,6 +2316,11 @@ const DEMO_DATA = {
 };
 
 // =========================================
+// PERFIL DO ANALISTA
+// =========================================
+let analystName = localStorage.getItem('kronos_analyst_name') || '';
+
+// =========================================
 // DATA — montada a partir da planilha
 // =========================================
 let machines = [];
@@ -2420,7 +2439,7 @@ async function sbFindHardware(record) {
 }
 
 async function saveRecord(record) {
-  await fetch(`${SUPABASE_URL}/rest/v1/registros`, {
+  const resReg = await fetch(`${SUPABASE_URL}/rest/v1/registros`, {
     method: 'POST',
     headers: { ...sbHeaders, 'Prefer': 'return=minimal' },
     body: JSON.stringify({
@@ -2445,6 +2464,7 @@ async function saveRecord(record) {
       sincronizadoEm: new Date().toISOString(),
     }),
   });
+  if (!resReg.ok) throw new Error(`Falha ao salvar registro: HTTP ${resReg.status}`);
 
   const hasIdentifier = record.hwId || record.hwSn || record.hwPatrimonio;
   const destId = record.machineDestId || '';
@@ -2452,14 +2472,15 @@ async function saveRecord(record) {
 
   const existing = await sbFindHardware(record);
   if (existing) {
-    await fetch(`${SUPABASE_URL}/rest/v1/hardwares?id=eq.${encodeURIComponent(existing.id)}`, {
+    const resHw = await fetch(`${SUPABASE_URL}/rest/v1/hardwares?id=eq.${encodeURIComponent(existing.id)}`, {
       method: 'PATCH',
       headers: { ...sbHeaders, 'Prefer': 'return=minimal' },
       body: JSON.stringify({ maquinaAtual: destId, instaladoEm: record.dateTime || new Date().toISOString() }),
     });
+    if (!resHw.ok) throw new Error(`Falha ao atualizar hardware: HTTP ${resHw.status}`);
   } else {
     const newId = record.hwId || record.hwPatrimonio || record.hwSn;
-    await fetch(`${SUPABASE_URL}/rest/v1/hardwares`, {
+    const resHw = await fetch(`${SUPABASE_URL}/rest/v1/hardwares`, {
       method: 'POST',
       headers: { ...sbHeaders, 'Prefer': 'return=minimal' },
       body: JSON.stringify({
@@ -2478,6 +2499,7 @@ async function saveRecord(record) {
         instaladoEm: record.dateTime || new Date().toISOString(),
       }),
     });
+    if (!resHw.ok) throw new Error(`Falha ao criar hardware: HTTP ${resHw.status}`);
   }
   return { success: true };
 }
@@ -2547,11 +2569,21 @@ function populateHwTypeSelects() {
 // ── SETTINGS ─────────────────────────────────
 let editingTipoId = null;
 
+function saveAnalystName() {
+  const input = document.getElementById('analystNameInput');
+  const name = input.value.trim();
+  if (!name) { showToast('warning', '⚠️', 'Nome vazio', 'Informe seu nome'); return; }
+  analystName = name;
+  localStorage.setItem('kronos_analyst_name', name);
+  showToast('success', '✅', 'Nome salvo', `Ações serão registradas como: ${name}`);
+}
+
 function openSettings() {
   editingTipoId = null;
   editingMaqTipoId = null;
   clearSettingsForm();
   clearMaqTipoForm();
+  document.getElementById('analystNameInput').value = analystName;
   renderTiposSettings();
   renderMaqTiposSettings();
   openModal('settingsModal');
@@ -3486,6 +3518,8 @@ async function addHardware() {
   const btn = document.getElementById('addHwBtn');
   btn.disabled = true; btn.textContent = 'Instalando...';
 
+  const backup = machines.map(m => ({ ...m, hardware: [...m.hardware] }));
+
   const newHw = {
     id: hwUniqueId, name: model, type, sn, manufacturer: manuf, patrimony: pat,
     installedAt: localDateStr(),
@@ -3508,7 +3542,7 @@ async function addHardware() {
     await saveRecord({
       id: `REG-${Date.now()}`,
       action: 'instalar',
-      techName: 'Analista',
+      techName: analystName || 'Analista',
       machineId: '',
       machineName: '',
       machineDestId: targetMachineId,
@@ -3529,7 +3563,10 @@ async function addHardware() {
     });
   } catch(e) {
     console.error('addHardware sync:', e);
-    showToast('warning', '⚠️', 'Sem conexão', 'Hardware salvo localmente apenas');
+    machines.length = 0;
+    backup.forEach(m => machines.push(m));
+    renderAll();
+    showToast('error', '❌', 'Falha ao salvar', 'Hardware removido — verifique a conexão');
   }
 }
 
@@ -3717,7 +3754,7 @@ async function confirmTransfer() {
     await saveRecord({
       id: `REG-${Date.now()}`,
       action: 'transferir',
-      techName: 'Analista',
+      techName: analystName || 'Analista',
       machineId: transferSourceMachineId,
       machineName: source.name,
       machineDestId: transferTargetMachineId,
@@ -3807,7 +3844,7 @@ async function confirmHwConflict() {
     await saveRecord({
       id: `REG-${Date.now()}`,
       action: 'transferir',
-      techName: 'Analista',
+      techName: analystName || 'Analista',
       machineId: targetMachineId,
       machineName: m.name,
       machineDestId: destId,
@@ -3826,7 +3863,7 @@ async function confirmHwConflict() {
     await saveRecord({
       id: `REG-${Date.now() + 1}`,
       action: 'instalar',
-      techName: 'Analista',
+      techName: analystName || 'Analista',
       machineId: '',
       machineName: '',
       machineDestId: targetMachineId,
