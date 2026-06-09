@@ -3589,7 +3589,7 @@ function openEditHw(machineId, hwId) {
   const hw = m.hardware.find(h => h.id === hwId);
   const hcfg = hwConfig[hw.type] || {};
 
-  document.getElementById('editHwModalSub').textContent = `${hcfg.emoji || ''} ${hw.id} em ${m.name}`;
+  document.getElementById('editHwModalSub').textContent = `${hcfg.label || hw.type || ''} · ${hw.id} em ${m.name}`;
   document.getElementById('editHwType').value = hw.type || '';
   document.getElementById('editHwPat').value = hw.patrimony || '';
   document.getElementById('editHwSn').value = hw.sn || '';
@@ -3704,7 +3704,7 @@ function openTransfer(machineId, hwId) {
   const hw = m.hardware.find(h => h.id === hwId);
   const hcfg = hwConfig[hw.type];
 
-  document.getElementById('transferHwName').textContent = `${hcfg.emoji} ${hw.name}`;
+  document.getElementById('transferHwName').textContent = hw.name;
   document.getElementById('transferHwDetail').textContent = `${hw.id} · S/N: ${hw.sn || '—'} · ${hcfg.label}`;
   document.getElementById('transferSearch').value = '';
 
@@ -3917,7 +3917,7 @@ function showHwDetail(machineId, hwId) {
   const badgeStyle = `background:${hcfg.color}22;color:${hcfg.color};border:1px solid ${hcfg.color}55;font-size:10px;font-weight:700;letter-spacing:1px;padding:3px 8px;border-radius:6px`;
 
   document.getElementById('hwDetailTitle').textContent = `${hw.name}`;
-  document.getElementById('hwDetailSub').textContent = `${hcfg.label} em ${mcfg.emoji} ${m.name}`;
+  document.getElementById('hwDetailSub').textContent = `${hcfg.label} em ${m.name}`;
 
   const baseFields = [
     ['Tipo', `<span style="${badgeStyle}">${hcfg.label}</span>`],
@@ -3926,7 +3926,7 @@ function showHwDetail(machineId, hwId) {
     ['Fabricante', hw.manufacturer || '—'],
     ['Patrimônio', hw.patrimony || '—'],
     ['Instalado em', hw.installedAt || '—'],
-    ['Máquina', `${mcfg.emoji} ${m.name} (${m.id})`],
+    ['Máquina', `${m.name} (${m.id})`],
     ['Chassi', m.chassi || '—'],
   ];
 
@@ -4032,7 +4032,7 @@ function openMachineEdit(machineId) {
   const m = machines.find(x => x.id === machineId);
   if (!m) return;
   const cfg = machineConfig[m.type] || {};
-  document.getElementById('machineEditSub').textContent = `${cfg.emoji || ''} ${m.type?.toUpperCase()} · ${m.id}`;
+  document.getElementById('machineEditSub').textContent = `${cfg.label || m.type?.toUpperCase()} · ${m.id}`;
   document.getElementById('editMachType').value    = m.type || '';
   document.getElementById('editMachName').value    = m.name || '';
   document.getElementById('editMachYear').value    = m.year || '';
