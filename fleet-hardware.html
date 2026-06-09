@@ -1950,9 +1950,17 @@
       <button class="modal-close" onclick="closeModal('machineEditModal')">✕</button>
     </div>
     <div class="modal-body">
-      <div class="form-group">
-        <label class="form-label">NOME / MODELO</label>
-        <input type="text" class="form-input" id="editMachName">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">TIPO</label>
+          <select class="form-select" id="editMachType">
+            <option value="" disabled selected hidden>— Selecione —</option>
+          </select>
+        </div>
+        <div class="form-group" style="flex:2">
+          <label class="form-label">NOME / MODELO</label>
+          <input type="text" class="form-input" id="editMachName">
+        </div>
       </div>
       <div class="form-row">
         <div class="form-group">
@@ -2713,9 +2721,9 @@ function buildMachineConfig(rawTipos) {
     REAL_TYPES.add(t.id);
   });
   /* rebuildFilterChips removido — chips substituídos por type-filter-row */
-  // Atualiza select de nova máquina
-  const sel = document.getElementById('newMachineType');
-  if (sel) {
+  // Atualiza selects de tipo de máquina
+  [document.getElementById('newMachineType'), document.getElementById('editMachType')].forEach(sel => {
+    if (!sel) return;
     const cur = sel.value;
     sel.innerHTML = '';
     rawTipos.forEach(t => {
@@ -2725,7 +2733,7 @@ function buildMachineConfig(rawTipos) {
       if (t.id === cur) opt.selected = true;
       sel.appendChild(opt);
     });
-  }
+  });
 }
 
 
@@ -4025,6 +4033,7 @@ function openMachineEdit(machineId) {
   if (!m) return;
   const cfg = machineConfig[m.type] || {};
   document.getElementById('machineEditSub').textContent = `${cfg.emoji || ''} ${m.type?.toUpperCase()} · ${m.id}`;
+  document.getElementById('editMachType').value    = m.type || '';
   document.getElementById('editMachName').value    = m.name || '';
   document.getElementById('editMachYear').value    = m.year || '';
   document.getElementById('editMachUnidade').value = m.unidade || '';
@@ -4036,6 +4045,7 @@ function openMachineEdit(machineId) {
 async function saveMachineEdit() {
   const m = machines.find(x => x.id === editingMachineEditId);
   if (!m) return;
+  const tipo    = document.getElementById('editMachType').value;
   const name    = document.getElementById('editMachName').value.trim();
   const year    = document.getElementById('editMachYear').value.trim();
   const unidade = document.getElementById('editMachUnidade').value;
@@ -4043,7 +4053,7 @@ async function saveMachineEdit() {
   const pat     = document.getElementById('editMachPat').value.trim();
   if (!name) { showToast('warning','⚠️','Campos obrigatórios','Preencha o nome'); return; }
 
-  m.name = name; m.year = year; m.unidade = unidade; m.chassi = chassi; m.patrimony = pat;
+  m.type = tipo; m.name = name; m.year = year; m.unidade = unidade; m.chassi = chassi; m.patrimony = pat;
   closeModal('machineEditModal');
   renderAll();
   showToast('success','✅','Máquina atualizada', name);
@@ -4052,7 +4062,7 @@ async function saveMachineEdit() {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/maquinas?id=eq.${encodeURIComponent(editingMachineEditId)}`, {
       method: 'PATCH',
       headers: { ...sbHeaders, 'Prefer': 'return=minimal' },
-      body: JSON.stringify({ nome: name, ano: year, unidade, chassi, patrimonio: pat }),
+      body: JSON.stringify({ tipo, nome: name, ano: year, unidade, chassi, patrimonio: pat }),
     });
     if (!res.ok) {
       const err = await res.json().catch(()=>({}));
