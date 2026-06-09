@@ -1603,7 +1603,7 @@
 
   <!-- Ações — direita -->
   <div class="header-actions">
-    <div class="stat-pill connection-pill" id="connectionPill" style="cursor:pointer" onclick="loadFromSheets()" title="Clique para sincronizar">
+    <div class="stat-pill connection-pill" id="connectionPill" style="cursor:pointer" onclick="loadFromSheets(true)" title="Clique para sincronizar">
       <div class="stat-dot orange" id="connectionDot"></div>
       <span id="connectionLabel">Conectando...</span>
       <span style="font-size:10px;opacity:0.5">↺</span>
@@ -2397,7 +2397,7 @@ function sheetsToMachines(rawMachines, rawHardwares) {
   });
 }
 
-async function loadFromSheets() {
+async function loadFromSheets(showToastOnSuccess = false) {
   isLoadingData = true;
   setConnectionStatus('loading');
   try {
@@ -2418,7 +2418,7 @@ async function loadFromSheets() {
     machines = sheetsToMachines(rawMachines, rawHardwares);
     injectVirtualMachines(rawHardwares);
     setConnectionStatus('online');
-    showToast('success', '☁️', 'Dados atualizados', `${machines.length} máquinas carregadas`);
+    if (showToastOnSuccess) showToast('success', '☁️', 'Dados atualizados', `${machines.length} máquinas carregadas`);
     retryPendingMachines();
   } catch(e) {
     console.error('loadFromSheets:', e);
