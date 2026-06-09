@@ -4839,13 +4839,17 @@ function parseBatchCsv() {
   return raw.split('\n').map(line => {
     const cols = line.split(',').map(c => c.trim());
     if (mode === 'hardwares') {
-      const [tipo, modelo, sn, pat, fab, dest] = cols;
+      const [tipo, modelo, ...rest] = cols;
       if (!tipo || !modelo) return null;
+      const dest = rest.pop() || 'ESTOQUE'; // destino é sempre a última coluna
+      const sn  = rest[0] || '';
+      const pat = rest[1] || '';
+      const fab = rest[2] || '';
       return {
         id: pat || `HW-${Date.now()}-${Math.random().toString(36).slice(2,6)}`,
         nome: modelo, tipo, modelo,
-        numeroDeSerie: sn || '', patrimonio: pat || '', fabricante: fab || '',
-        firmware: '', maquinaAtual: dest || 'ESTOQUE',
+        numeroDeSerie: sn, patrimonio: pat, fabricante: fab,
+        firmware: '', maquinaAtual: dest,
         instaladoEm: localDateStr(),
       };
     } else {
@@ -4865,7 +4869,7 @@ function previewBatch() {
     rows.map(r => {
       const mode = document.getElementById('batchMode').value;
       return mode === 'hardwares'
-        ? `${r.tipo} · ${r.nome} · S/N:${r.numeroDeSerie||'—'} · ${r.maquinaAtual}`
+        ? `${r.tipo} · ${r.nome} · S/N:${r.numeroDeSerie||'—'}${r.patrimonio ? ` · Pat:${r.patrimonio}` : ''} · ${r.maquinaAtual}`
         : `${r.id} · ${r.nome} · ${r.tipo}`;
     }).join('<br>');
 }
