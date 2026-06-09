@@ -3210,7 +3210,7 @@ function buildSearchResultItem(r, term) {
     const mcfg = machineConfig[r.machine.type] || { emoji: '🚛' };
     const patDetail = r.hw.patrimony ? ` · Pat: ${highlight(r.hw.patrimony, term)}` : '';
     item.innerHTML = `
-      <div class="sri-type">${hcfg.emoji} ${hcfg.label} em ${mcfg.emoji} ${r.machine.name}</div>
+      <div class="sri-type">${hcfg.label} em ${r.machine.name}</div>
       <div class="sri-name">${highlight(r.hw.name, term)}</div>
       <div class="sri-detail">S/N: ${highlight(r.hw.sn||'—', term)}${patDetail}</div>
     `;
@@ -4625,7 +4625,7 @@ function renderConsultas() {
             ${machineLine}
           </td>
           <td>${isDest ? '—' : (m.unidade || '—')}</td>
-          <td><span class="ct-badge" style="${hwBadge}">${hcfg.emoji} ${hcfg.label}</span></td>
+          <td><span class="ct-badge" style="${hwBadge}">${renderIcon(hcfg.emoji,10,hcfg.color)} ${hcfg.label}</span></td>
           <td style="color:var(--text)">${hw.name}</td>
           <td style="font-family:'JetBrains Mono',monospace;font-size:11px">${hw.sn || '—'}</td>
           <td style="font-family:'JetBrains Mono',monospace;font-size:11px">${hw.patrimony || '—'}</td>
@@ -4881,31 +4881,79 @@ async function submitBatch() {
 
   const btn = document.querySelector('#batchModal .btn-primary');
   btn.disabled = true; btn.textContent = 'Importando...';
-  let ok = 0, fail = 0;
+  let ok = 0, fail = 0, skipped = 0;
 
-  const table    = mode === 'hardwares' ? 'hardwares' : 'maquinas';
   const conflict = document.getElementById('batchConflict').value;
-  // ignore  → pula silenciosamente registros com ID duplicado
-  // merge   → atualiza campos do registro existente (upsert)
-  const prefer = conflict === 'merge'
-    ? 'return=minimal,resolution=merge-duplicates'
-    : 'return=minimal,resolution=ignore-duplicates';
 
-  for (const row of rows) {
+  if (mode === 'hardwares') {
+    // Deduplicação por S/N: busca todos os S/Ns existentes no banco antes de inserir
+    let existingSns = new Set();
+    let existingIds = new Set();
     try {
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
-        method: 'POST',
-        headers: { ...sbHeaders, 'Prefer': prefer },
-        body: JSON.stringify(row),
-      });
-      if (res.ok) { ok++; } else { fail++; console.warn('batch row fail', res.status, row); }
-    } catch(e) { fail++; }
+      const r = await fetch(`${SUPABASE_URL}/rest/v1/hardwares?select=id,"numeroDeSerie"`, { headers: sbHeaders });
+      if (r.ok) {
+        const data = await r.json();
+        data.forEach(h => {
+          if (h.numeroDeSerie) existingSns.add(h.numeroDeSerie.trim());
+          existingIds.add(h.id);
+        });
+      }
+    } catch(e) { /* sem cache, prossegue sem deduplicação por SN */ }
+
+    for (const row of rows) {
+      const sn = (row.numeroDeSerie || '').trim();
+      const snExists = sn && existingSns.has(sn);
+
+      if (snExists) {
+        if (conflict === 'ignore') { skipped++; continue; }
+        // merge: PATCH no registro existente pelo S/N
+        try {
+          const res = await fetch(
+            `${SUPABASE_URL}/rest/v1/hardwares?numeroDeSerie=eq.${encodeURIComponent(sn)}`,
+            { method: 'PATCH', headers: { ...sbHeaders, 'Prefer': 'return=minimal' }, body: JSON.stringify(row) }
+          );
+          res.ok ? ok++ : (fail++, console.warn('batch patch fail', res.status, row));
+        } catch(e) { fail++; }
+        continue;
+      }
+
+      // Novo registro — garante ID único
+      if (existingIds.has(row.id)) {
+        row.id = `HW-${Date.now()}-${Math.random().toString(36).slice(2,6)}`;
+      }
+      existingIds.add(row.id);
+      if (sn) existingSns.add(sn);
+
+      try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/hardwares`, {
+          method: 'POST',
+          headers: { ...sbHeaders, 'Prefer': 'return=minimal' },
+          body: JSON.stringify(row),
+        });
+        res.ok ? ok++ : (fail++, console.warn('batch row fail', res.status, row));
+      } catch(e) { fail++; }
+    }
+  } else {
+    // Modo máquinas — sem deduplicação por SN, usa conflict do Supabase por ID
+    const prefer = conflict === 'merge'
+      ? 'return=minimal,resolution=merge-duplicates'
+      : 'return=minimal,resolution=ignore-duplicates';
+    for (const row of rows) {
+      try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/maquinas`, {
+          method: 'POST',
+          headers: { ...sbHeaders, 'Prefer': prefer },
+          body: JSON.stringify(row),
+        });
+        res.ok ? ok++ : (fail++, console.warn('batch row fail', res.status, row));
+      } catch(e) { fail++; }
+    }
   }
 
   btn.disabled = false; btn.textContent = '⬆ Importar';
   closeModal('batchModal');
-  showToast(fail ? 'warning' : 'success', fail ? '⚠️' : '✅',
-    `${ok} importado(s)`, fail ? `${fail} falha(s)` : 'Sincronize para ver os novos registros');
+  const sub = [fail ? `${fail} falha(s)` : '', skipped ? `${skipped} ignorado(s)` : ''].filter(Boolean).join(' · ') || 'Sincronize para ver os novos registros';
+  showToast(fail ? 'warning' : 'success', fail ? '⚠️' : '✅', `${ok} importado(s)`, sub);
   if (ok) await loadFromSheets();
 }
 </script>
