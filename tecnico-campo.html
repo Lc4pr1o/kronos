@@ -1616,10 +1616,11 @@ function mapMachines(raw) {
 
 function mapHardwares(raw) {
   return raw.map(h => ({
-    id:        String(h.id           ?? ''),
-    name:      String(h.nome         ?? h.name ?? ''),
-    type:      String(h.tipo         ?? h.type ?? ''),
-    sn:        String(h.numeroDeSerie ?? h.sn ?? ''),
+    id:        String(h.id            ?? ''),
+    name:      String(h.nome          ?? h.name ?? ''),
+    type:      String(h.tipo          ?? h.type ?? ''),
+    sn:        String(h.numeroDeSerie ?? h.sn   ?? ''),
+    modelo:    String(h.modelo        ?? ''),
     machine:   String(h.maquinaAtual  ?? h.machine ?? ''),
     patrimonio: String(h.patrimonio   ?? ''),
   }));
@@ -2265,7 +2266,7 @@ function submitRecord() {
     const hw = selectedHwObj || hardwares.find(h => h.id === selectedHwId);
     if (!hw) { showToast('err','⚠️','Equipamento não encontrado'); return; }
     hwId = hw.id; hwSn = hw.sn||''; hwName = hw.name||'';
-    hwType = hw.type||''; hwModelo = hw.name||''; hwPatrimonio = hw.patrimonio||'';
+    hwType = hw.type||''; hwModelo = hw.modelo || hw.name || ''; hwPatrimonio = hw.patrimonio||'';
   }
 
   const techName = document.getElementById('techName').value.trim() || 'Técnico';
@@ -2314,7 +2315,7 @@ function submitRecord() {
       machineDestId: displacementDest,
       machineDestName: getMachineName(displacementDest),
       hwId: hw.id, hwSn: hw.sn||'', hwName: hw.name||'',
-      hwType: hw.type||'', hwModelo: hw.name||'', hwPatrimonio: hw.patrimonio||'',
+      hwType: hw.type||'', hwModelo: hw.modelo||hw.name||'', hwPatrimonio: hw.patrimonio||'',
       gpsLat:'', gpsLng:'', gpsAcc:'',
       dateTime,
       notes: `Realocação automática — instalação de ${hwName}`,
@@ -2902,7 +2903,7 @@ async function submitCadastroEquip() {
   const hwId = pat || `HW-${Date.now()}`;
   hardwares.push({ id: hwId, name: model, type, sn, machine: destId, patrimonio: pat });
   closeCadastroEquip();
-  showToast('ok','✅','Equipamento cadastrado', `${model} → ${getMachineName(destId)}`);
+  showToast('ok','✅', `Equipamento cadastrado — ${model} → ${getMachineName(destId)}`);
 
   try {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/hardwares`, {
@@ -2965,7 +2966,7 @@ async function submitCadastroMaquina() {
 
   machines.push({ id, name: nome, type: tipo });
   closeCadastroMaquina();
-  showToast('ok','✅','Máquina cadastrada', `${nome} (${id})`);
+  showToast('ok','✅', `Máquina cadastrada — ${nome} (${id})`);
 
   try {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/maquinas`, {

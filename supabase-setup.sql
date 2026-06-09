@@ -90,6 +90,16 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON registros  TO anon;
 GRANT SELECT, INSERT, UPDATE, DELETE ON hw_tipos   TO anon;
 GRANT SELECT, INSERT, UPDATE, DELETE ON maq_tipos  TO anon;
 
+CREATE TABLE IF NOT EXISTS tecnicos (
+  nome TEXT PRIMARY KEY
+);
+ALTER TABLE tecnicos DISABLE ROW LEVEL SECURITY;
+GRANT SELECT, INSERT, UPDATE, DELETE ON tecnicos TO anon;
+
+INSERT INTO tecnicos (nome) VALUES
+  ('Anderson'), ('Lucas'), ('Kayky'), ('Murilo'), ('Isaac')
+ON CONFLICT (nome) DO NOTHING;
+
 INSERT INTO maq_tipos (id, label, emoji, cor) VALUES
 ('trator',         'TRATOR',         '🚜', '#f5a623'),
 ('motoniveladora', 'MOTONIVELADORA', '🚧', '#4a9eff'),

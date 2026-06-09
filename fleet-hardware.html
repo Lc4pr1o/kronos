@@ -1644,7 +1644,7 @@
       <div class="toolbar-actions">
         <button class="btn btn-ghost" onclick="openModal('batchModal')" title="Importar em lote">⬆ Lote</button>
         <button class="btn btn-ghost" onclick="openModal('addMachineModal')">+ Máquina</button>
-        <button class="btn btn-primary" id="addHwBtn" onclick="openAddHwModal()" style="display:none">+ Hardware</button>
+        <button class="btn btn-primary" id="addHwBtnNav" onclick="openAddHwModal()" style="display:none">+ Hardware</button>
       </div>
     </div>
 
@@ -2233,7 +2233,7 @@
         <div class="modal-title">⚠️ Conflito de Tipo</div>
         <div class="modal-sub" id="hwConflictSub">—</div>
       </div>
-      <button class="modal-close" onclick="closeModal('hwConflictModal')">✕</button>
+      <button class="modal-close" onclick="_pendingHwInstall=null;closeModal('hwConflictModal')">✕</button>
     </div>
     <div class="modal-body">
       <div style="font-size:12px;color:var(--text2);margin-bottom:12px">Esta máquina já possui um equipamento deste tipo. Indique para onde vai o equipamento atual antes de instalar o novo.</div>
@@ -2246,7 +2246,7 @@
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal('hwConflictModal')">Cancelar</button>
+      <button class="btn btn-ghost" onclick="_pendingHwInstall=null;closeModal('hwConflictModal')">Cancelar</button>
       <button class="btn btn-primary" onclick="confirmHwConflict()">Confirmar e Instalar</button>
     </div>
   </div>
@@ -2872,7 +2872,7 @@ function renderAll() {
     const detail = document.getElementById('machineDetail');
     detail.style.display = '';
     detail.className = 'machine-detail';
-    document.getElementById('addHwBtn').style.display = 'none';
+    document.getElementById('addHwBtnNav').style.display = 'none';
     document.getElementById('breadcrumbCurrent').textContent = 'Visão Geral';
     document.getElementById('breadcrumbBack')?.classList.remove('clickable');
   }
@@ -3030,7 +3030,7 @@ function selectMachine(id) {
   renderMachineList();
   renderDetail(id);
   document.getElementById('machineGridView').style.display = 'none';
-  document.getElementById('addHwBtn').style.display = 'flex';
+  document.getElementById('addHwBtnNav').style.display = 'flex';
   document.getElementById('breadcrumbBack')?.classList.add('clickable');
 }
 
@@ -3504,17 +3504,17 @@ async function addHardware() {
     return;
   }
 
-  const m = machines.find(x => x.id === targetMachineId);
-  const conflicting = !DEST_TYPES.includes(m.type) && m.hardware.find(h => h.type === type);
-  if (conflicting) {
-    _pendingHwInstall = { type, pat, model, sn, manuf, targetMachineId, hwUniqueId };
-    openHwConflictModal(conflicting, m);
-    return;
-  }
-
   const licAtivada = document.getElementById('newHwLicAtivada')?.value || '';
   const licExpira  = document.getElementById('newHwLicExpira')?.value  || '';
   const licCodigo  = document.getElementById('newHwLicCodigo')?.value.trim().toUpperCase() || '';
+
+  const m = machines.find(x => x.id === targetMachineId);
+  const conflicting = !DEST_TYPES.includes(m.type) && m.hardware.find(h => h.type === type);
+  if (conflicting) {
+    _pendingHwInstall = { type, pat, model, sn, manuf, targetMachineId, hwUniqueId, licAtivada, licExpira, licCodigo };
+    openHwConflictModal(conflicting, m);
+    return;
+  }
 
   const btn = document.getElementById('addHwBtn');
   btn.disabled = true; btn.textContent = 'Instalando...';
@@ -3823,7 +3823,7 @@ async function confirmHwConflict() {
     return;
   }
 
-  const { type, pat, model, sn, manuf, targetMachineId, hwUniqueId } = _pendingHwInstall;
+  const { type, pat, model, sn, manuf, targetMachineId, hwUniqueId, licAtivada, licExpira, licCodigo } = _pendingHwInstall;
   const m    = machines.find(x => x.id === targetMachineId);
   const dest = machines.find(x => x.id === destId);
   const conflicting = m.hardware.find(h => h.type === type);
@@ -3833,7 +3833,7 @@ async function confirmHwConflict() {
   m.hardware = m.hardware.filter(h => h.id !== conflicting.id);
   dest.hardware.push(conflicting);
 
-  const newHw = { id: hwUniqueId, name: model, type, sn, manufacturer: manuf, patrimony: pat, installedAt: localDateStr() };
+  const newHw = { id: hwUniqueId, name: model, type, sn, manufacturer: manuf, patrimony: pat, installedAt: localDateStr(), licAtivadaEm: licAtivada, licExpiraEm: licExpira, licCodigo };
   m.hardware.push(newHw);
 
   closeModal('hwConflictModal');
@@ -3876,6 +3876,9 @@ async function confirmHwConflict() {
       hwModelo: model,
       hwPatrimonio: pat,
       hwManuf: manuf,
+      hwLicAtivada: licAtivada,
+      hwLicExpira:  licExpira,
+      hwLicCodigo:  licCodigo,
       gpsLat: '', gpsLng: '', gpsAcc: '',
       dateTime: new Date().toISOString().slice(0, 16),
       notes: '',
