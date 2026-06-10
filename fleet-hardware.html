@@ -3054,7 +3054,7 @@ function renderDetail(id) {
   document.getElementById('breadcrumbCurrent').textContent = `${m.name} (${m.id})`;
   document.getElementById('heroEmoji').innerHTML = renderIcon(cfg.emoji, 34, cfg.color || 'currentColor');
   document.getElementById('heroIcon').className = `hero-icon-wrap ${m.type}`;
-  document.getElementById('heroCard').setAttribute('data-emoji', cfg.emoji);
+  document.getElementById('heroCard').setAttribute('data-emoji', cfg.label || m.type?.toUpperCase() || '');
 
   // Botão de edição — só para máquinas reais
   const editRow = document.getElementById('machineEditBtnRow');
