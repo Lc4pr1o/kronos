@@ -1642,6 +1642,7 @@
         <span class="current" id="breadcrumbCurrent">Visão Geral</span>
       </div>
       <div class="toolbar-actions">
+        <button class="btn btn-ghost" onclick="exportPlanilhaGeral()" title="Exportar planilha geral (CSV)">⬇ Exportar</button>
         <button class="btn btn-ghost" onclick="openModal('batchModal')" title="Importar em lote">⬆ Lote</button>
         <button class="btn btn-ghost" onclick="openModal('addMachineModal')">+ Máquina</button>
         <button class="btn btn-primary" id="addHwBtnNav" onclick="openAddHwModal()" style="display:none">+ Hardware</button>
@@ -1747,6 +1748,7 @@
       <button class="btn btn-ghost" style="font-size:10px;padding:6px 12px" onclick="resetConsultaFilters()">↺ Limpar</button>
       <span class="consultas-count" id="consultasCount"></span>
       <div style="margin-left:auto;display:flex;gap:8px;flex-shrink:0">
+        <button class="btn btn-ghost" onclick="exportPlanilhaGeral()" title="Exportar planilha geral (CSV)">⬇ Exportar</button>
         <button class="btn btn-ghost" onclick="openModal('batchModal')" title="Importar em lote">⬆ Lote</button>
         <button class="btn btn-ghost" onclick="openModal('addMachineModal')">+ Máquina</button>
         <button class="btn btn-primary" onclick="openAddHwModal()">+ Hardware</button>
@@ -4792,6 +4794,42 @@ document.getElementById('batchMode')?.addEventListener('change', function() {
   document.getElementById('batchMaqHelp').style.display = this.value === 'maquinas'  ? 'block' : 'none';
   document.getElementById('batchPreview').style.display = 'none';
 });
+
+function csvField(value) {
+  const str = String(value ?? '');
+  return /[",\r\n]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
+}
+
+function exportPlanilhaGeral() {
+  const headers = [
+    'maquinaId','maquinaNome','maquinaTipo','unidade',
+    'hwTipo','hwModelo','hwNumeroSerie','hwPatrimonio','hwFabricante','instaladoEm'
+  ];
+  const rows = [headers];
+
+  machines.forEach(m => {
+    if (m.hardware.length === 0) {
+      rows.push([m.id, m.name, m.type, m.unidade, '', '', '', '', '', '']);
+    } else {
+      m.hardware.forEach(h => {
+        rows.push([
+          m.id, m.name, m.type, m.unidade,
+          h.type, h.name || '', h.sn, h.patrimony, h.manufacturer, h.installedAt || ''
+        ]);
+      });
+    }
+  });
+
+  const content = rows.map(r => r.map(csvField).join(',')).join('\r\n');
+  const blob = new Blob(['﻿' + content], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  const ts   = new Date().toISOString().slice(0,10);
+  a.href = url; a.download = `kronos_planilha_geral_${ts}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('success', '⬇', 'Exportação concluída', 'Planilha geral baixada com sucesso');
+}
 
 function downloadBatchTemplate() {
   const mode = document.getElementById('batchMode').value;
