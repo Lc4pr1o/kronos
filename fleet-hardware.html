@@ -2734,7 +2734,8 @@ function buildMachineConfig(rawTipos) {
     rawTipos.forEach(t => {
       const opt = document.createElement('option');
       opt.value = t.id;
-      opt.textContent = `${t.emoji || ''} ${t.label}`.trim();
+      const _te = safeEmoji(t.emoji || '');
+      opt.textContent = _te ? `${_te} ${t.label}` : t.label;
       if (t.id === cur) opt.selected = true;
       sel.appendChild(opt);
     });
@@ -2848,6 +2849,12 @@ function setTypeFilter(btn, type) {
   if (!selectedMachineId) renderMachineGrid();
 }
 
+// Retorna a string só se for um emoji unicode real (não texto ASCII)
+function safeEmoji(str) {
+  if (!str) return '';
+  return [...str].some(c => c.codePointAt(0) > 127) ? str : '';
+}
+
 function rebuildTypeFilterButtons() {
   const row = document.getElementById('typeFilterRow');
   if (!row || row.dataset.built === '1') return;
@@ -2860,7 +2867,7 @@ function rebuildTypeFilterButtons() {
     const btn = document.createElement('button');
     btn.className = 'type-filter-btn';
     btn.dataset.type = type;
-    btn.innerHTML = `${cfg.emoji} ${cfg.label}`;
+    btn.innerHTML = `${renderIcon(cfg.emoji, 13, cfg.color || 'currentColor')} ${cfg.label}`;
     btn.onclick = () => setTypeFilter(btn, type);
     row.appendChild(btn);
   });
@@ -2906,7 +2913,7 @@ function buildMachineCard(m, searchTerm) {
   card.onclick = () => selectMachine(m.id);
   card.innerHTML = `
     <div class="mc-header">
-      <div class="mc-icon">${cfg.emoji}</div>
+      <div class="mc-icon">${renderIcon(cfg.emoji, 22, cfg.color || 'currentColor')}</div>
       <div class="mc-hw-count">${m.hardware.length} hw</div>
     </div>
     <div class="mc-name">${highlight(m.name, searchTerm)}</div>
@@ -3208,7 +3215,7 @@ function buildSearchResultItem(r, term) {
   if (r.kind === 'machine') {
     const cfg = machineConfig[r.machine.type];
     item.innerHTML = `
-      <div class="sri-type">${cfg.emoji} ${cfg.label}</div>
+      <div class="sri-type">${renderIcon(cfg.emoji, 12, cfg.color || 'currentColor')} ${cfg.label}</div>
       <div class="sri-name">${highlight(r.machine.name, term)}</div>
       <div class="sri-detail">${r.machine.id} · ${r.machine.patrimony||'—'} · ${r.machine.hardware.length} hw</div>
     `;
@@ -3735,7 +3742,7 @@ function renderTransferGrid() {
     const div = document.createElement('div');
     div.className = `msq-item${isSelf ? ' disabled-target' : ''}${transferTargetMachineId === target.id ? ' selected-target' : ''}`;
     div.innerHTML = `
-      <div class="msq-icon">${cfg.emoji}</div>
+      <div class="msq-icon">${renderIcon(cfg.emoji, 20, cfg.color || 'currentColor')}</div>
       <div class="msq-name">${target.name}</div>
       <div class="msq-id">${target.id}</div>
     `;
@@ -3823,7 +3830,8 @@ function openHwConflictModal(existingHw, machine) {
     const cfg = machineConfig[dest.type] || { emoji: '📦', label: dest.type };
     const opt = document.createElement('option');
     opt.value = dest.id;
-    opt.textContent = `${cfg.emoji} ${cfg.label}`;
+    const _emo = safeEmoji(cfg.emoji);
+    opt.textContent = _emo ? `${_emo} ${cfg.label}` : cfg.label;
     sel.appendChild(opt);
   });
 
@@ -4096,7 +4104,8 @@ async function saveMachineEdit() {
     if (!cfg) return;
     const opt = document.createElement('option');
     opt.value = id;
-    opt.textContent = `${cfg.emoji} ${cfg.label}`;
+    const _e = safeEmoji(cfg.emoji);
+    opt.textContent = _e ? `${_e} ${cfg.label}` : cfg.label;
     sel.appendChild(opt);
   });
 })();
@@ -4135,15 +4144,14 @@ function getDashboardData() {
   const hwByType = {};
   allHw.forEach(hw => { hwByType[hw.type] = (hwByType[hw.type] || 0) + 1; });
 
-  const machinesByUnidade = {};
-  realMachines.forEach(m => {
-    const u = m.unidade || '—';
-    if (!machinesByUnidade[u]) machinesByUnidade[u] = { machines: 0, hw: 0 };
-    machinesByUnidade[u].machines++;
-    machinesByUnidade[u].hw += m.hardware.length;
+  const hwByModel = {};
+  allHw.forEach(hw => {
+    const key = hw.name?.trim() || '—';
+    if (!hwByModel[key]) hwByModel[key] = { count: 0, type: hw.type };
+    hwByModel[key].count++;
   });
 
-  return { realMachines, allHw, hwCampo, hwManutencao, hwEstoque, hwInativo, hwByType, machinesByUnidade };
+  return { realMachines, allHw, hwCampo, hwManutencao, hwEstoque, hwInativo, hwByType, hwByModel };
 }
 
 function renderDashboard() {
@@ -4248,8 +4256,8 @@ function renderDashboard() {
     <!-- Tabelas: 2 colunas -->
     <div class="dash-bottom-row" style="margin-bottom:8px">
       <div class="table-card">
-        <div class="chart-card-title">DISTRIBUIÇÃO POR UNIDADE</div>
-        <table class="mini-table" id="unidadeTable"></table>
+        <div class="chart-card-title">HARDWARE POR MODELO</div>
+        <canvas id="modelosCanvas" width="600" height="220" style="width:100%;height:220px"></canvas>
       </div>
       <div class="table-card">
         <div class="chart-card-title">TIPOS MAIS FREQUENTES</div>
@@ -4291,14 +4299,16 @@ function renderDashboard() {
       }));
     drawBars('barsCanvas', bars);
 
-    // Tabela unidade
-    const uTable = document.getElementById('unidadeTable');
-    if (uTable) {
-      const rows = Object.entries(d.machinesByUnidade).sort((a, b) => b[1].hw - a[1].hw);
-      uTable.innerHTML = `<tr><th>Unidade</th><th>Máquinas</th><th>Hardwares</th></tr>` +
-        rows.map(([u, v]) => `<tr><td>${u}</td><td>${v.machines}</td><td>${v.hw}</td></tr>`).join('') +
-        (rows.length === 0 ? '<tr><td colspan="3" style="opacity:.4;padding:20px;text-align:center">Sem dados</td></tr>' : '');
-    }
+    // Gráfico — hardware por modelo
+    const modelBars = Object.entries(d.hwByModel)
+      .sort((a, b) => b[1].count - a[1].count)
+      .slice(0, 12)
+      .map(([name, data]) => ({
+        label: name,
+        value: data.count,
+        color: hwConfig[data.type]?.color || '#4a9eff',
+      }));
+    drawBars('modelosCanvas', modelBars);
 
     // Tabela tipos
     const tTable = document.getElementById('tiposTable');
@@ -4308,8 +4318,9 @@ function renderDashboard() {
       tTable.innerHTML = `<tr><th>Tipo</th><th>Qtde</th><th>%</th></tr>` +
         rows.map(([type, count]) => {
           const cfg = hwConfig[type] || {};
+          const emo = safeEmoji(cfg.emoji || '');
           return `<tr>
-            <td>${cfg.emoji || ''} ${cfg.label || type}</td>
+            <td>${emo ? emo + ' ' : ''}${cfg.label || type}</td>
             <td>${count}</td>
             <td style="color:var(--accent);font-family:'JetBrains Mono',monospace">${Math.round(count/total*100)}%</td>
           </tr>`;
@@ -4486,7 +4497,7 @@ function buildConsultaFilters() {
       const cfg = machineConfig[t] || { label: t, emoji: '🚛' };
       return `<label class="fdp-item">
         <input type="checkbox" value="${t}" onchange="onFiltChange()">
-        ${cfg.emoji} ${cfg.label}
+        ${renderIcon(cfg.emoji, 13, cfg.color || 'currentColor')} ${cfg.label}
       </label>`;
     }).join('');
   }
@@ -4498,7 +4509,7 @@ function buildConsultaFilters() {
     hwEl.innerHTML = Object.entries(hwConfig).map(([t, cfg]) =>
       `<label class="fdp-item">
         <input type="checkbox" value="${t}" onchange="onFiltChange()">
-        ${cfg.emoji} ${cfg.label}
+        ${renderIcon(cfg.emoji, 13, cfg.color || 'currentColor')} ${cfg.label}
       </label>`
     ).join('');
   }
@@ -4606,7 +4617,7 @@ function renderConsultas() {
         const sitTxt = sitLabel[situacao] || situacao;
         const machineLine = isDest
           ? ''
-          : `<div style="font-size:11px;font-weight:700;color:var(--text);margin-top:2px">${mcfg.emoji} ${m.name} <span style="font-weight:400;color:var(--text3)">${m.id}</span></div>`;
+          : `<div style="font-size:11px;font-weight:700;color:var(--text);margin-top:2px">${renderIcon(mcfg.emoji, 12, mcfg.color || 'currentColor')} ${m.name} <span style="font-weight:400;color:var(--text3)">${m.id}</span></div>`;
 
         if (!hw) {
           return `<tr style="opacity:.6">
