@@ -2677,9 +2677,12 @@ async function saveTipo() {
 async function deleteTipo(id) {
   if (!confirm(`Excluir tipo "${hwConfig[id]?.label}"?\nOs hardwares já cadastrados com este tipo não serão afetados.`)) return;
   try {
-    await fetch(`${SUPABASE_URL}/rest/v1/hw_tipos?id=eq.${encodeURIComponent(id)}`, {
-      method: 'DELETE', headers: sbHeaders,
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/hw_tipos?id=eq.${encodeURIComponent(id)}`, {
+      method: 'DELETE', headers: { ...sbHeaders, 'Prefer': 'return=representation' },
     });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const deleted = await res.json();
+    if (!deleted.length) throw new Error('Nenhum registro excluído');
     await reloadTipos();
     showToast('success','✅','Tipo excluído','');
   } catch(e) {
@@ -2814,9 +2817,12 @@ async function saveMaqTipo() {
 async function deleteMaqTipo(id) {
   if (!confirm(`Excluir tipo de máquina "${machineConfig[id]?.label}"?\nAs máquinas já cadastradas não serão afetadas.`)) return;
   try {
-    await fetch(`${SUPABASE_URL}/rest/v1/maq_tipos?id=eq.${encodeURIComponent(id)}`, {
-      method: 'DELETE', headers: sbHeaders,
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/maq_tipos?id=eq.${encodeURIComponent(id)}`, {
+      method: 'DELETE', headers: { ...sbHeaders, 'Prefer': 'return=representation' },
     });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const deleted = await res.json();
+    if (!deleted.length) throw new Error('Nenhum registro excluído');
     await reloadMaqTipos();
     showToast('success','✅','Tipo excluído','');
   } catch(e) {
