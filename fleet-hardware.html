@@ -204,18 +204,135 @@
     50% { opacity: 0.5; transform: scale(0.8); }
   }
 
-  /* MAIN LAYOUT */
-  .app {
-    display: grid;
-    grid-template-columns: 320px 1fr;
-    flex: 1;
-    min-height: 0;
+  /* FROTA — layout flex linha */
+  #view-frota .app {
+    display: flex;
+    flex-direction: row;
     height: 100%;
   }
 
-  /* SIDEBAR */
-  .sidebar {
+  /* FLEET SIDEBAR */
+  .fleet-sidebar {
+    width: 280px;
+    min-width: 280px;
+    flex-shrink: 0;
+    background: var(--surface);
     border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .fs-header {
+    padding: 12px 12px 10px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .fs-input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .fs-input:focus { border-color: var(--accent); }
+  .fs-input::placeholder { color: var(--text3); }
+
+  .fs-chips {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+  }
+
+  .fs-chip {
+    padding: 3px 9px;
+    border-radius: 20px;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    border: 1px solid var(--border);
+    color: var(--text3);
+    cursor: pointer;
+    transition: all 0.15s;
+    background: none;
+    font-family: 'JetBrains Mono', monospace;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .fs-chip:hover { border-color: var(--border2); color: var(--text2); }
+  .fs-chip.active { border-color: var(--accent); color: var(--accent); background: rgba(245,166,35,0.08); }
+
+  .fs-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 6px 0;
+  }
+  .fs-list::-webkit-scrollbar { width: 3px; }
+  .fs-list::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+  .fs-grupo-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: background 0.15s;
+    user-select: none;
+    border-bottom: 1px solid var(--border2);
+  }
+  .fs-grupo-header:hover { background: rgba(255,255,255,0.02); }
+  .fs-grupo-name { font-size: 9px; font-weight: 700; letter-spacing: 2px; color: var(--text3); flex: 1; }
+  .fs-grupo-count { font-size: 10px; color: var(--text3); font-family: 'JetBrains Mono', monospace; }
+  .fs-arrow { font-size: 9px; color: var(--text3); transition: transform 0.2s; display: inline-block; }
+  .fs-arrow.open { transform: rotate(90deg); }
+
+  .fs-machines { display: none; }
+  .fs-machines.open { display: flex; flex-direction: column; }
+
+  .fs-machine {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 12px 7px 18px;
+    cursor: pointer;
+    transition: background 0.15s;
+    border-left: 2px solid transparent;
+  }
+  .fs-machine:hover { background: rgba(255,255,255,0.03); }
+  .fs-machine.selected { background: rgba(245,166,35,0.07); border-left-color: var(--accent); }
+  .fs-machine-info { flex: 1; min-width: 0; }
+  .fs-machine-name { font-size: 11px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .fs-machine-id { font-size: 9px; color: var(--text3); margin-top: 1px; }
+  .fs-machine-hw { font-size: 10px; font-weight: 700; color: var(--accent); background: rgba(245,166,35,0.1); padding: 1px 6px; border-radius: 8px; flex-shrink: 0; font-family: 'JetBrains Mono', monospace; }
+  .fs-machine-hw.zero { color: var(--text3); background: none; font-weight: 400; }
+
+  .fs-divider { height: 1px; background: var(--border); margin: 4px 8px; }
+
+  .fs-dest {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 12px 7px 14px;
+    cursor: pointer;
+    transition: background 0.15s;
+    border-left: 2px solid transparent;
+  }
+  .fs-dest:hover { background: rgba(255,255,255,0.02); }
+  .fs-dest.selected { border-left-color: var(--accent); background: rgba(245,166,35,0.05); }
+  .fs-dest-label { font-size: 11px; font-weight: 600; color: var(--text2); flex: 1; }
+  .fs-dest-count { font-size: 10px; color: var(--text3); font-family: 'JetBrains Mono', monospace; }
+
+  /* MACHINE DETAIL AREA */
+  .machine-detail-area {
+    flex: 1;
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -545,20 +662,15 @@
   .tag-tela     { background: rgba(46,204,138,0.15);  color: #2ecc8a; border: 1px solid rgba(46,204,138,0.3); }
   .tag-bordo    { background: rgba(249,115,22,0.15);  color: #f97316; border: 1px solid rgba(249,115,22,0.3); }
 
-  /* MAIN PANEL */
-  .main-panel {
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
-
-  .panel-toolbar {
+  /* DETAIL TOOLBAR */
+  .detail-toolbar {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 16px 28px;
+    padding: 14px 24px;
     border-bottom: 1px solid var(--border);
     background: var(--surface);
+    flex-shrink: 0;
     gap: 16px;
   }
 
@@ -585,6 +697,86 @@
     display: flex;
     gap: 10px;
     align-items: center;
+  }
+
+  /* DETAIL BODY — área scrollável do painel direito */
+  .detail-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .detail-body::-webkit-scrollbar { width: 3px; }
+  .detail-body::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+  /* Empty state — nenhuma máquina selecionada */
+  .detail-empty {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    color: var(--text3);
+    text-align: center;
+  }
+  .detail-empty-icon { font-size: 52px; opacity: 0.3; }
+  .detail-empty-title { font-size: 15px; font-weight: 700; color: var(--text2); }
+  .detail-empty-sub { font-size: 12px; max-width: 280px; line-height: 1.6; }
+
+  /* Machine info fields grid */
+  .minfo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 8px;
+  }
+
+  .minfo-field {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+  }
+
+  .minfo-label {
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    color: var(--text3);
+    margin-bottom: 4px;
+  }
+
+  .minfo-value {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Section title with line */
+  .sec-title {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 2.5px;
+    color: var(--text3);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .sec-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .sec-count {
+    background: var(--surface3);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1px 8px;
+    font-size: 10px;
+    color: var(--text2);
+    font-family: 'JetBrains Mono', monospace;
   }
 
   .btn {
@@ -650,21 +842,14 @@
   .empty-title { font-size: 18px; font-weight: 700; color: var(--text2); }
   .empty-sub { font-size: 13px; }
 
-  /* MACHINE DETAIL */
+  /* MACHINE DETAIL — conteúdo dentro do detail-body */
   .machine-detail {
-    flex: 1;
-    overflow-y: auto;
-    padding: 28px;
     display: none;
     flex-direction: column;
-    gap: 24px;
+    gap: 20px;
   }
 
   .machine-detail.active { display: flex; }
-
-  .machine-detail::-webkit-scrollbar { width: 4px; }
-  .machine-detail::-webkit-scrollbar-track { background: transparent; }
-  .machine-detail::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
 
   .detail-hero {
     background: var(--surface2);
@@ -1204,148 +1389,6 @@
   .add-hw-card .add-icon { font-size: 28px; }
   .add-hw-card span { font-size: 12px; font-weight: 600; letter-spacing: 0.5px; }
 
-  /* ── SIDEBAR HEADER (novo foco Frota) ── */
-  .sidebar-header {
-    padding: 16px 16px 10px;
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    flex-shrink: 0;
-  }
-  .sidebar-title {
-    font-size: 9px; font-weight: 700; letter-spacing: 2.5px; color: var(--text3);
-    margin-bottom: 10px;
-  }
-  .type-filter-row { display: flex; gap: 6px; flex-wrap: wrap; }
-  .type-filter-btn {
-    padding: 4px 10px;
-    border-radius: 20px;
-    border: 1px solid var(--border);
-    background: none;
-    font-size: 10px; font-weight: 600; font-family: 'JetBrains Mono', monospace;
-    color: var(--text3); cursor: pointer; transition: all 0.15s;
-    display: flex; align-items: center; gap: 4px;
-  }
-  .type-filter-btn:hover { border-color: var(--border2); color: var(--text2); }
-  .type-filter-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(245,166,35,0.08); }
-
-  /* ── UNIDADE GROUPS no sidebar ── */
-  .unidade-group { display: flex; flex-direction: column; }
-  .unidade-header {
-    display: flex; align-items: center; gap: 8px;
-    padding: 10px 14px 10px 16px;
-    cursor: pointer; transition: background 0.15s;
-    border-bottom: 1px solid var(--border2);
-    flex-shrink: 0;
-  }
-  .unidade-header:hover { background: rgba(255,255,255,0.02); }
-  .unidade-name {
-    font-size: 10px; font-weight: 700; letter-spacing: 1.5px; color: var(--text2); flex: 1;
-  }
-  .unidade-count { font-size: 10px; color: var(--text3); font-family: 'JetBrains Mono', monospace; }
-  .unidade-arrow { font-size: 10px; color: var(--text3); transition: transform 0.2s; }
-  .unidade-arrow.open { transform: rotate(180deg); }
-  .unidade-machines { display: flex; flex-direction: column; }
-
-  /* ── machine item no sidebar (compacto) ── */
-  .mlist-item {
-    display: flex; align-items: center; gap: 10px;
-    padding: 9px 14px 9px 24px;
-    cursor: pointer; transition: background 0.15s;
-    border-bottom: 1px solid rgba(255,255,255,0.03);
-    border-left: 2px solid transparent;
-  }
-  .mlist-item:hover { background: rgba(255,255,255,0.03); }
-  .mlist-item.selected {
-    background: rgba(245,166,35,0.06);
-    border-left-color: var(--accent);
-  }
-  .mlist-icon { font-size: 14px; flex-shrink: 0; }
-  .mlist-info { flex: 1; min-width: 0; }
-  .mlist-name { font-size: 11px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .mlist-id   { font-size: 10px; color: var(--text3); margin-top: 1px; }
-  .mlist-hw {
-    font-size: 10px; font-weight: 700; font-family: 'JetBrains Mono', monospace;
-    color: var(--accent); background: rgba(245,166,35,0.1);
-    padding: 2px 6px; border-radius: 10px; flex-shrink: 0;
-  }
-  .mlist-hw.zero { color: var(--text3); background: none; }
-
-  /* ── dest-strip (Estoque/Manutenção/Inativo compactos) ── */
-  .dest-strip { border-top: 1px solid var(--border); margin-top: 4px; padding: 8px 0; flex-shrink: 0; }
-  .dest-strip-item {
-    display: flex; align-items: center; gap: 8px;
-    padding: 7px 16px; cursor: pointer; transition: background 0.15s;
-    border-left: 2px solid transparent;
-  }
-  .dest-strip-item:hover { background: rgba(255,255,255,0.02); }
-  .dest-strip-item.selected { border-left-color: var(--accent); background: rgba(245,166,35,0.04); }
-  .dest-strip-icon { font-size: 13px; }
-  .dest-strip-label { font-size: 11px; font-weight: 600; color: var(--text2); flex: 1; }
-  .dest-strip-count { font-size: 10px; color: var(--text3); font-family: 'JetBrains Mono', monospace; }
-
-  /* ── MACHINE GRID (painel principal sem seleção) ── */
-  .machine-grid-view {
-    flex: 1; overflow-y: auto; padding: 24px;
-    display: flex; flex-direction: column; gap: 0;
-  }
-  .mgv-header {
-    display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 18px;
-  }
-  .mgv-title { font-size: 11px; font-weight: 700; letter-spacing: 2px; color: var(--text3); }
-  .mgv-count { font-size: 11px; color: var(--text3); font-family: 'JetBrains Mono', monospace; }
-  .machine-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
-    gap: 12px;
-  }
-  .mg-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-top: 3px solid var(--mg-color, var(--border));
-    border-radius: 12px;
-    padding: 16px;
-    cursor: pointer;
-    transition: all 0.18s;
-    display: flex; flex-direction: column; gap: 8px;
-    position: relative;
-  }
-  .mg-card:hover { border-color: var(--mg-color, var(--accent)); background: var(--surface2); transform: translateY(-1px); }
-  .mg-card-top { display: flex; align-items: center; justify-content: space-between; }
-  .mg-card-emoji { font-size: 20px; }
-  .mg-card-hw {
-    font-size: 10px; font-weight: 700; font-family: 'JetBrains Mono', monospace;
-    color: var(--mg-color, var(--accent));
-    background: color-mix(in srgb, var(--mg-color, var(--accent)) 12%, transparent);
-    padding: 2px 7px; border-radius: 10px;
-  }
-  .mg-card-name { font-size: 12px; font-weight: 700; color: var(--text); line-height: 1.3; }
-  .mg-card-frota { font-size: 10px; color: var(--text3); font-family: 'JetBrains Mono', monospace; }
-  .mg-card-unidade {
-    font-size: 9px; font-weight: 700; letter-spacing: 1px;
-    color: var(--text3); border: 1px solid var(--border);
-    padding: 2px 6px; border-radius: 4px; align-self: flex-start;
-  }
-
-  /* MACHINE TYPES LEGEND */
-  .type-legend {
-    display: flex;
-    gap: 16px;
-    align-items: center;
-  }
-
-  .tl-item {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 11px;
-    color: var(--text2);
-  }
-
-  .tl-dot {
-    width: 8px; height: 8px; border-radius: 2px;
-  }
-
   .animate-in {
     animation: fadeSlideIn 0.25s ease forwards;
   }
@@ -1368,9 +1411,9 @@
   .view { display: none; flex: 1; min-height: 0; }
   .view.active { display: block; }
 
-  /* frota view mantém o app grid */
-  #view-frota.active { display: block; height: 100%; }
-  #view-frota .app { height: 100%; }
+  /* frota view — flex para suportar layout de duas colunas */
+  #view-frota.active { display: flex; flex-direction: column; }
+  #view-frota .app { flex: 1; min-height: 0; }
 
   /* ══════════════════════════════════════
      DASHBOARD
@@ -1683,73 +1726,78 @@
   <div id="dashboardContent"></div>
 </div>
 
-<!-- VIEW: FROTA (conteúdo original) -->
+<!-- VIEW: FROTA -->
 <div class="view" id="view-frota" role="region" aria-label="Gestão de Frota">
 <div class="app">
-  <!-- SIDEBAR -->
-  <aside class="sidebar">
-    <div class="sidebar-header">
-      <div class="sidebar-title">FROTA</div>
-      <div class="type-filter-row" id="typeFilterRow">
-        <button class="type-filter-btn active" data-type="all" onclick="setTypeFilter(this,'all')">Todas</button>
+
+  <!-- FLEET SIDEBAR -->
+  <div class="fleet-sidebar">
+    <div class="fs-header">
+      <input class="fs-input" id="fleetSearch" placeholder="Buscar máquina..." autocomplete="off" oninput="filterFleetList()">
+      <div class="fs-chips" id="typeFilterRow">
+        <button class="fs-chip active" data-type="all" onclick="setTypeFilter(this,'all')">Todas</button>
       </div>
     </div>
-    <div class="machine-list" id="machineList" style="flex:1;overflow-y:auto;display:flex;flex-direction:column"></div>
-  </aside>
+    <div class="fs-list" id="machineList"></div>
+  </div>
 
-  <!-- MAIN PANEL -->
-  <main class="main-panel">
-    <div class="panel-toolbar">
+  <!-- MACHINE DETAIL AREA -->
+  <div class="machine-detail-area">
+    <div class="detail-toolbar">
       <div class="breadcrumb">
-        <span class="breadcrumb-back" id="breadcrumbBack" onclick="backToGrid()" title="Voltar para Frota">Frota</span>
+        <span class="breadcrumb-back" id="breadcrumbBack" onclick="backToGrid()" title="Limpar seleção">Frota</span>
         <span class="sep">›</span>
-        <span class="current" id="breadcrumbCurrent">Visão Geral</span>
+        <span class="current" id="breadcrumbCurrent">Selecione uma máquina</span>
       </div>
       <div class="toolbar-actions">
         <button class="btn btn-ghost" onclick="exportPlanilhaGeral()" title="Exportar planilha geral (CSV)">⬇ Exportar</button>
         <button class="btn btn-ghost" onclick="openModal('batchModal')" title="Importar em lote">⬆ Lote</button>
-        <button class="btn btn-ghost" onclick="openBatchTransfer()" title="Transferir equipamentos em lote">↔ Transferir</button>
         <button class="btn btn-ghost" onclick="openModal('addMachineModal')">+ Máquina</button>
         <button class="btn btn-primary" id="addHwBtnNav" onclick="openAddHwModal()" style="display:none">+ Hardware</button>
       </div>
     </div>
 
-    <!-- MACHINE GRID (padrão quando nenhuma máquina selecionada) -->
-    <div class="machine-grid-view" id="machineGridView">
-      <div class="mgv-header">
-        <div class="mgv-title">TODAS AS MÁQUINAS</div>
-        <div class="mgv-count" id="mgvCount"></div>
-      </div>
-      <div class="machine-grid" id="machineGrid"></div>
-    </div>
-
-    <!-- MACHINE DETAIL -->
-    <div class="machine-detail" id="machineDetail">
-      <div class="detail-hero" id="heroCard">
-        <div class="hero-icon-wrap" id="heroIcon"><span id="heroEmoji">🚜</span></div>
-        <div class="hero-info">
-          <div class="hero-type" id="heroType">TIPO</div>
-          <div class="hero-name" id="heroName">Nome</div>
-          <div class="hero-id" id="heroId">ID</div>
-        </div>
-        <div class="hero-stats">
-          <div class="hs-item">
-            <div class="hs-label">HARDWARES</div>
-            <div class="hs-value" id="heroHwCount" style="color:var(--accent)">0</div>
-          </div>
-          <div class="hs-item">
-            <div class="hs-label">CADASTRO</div>
-            <div class="hs-value" id="heroCadastro" style="font-size:11px;color:var(--text2)">—</div>
-          </div>
-        </div>
+    <div class="detail-body">
+      <!-- Empty state -->
+      <div class="detail-empty" id="detailEmptyState">
+        <div class="detail-empty-icon">🚜</div>
+        <div class="detail-empty-title">Selecione uma máquina</div>
+        <div class="detail-empty-sub">Escolha uma máquina na lista à esquerda para ver seus detalhes e hardware instalado</div>
       </div>
 
-      <div id="machineEditBtnRow" style="display:none;justify-content:flex-end;margin-bottom:4px">
-        <button class="btn btn-ghost" style="font-size:12px" id="machineEditBtn">✏️ Editar Máquina</button>
+      <!-- Machine detail (populated by renderDetail) -->
+      <div class="machine-detail" id="machineDetail">
+        <div class="detail-hero" id="heroCard">
+          <div class="hero-icon-wrap" id="heroIcon"><span id="heroEmoji">🚜</span></div>
+          <div class="hero-info">
+            <div class="hero-type" id="heroType">TIPO</div>
+            <div class="hero-name" id="heroName">Nome</div>
+            <div class="hero-id" id="heroId">ID</div>
+          </div>
+          <div class="hero-stats">
+            <div class="hs-item">
+              <div class="hs-label">HARDWARES</div>
+              <div class="hs-value" id="heroHwCount" style="color:var(--accent)">0</div>
+            </div>
+            <div class="hs-item">
+              <div class="hs-label">CADASTRO</div>
+              <div class="hs-value" id="heroCadastro" style="font-size:11px;color:var(--text2)">—</div>
+            </div>
+          </div>
+        </div>
+
+        <div id="machineEditBtnRow" style="display:none;justify-content:flex-end">
+          <button class="btn btn-ghost" style="font-size:12px" id="machineEditBtn">✏️ Editar Máquina</button>
+        </div>
+
+        <div class="minfo-grid" id="machineInfoGrid"></div>
+
+        <div class="sec-title">HARDWARE INSTALADO <span class="sec-count" id="hwSecCount">0</span></div>
+        <div class="hw-grid" id="hwGrid"></div>
       </div>
-      <div class="hw-grid" id="hwGrid"></div>
     </div>
-  </main>
+  </div>
+
 </div><!-- /app -->
 </div><!-- /view-frota -->
 
@@ -2979,10 +3027,9 @@ let _activeTypeFilter = 'all';
 
 function setTypeFilter(btn, type) {
   _activeTypeFilter = type;
-  document.querySelectorAll('.type-filter-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.fs-chip').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   renderMachineList();
-  if (!selectedMachineId) renderMachineGrid();
 }
 
 // Retorna a string só se for um emoji unicode real (não texto ASCII)
@@ -3001,9 +3048,9 @@ function rebuildTypeFilterButtons() {
     const count = machines.filter(m => m.type === type).length;
     if (!count) return;
     const btn = document.createElement('button');
-    btn.className = 'type-filter-btn';
+    btn.className = 'fs-chip';
     btn.dataset.type = type;
-    btn.innerHTML = `${renderIcon(cfg.emoji, 13, cfg.color || 'currentColor')} ${cfg.label}`;
+    btn.innerHTML = `${renderIcon(cfg.emoji, 11, cfg.color || 'currentColor')} ${cfg.label}`;
     btn.onclick = () => setTypeFilter(btn, type);
     row.appendChild(btn);
   });
@@ -3024,15 +3071,13 @@ function renderAll() {
   rebuildTypeFilterButtons();
   if (selectedMachineId) {
     renderDetail(selectedMachineId);
-    document.getElementById('machineGridView').style.display = 'none';
   } else {
-    renderMachineGrid();
-    document.getElementById('machineGridView').style.display = 'flex';
+    document.getElementById('detailEmptyState').style.display = 'flex';
     const detail = document.getElementById('machineDetail');
-    detail.style.display = '';
+    detail.style.display = 'none';
     detail.className = 'machine-detail';
     document.getElementById('addHwBtnNav').style.display = 'none';
-    document.getElementById('breadcrumbCurrent').textContent = 'Visão Geral';
+    document.getElementById('breadcrumbCurrent').textContent = 'Selecione uma máquina';
     document.getElementById('breadcrumbBack')?.classList.remove('clickable');
   }
   if (_currentView === 'dashboard') renderDashboard();
@@ -3069,9 +3114,14 @@ function renderMachineList() {
   const list = document.getElementById('machineList');
   list.innerHTML = '';
 
-  const real = machines.filter(m =>
-    REAL_TYPES.has(m.type) && (_activeTypeFilter === 'all' || m.type === _activeTypeFilter)
-  );
+  const term = (document.getElementById('fleetSearch')?.value || '').toLowerCase().trim();
+
+  const real = machines.filter(m => {
+    if (!REAL_TYPES.has(m.type)) return false;
+    if (_activeTypeFilter !== 'all' && m.type !== _activeTypeFilter) return false;
+    if (term && !m.name.toLowerCase().includes(term) && !String(m.id).toLowerCase().includes(term)) return false;
+    return true;
+  });
 
   // Agrupar por unidade
   const groups = {};
@@ -3087,46 +3137,42 @@ function renderMachineList() {
   sorted.forEach(unidade => {
     const mList = groups[unidade];
     if (!mList) return;
-    const totalHw = mList.reduce((s, m) => s + m.hardware.length, 0);
-    const isOpen = _unidadeExpanded[unidade] === true; // retraído por padrão
+    const isOpen = _unidadeExpanded[unidade] !== false; // expandido por padrão
 
     const group = document.createElement('div');
-    group.className = 'unidade-group';
+    group.className = 'fs-grupo';
 
     const header = document.createElement('div');
-    header.className = 'unidade-header';
+    header.className = 'fs-grupo-header';
     header.innerHTML = `
-      <div class="unidade-name">${unidade}</div>
-      <div class="unidade-count">${mList.length} · ${totalHw}hw</div>
-      <div class="unidade-arrow${isOpen ? ' open' : ''}">▾</div>
+      <span class="fs-arrow${isOpen ? ' open' : ''}">›</span>
+      <span class="fs-grupo-name">${unidade}</span>
+      <span class="fs-grupo-count">${mList.length}</span>
     `;
 
     const body = document.createElement('div');
-    body.className = 'unidade-machines';
-    body.style.display = isOpen ? 'flex' : 'none';
-    body.style.flexDirection = 'column';
+    body.className = `fs-machines${isOpen ? ' open' : ''}`;
 
     mList.forEach(m => {
       const cfg = machineConfig[m.type] || { emoji: '🚛' };
       const item = document.createElement('div');
-      item.className = `mlist-item${selectedMachineId === String(m.id) ? ' selected' : ''}`;
+      item.className = `fs-machine${selectedMachineId === String(m.id) ? ' selected' : ''}`;
       item.innerHTML = `
-        <div class="mlist-icon">${renderIcon(cfg.emoji, 16, cfg.color || 'currentColor')}</div>
-        <div class="mlist-info">
-          <div class="mlist-name">${m.name}</div>
-          <div class="mlist-id">${m.id}${m.patrimony ? ' · ' + m.patrimony : ''}</div>
+        ${renderIcon(cfg.emoji, 15, cfg.color || 'currentColor')}
+        <div class="fs-machine-info">
+          <div class="fs-machine-name">${m.name}</div>
+          <div class="fs-machine-id">${m.id}${m.unidade ? ' · ' + m.unidade : ''}</div>
         </div>
-        <div class="mlist-hw${m.hardware.length === 0 ? ' zero' : ''}">${m.hardware.length}</div>
+        <span class="fs-machine-hw${m.hardware.length === 0 ? ' zero' : ''}">${m.hardware.length}</span>
       `;
       item.onclick = () => selectMachine(m.id);
       body.appendChild(item);
     });
 
     header.onclick = () => {
-      _unidadeExpanded[unidade] = body.style.display === 'none';
-      body.style.display = _unidadeExpanded[unidade] ? 'flex' : 'none';
-      body.style.flexDirection = 'column';
-      header.querySelector('.unidade-arrow').classList.toggle('open', _unidadeExpanded[unidade]);
+      _unidadeExpanded[unidade] = !body.classList.contains('open');
+      body.classList.toggle('open', _unidadeExpanded[unidade]);
+      header.querySelector('.fs-arrow').classList.toggle('open', _unidadeExpanded[unidade]);
     };
 
     group.appendChild(header);
@@ -3134,24 +3180,29 @@ function renderMachineList() {
     list.appendChild(group);
   });
 
-  // Destinos — compactos no rodapé do sidebar
-  const strip = document.createElement('div');
-  strip.className = 'dest-strip';
+  // Destinos virtuais — divider + items compactos
+  const divider = document.createElement('div');
+  divider.className = 'fs-divider';
+  list.appendChild(divider);
+
   DEST_TYPES.forEach(type => {
     const m = machines.find(x => x.type === type);
     if (!m) return;
     const cfg = machineConfig[type] || { emoji: '📦', label: type };
     const item = document.createElement('div');
-    item.className = `dest-strip-item${selectedMachineId === String(m.id) ? ' selected' : ''}`;
+    item.className = `fs-dest${selectedMachineId === String(m.id) ? ' selected' : ''}`;
     item.innerHTML = `
-      <div class="dest-strip-icon">${renderIcon(cfg.emoji, 18, cfg.color || 'currentColor')}</div>
-      <div class="dest-strip-label">${cfg.label}</div>
-      <div class="dest-strip-count">${m.hardware.length}hw</div>
+      ${renderIcon(cfg.emoji, 15, cfg.color || 'currentColor')}
+      <span class="fs-dest-label">${cfg.label}</span>
+      <span class="fs-dest-count">${m.hardware.length}hw</span>
     `;
     item.onclick = () => selectMachine(m.id);
-    strip.appendChild(item);
+    list.appendChild(item);
   });
-  list.appendChild(strip);
+}
+
+function filterFleetList() {
+  renderMachineList();
 }
 
 function renderMachineGrid() {
@@ -3188,7 +3239,6 @@ function selectMachine(id) {
   selectedMachineId = id;
   renderMachineList();
   renderDetail(id);
-  document.getElementById('machineGridView').style.display = 'none';
   document.getElementById('addHwBtnNav').style.display = 'flex';
   document.getElementById('breadcrumbBack')?.classList.add('clickable');
 }
@@ -3198,7 +3248,7 @@ function renderDetail(id) {
   if (!m) return;
 
   const cfg = machineConfig[m.type] || { emoji: '🚛', label: m.type?.toUpperCase() || 'MÁQUINA', color: 'var(--text3)', cssClass: '' };
-  document.getElementById('machineGridView').style.display = 'none';
+  document.getElementById('detailEmptyState').style.display = 'none';
   document.getElementById('machineDetail').style.display = 'flex';
   document.getElementById('machineDetail').className = 'machine-detail active';
 
@@ -3216,9 +3266,36 @@ function renderDetail(id) {
   }
   document.getElementById('heroType').textContent = cfg.label;
   document.getElementById('heroName').textContent = m.name;
-  document.getElementById('heroId').textContent = `${m.id} · ${m.unidade || '—'} · ${m.year || '—'}`;
+  document.getElementById('heroId').textContent = m.id;
   document.getElementById('heroHwCount').textContent = m.hardware.length;
   document.getElementById('heroCadastro').textContent = m.createdAt || '—';
+
+  // Hw section count
+  const hwSecCount = document.getElementById('hwSecCount');
+  if (hwSecCount) hwSecCount.textContent = m.hardware.length;
+
+  // Machine info grid — só para máquinas reais
+  const infoGrid = document.getElementById('machineInfoGrid');
+  if (infoGrid) {
+    if (REAL_TYPES.has(m.type)) {
+      const fields = [
+        { label: 'UNIDADE',    value: m.unidade   || '—' },
+        { label: 'FROTA',      value: m.id },
+        { label: 'ANO',        value: m.year      || '—' },
+        { label: 'CHASSI',     value: m.chassi    || '—' },
+        { label: 'PATRIMÔNIO', value: m.patrimony || '—' },
+      ];
+      infoGrid.innerHTML = fields.map(f => `
+        <div class="minfo-field">
+          <div class="minfo-label">${f.label}</div>
+          <div class="minfo-value" title="${f.value}">${f.value}</div>
+        </div>`).join('');
+      infoGrid.style.display = '';
+    } else {
+      infoGrid.innerHTML = '';
+      infoGrid.style.display = 'none';
+    }
+  }
 
   // HW GRID
   const grid = document.getElementById('hwGrid');
