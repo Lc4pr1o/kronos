@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KRONOS — Proposta B: Quadro de Alocação</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0d1520;
+  --surface: #141e2e;
+  --surface2: #1a2438;
+  --surface3: #202d46;
+  --border: #263245;
+  --border2: #2e3d56;
+  --accent: #f5a623;
+  --green: #2ecc8a;
+  --red: #e05252;
+  --blue: #4a9eff;
+  --purple: #a78bfa;
+  --orange: #f97316;
+  --text: #cdd5e0;
+  --text2: #7a8fac;
+  --text3: #44566c;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: var(--bg); color: var(--text); font-family: 'JetBrains Mono', monospace; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+
+/* ── TOP BAR ── */
+.topbar {
+  height: 56px; display: flex; align-items: center; gap: 16px;
+  padding: 0 20px; background: var(--surface); border-bottom: 2px solid var(--border);
+  flex-shrink: 0; z-index: 50;
+}
+.logo { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.logo-mark { width: 34px; height: 34px; background: var(--accent); border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+.logo-name { font-size: 18px; font-weight: 800; letter-spacing: 3px; }
+.logo-name span { color: var(--accent); }
+.logo-tagline { font-size: 8px; font-weight: 600; letter-spacing: 2px; color: var(--text3); margin-top: 2px; }
+
+.tb-divider { width: 1px; height: 28px; background: var(--border); }
+
+/* Top nav pills */
+.tb-nav { display: flex; gap: 2px; }
+.tb-nav-item {
+  display: flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 7px;
+  font-size: 11px; font-weight: 700; letter-spacing: 0.5px; cursor: pointer; transition: all 0.15s;
+  color: var(--text3); border: 1px solid transparent;
+}
+.tb-nav-item:hover { color: var(--text2); background: var(--surface2); }
+.tb-nav-item.active { color: var(--accent); background: rgba(245,166,35,0.08); border-color: rgba(245,166,35,0.2); }
+.tb-nav-icon { font-size: 14px; }
+
+/* Search */
+.tb-search {
+  flex: 1; max-width: 400px; display: flex; align-items: center; gap: 8px;
+  background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
+  padding: 7px 14px; transition: border-color 0.2s;
+}
+.tb-search:focus-within { border-color: var(--accent); }
+.tb-search input { background: none; border: none; color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 12px; outline: none; width: 100%; }
+.tb-search input::placeholder { color: var(--text3); }
+
+.tb-spacer { flex: 1; }
+
+/* Stats strip in topbar */
+.tb-stats { display: flex; gap: 6px; align-items: center; }
+.stat-chip {
+  display: flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 6px;
+  font-size: 10px; font-weight: 700; border: 1px solid;
+}
+.stat-chip.green { background: rgba(46,204,138,0.08); border-color: rgba(46,204,138,0.25); color: var(--green); }
+.stat-chip.amber { background: rgba(245,166,35,0.08); border-color: rgba(245,166,35,0.25); color: var(--accent); }
+.stat-chip.red { background: rgba(224,82,82,0.08); border-color: rgba(224,82,82,0.25); color: var(--red); }
+.stat-chip.blue { background: rgba(74,158,255,0.08); border-color: rgba(74,158,255,0.25); color: var(--blue); }
+
+.tb-action-btn {
+  display: flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 8px;
+  font-size: 12px; font-weight: 700; cursor: pointer; border: none; transition: all 0.15s;
+  background: var(--accent); color: #000; letter-spacing: 0.5px;
+}
+.tb-action-btn:hover { background: #e8870a; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(245,166,35,0.35); }
+
+/* ── VIEWS ── */
+.view { display: none; flex: 1; min-height: 0; overflow: hidden; }
+.view.active { display: flex; }
+
+/* ════════════════════════
+   BOARD VIEW
+════════════════════════ */
+#v-board { flex-direction: column; }
+#v-board.active { display: flex; }
+
+.board-header {
+  display: flex; align-items: center; gap: 12px; padding: 12px 20px;
+  background: var(--surface); border-bottom: 1px solid var(--border); flex-shrink: 0;
+}
+.board-filter-btn {
+  display: flex; align-items: center; gap: 5px; padding: 5px 12px; border-radius: 6px;
+  font-size: 10px; font-weight: 700; letter-spacing: 0.5px; cursor: pointer; transition: all 0.15s;
+  background: none; border: 1px solid var(--border); color: var(--text3);
+}
+.board-filter-btn:hover { border-color: var(--border2); color: var(--text2); }
+.board-filter-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(245,166,35,0.06); }
+.bh-spacer { flex: 1; }
+.bh-legend { display: flex; gap: 12px; align-items: center; }
+.bh-leg-item { display: flex; align-items: center; gap: 5px; font-size: 9px; color: var(--text3); }
+.bh-leg-dot { width: 7px; height: 7px; border-radius: 50%; }
+
+.board { display: grid; grid-template-columns: 280px 1fr 260px; flex: 1; min-height: 0; gap: 0; }
+
+/* ── COLUMNS ── */
+.col { display: flex; flex-direction: column; border-right: 1px solid var(--border); overflow: hidden; }
+.col:last-child { border-right: none; }
+
+.col-header {
+  padding: 14px 16px; background: var(--surface); border-bottom: 1px solid var(--border);
+  flex-shrink: 0; position: sticky; top: 0; z-index: 5;
+}
+.col-header-top { display: flex; align-items: center; gap: 8px; margin-bottom: 2px; }
+.col-icon { font-size: 16px; }
+.col-name { font-size: 11px; font-weight: 800; letter-spacing: 1.5px; }
+.col-count {
+  margin-left: auto; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px;
+  background: var(--surface2); border: 1px solid var(--border); color: var(--text3);
+}
+.col-sub { font-size: 9px; color: var(--text3); letter-spacing: 0.5px; margin-top: 2px; }
+
+.col-body { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+.col-body::-webkit-scrollbar { width: 3px; }
+.col-body::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+/* ── ESTOQUE COLUMN ── */
+.eq-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px;
+  transition: all 0.18s; cursor: pointer; position: relative; overflow: hidden;
+}
+.eq-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; border-radius: 10px 0 0 10px; background: var(--ec, var(--text3)); }
+.eq-card:hover { border-color: var(--border2); transform: translateX(2px); background: var(--surface2); }
+.eq-card.selected { border-color: var(--blue); background: rgba(74,158,255,0.05); }
+.eq-card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.eq-badge { font-size: 8px; font-weight: 700; letter-spacing: 1px; padding: 2px 6px; border-radius: 3px; }
+.eq-since { font-size: 9px; color: var(--text3); }
+.eq-name { font-size: 12px; font-weight: 700; margin-bottom: 2px; }
+.eq-model { font-size: 10px; color: var(--text2); margin-bottom: 6px; }
+.eq-meta { display: flex; gap: 10px; }
+.eq-meta-item { font-size: 9px; color: var(--text3); }
+.eq-meta-item span { color: var(--text2); }
+
+/* Add equipment button */
+.add-eq-btn {
+  display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 10px;
+  border: 1px dashed var(--border2); cursor: pointer; transition: all 0.15s; color: var(--text3); font-size: 11px;
+  background: none;
+}
+.add-eq-btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(245,166,35,0.04); }
+
+/* ── FROTA COLUMN ── */
+.campo-section { display: flex; flex-direction: column; gap: 6px; }
+.campo-label {
+  display: flex; align-items: center; gap: 8px; padding: 6px 4px; cursor: pointer;
+}
+.campo-label-text { font-size: 9px; font-weight: 800; letter-spacing: 2px; color: var(--text3); flex: 1; }
+.campo-label-count { font-size: 9px; color: var(--text3); }
+.campo-arrow { font-size: 9px; color: var(--text3); transition: transform 0.2s; }
+.campo-arrow.open { transform: rotate(90deg); }
+.campo-machines { display: flex; flex-direction: column; gap: 6px; }
+
+/* Machine card */
+.mach-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  transition: all 0.18s; cursor: pointer; overflow: hidden;
+}
+.mach-card:hover { border-color: var(--border2); box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
+.mach-card.expanded { border-color: var(--accent); }
+.mach-card.warning { border-color: rgba(245,166,35,0.35); }
+.mach-card.critical { border-color: rgba(224,82,82,0.35); }
+
+.mach-header { display: flex; align-items: center; gap: 10px; padding: 12px 14px; }
+.mach-icon-wrap { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; background: var(--surface2); flex-shrink: 0; }
+.mach-info { flex: 1; min-width: 0; }
+.mach-name { font-size: 12px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mach-id { font-size: 9px; color: var(--text3); margin-top: 1px; }
+.mach-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+.mach-hw-pill {
+  display: flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 700;
+  padding: 2px 8px; border-radius: 10px;
+}
+.mach-hw-pill.full { background: rgba(46,204,138,0.1); color: var(--green); }
+.mach-hw-pill.partial { background: rgba(245,166,35,0.1); color: var(--accent); }
+.mach-hw-pill.empty { background: rgba(224,82,82,0.1); color: var(--red); }
+.mach-expand { font-size: 10px; color: var(--text3); transition: transform 0.2s; }
+.mach-expand.open { transform: rotate(180deg); }
+
+/* Equipment slots strip */
+.mach-slots { padding: 0 14px 12px; display: flex; gap: 5px; }
+.slot {
+  flex: 1; padding: 5px 6px; border-radius: 6px; border: 1px solid var(--border);
+  background: var(--surface2); text-align: center; transition: all 0.15s; cursor: pointer;
+}
+.slot:hover { border-color: var(--border2); }
+.slot.filled { border-color: transparent; }
+.slot.filled.monitor { background: rgba(74,158,255,0.1); border-color: rgba(74,158,255,0.25); }
+.slot.filled.receptor { background: rgba(167,139,250,0.1); border-color: rgba(167,139,250,0.25); }
+.slot.filled.radio { background: rgba(245,166,35,0.1); border-color: rgba(245,166,35,0.25); }
+.slot.filled.bordo { background: rgba(249,115,22,0.1); border-color: rgba(249,115,22,0.25); }
+.slot.filled.tela { background: rgba(46,204,138,0.1); border-color: rgba(46,204,138,0.25); }
+.slot.empty-slot { background: rgba(224,82,82,0.05); border-color: rgba(224,82,82,0.2); border-style: dashed; }
+.slot-icon { font-size: 14px; margin-bottom: 2px; }
+.slot-label { font-size: 7px; font-weight: 700; letter-spacing: 0.5px; color: var(--text3); }
+.slot.filled .slot-label { color: var(--text2); }
+.slot.empty-slot .slot-label { color: var(--red); opacity: 0.7; }
+
+/* Expanded detail */
+.mach-detail { border-top: 1px solid var(--border); padding: 12px 14px; display: none; background: var(--bg); }
+.mach-detail.open { display: block; }
+.mach-hw-list { display: flex; flex-direction: column; gap: 6px; }
+.mhw-item {
+  display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 8px;
+  background: var(--surface); border: 1px solid var(--border); transition: all 0.15s;
+}
+.mhw-item:hover { border-color: var(--border2); }
+.mhw-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.mhw-name { font-size: 11px; font-weight: 700; flex: 1; }
+.mhw-sn { font-size: 9px; color: var(--text3); }
+.mhw-actions { display: flex; gap: 4px; }
+.mhw-btn { width: 22px; height: 22px; border-radius: 5px; background: var(--surface2); border: 1px solid var(--border); color: var(--text2); font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+.mhw-btn:hover { background: var(--accent); color: #000; border-color: var(--accent); }
+.mhw-btn.danger:hover { background: var(--red); color: #fff; border-color: var(--red); }
+.mach-add-hw {
+  display: flex; align-items: center; gap: 6px; padding: 7px 10px; border-radius: 8px;
+  border: 1px dashed var(--border2); color: var(--text3); font-size: 10px; cursor: pointer;
+  transition: all 0.15s; margin-top: 4px; background: none;
+}
+.mach-add-hw:hover { border-color: var(--accent); color: var(--accent); }
+.mach-detail-actions { display: flex; gap: 6px; margin-top: 10px; }
+.mda-btn { flex: 1; padding: 8px; border-radius: 7px; font-size: 10px; font-weight: 700; font-family: 'JetBrains Mono', monospace; cursor: pointer; border: 1px solid; transition: all 0.15s; text-align: center; }
+.mda-btn.hist { background: rgba(74,158,255,0.08); border-color: rgba(74,158,255,0.3); color: var(--blue); }
+.mda-btn.edit { background: rgba(245,166,35,0.08); border-color: rgba(245,166,35,0.3); color: var(--accent); }
+
+/* ── MAINTENANCE COLUMN ── */
+.maint-section { display: flex; flex-direction: column; gap: 6px; }
+.maint-label { font-size: 9px; font-weight: 800; letter-spacing: 2px; color: var(--text3); padding: 4px 4px 2px; }
+.maint-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 11px 13px;
+  cursor: pointer; transition: all 0.15s;
+}
+.maint-card:hover { border-color: var(--border2); transform: translateX(-2px); }
+.maint-card.manut { border-left: 3px solid var(--red); }
+.maint-card.inativo { border-left: 3px solid var(--text3); }
+.maint-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px; }
+.maint-badge { font-size: 8px; font-weight: 700; letter-spacing: 1px; padding: 2px 7px; border-radius: 4px; }
+.maint-badge.manut { background: rgba(224,82,82,0.1); color: var(--red); }
+.maint-badge.inativo { background: rgba(100,116,139,0.1); color: var(--text3); }
+.maint-since { font-size: 9px; color: var(--text3); }
+.maint-name { font-size: 12px; font-weight: 700; margin-bottom: 2px; }
+.maint-orig { font-size: 10px; color: var(--text2); }
+.maint-note { font-size: 9px; color: var(--text3); margin-top: 4px; font-style: italic; }
+
+/* ════════════════════════
+   DASHBOARD VIEW
+════════════════════════ */
+#v-dashboard { flex-direction: column; overflow-y: auto; padding: 24px 28px; gap: 20px; }
+#v-dashboard.active { display: flex; }
+
+.kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.kpi-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+  padding: 18px 20px; position: relative; overflow: hidden;
+}
+.kpi-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--kc, var(--text3)); border-radius: 14px 14px 0 0; }
+.kpi-label { font-size: 8px; font-weight: 700; letter-spacing: 2px; color: var(--text3); margin-bottom: 10px; }
+.kpi-main { display: flex; align-items: baseline; gap: 6px; }
+.kpi-value { font-size: 36px; font-weight: 800; line-height: 1; font-family: 'JetBrains Mono', monospace; }
+.kpi-total { font-size: 14px; font-weight: 400; color: var(--text3); font-family: 'JetBrains Mono', monospace; }
+.kpi-sub { font-size: 10px; color: var(--text2); margin-top: 8px; }
+
+.dash-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+.dash-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px 22px; }
+.dash-card-title { font-size: 8px; font-weight: 700; letter-spacing: 2.5px; color: var(--text3); margin-bottom: 14px; }
+
+.progress-list { display: flex; flex-direction: column; gap: 10px; }
+.prog-item { display: flex; flex-direction: column; gap: 4px; }
+.prog-top { display: flex; justify-content: space-between; font-size: 10px; }
+.prog-name { color: var(--text2); }
+.prog-val { color: var(--text); font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+.prog-track { height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+.prog-fill { height: 100%; border-radius: 3px; }
+
+.flow-diagram { display: flex; align-items: center; gap: 8px; justify-content: center; padding: 8px 0; }
+.flow-box { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; text-align: center; flex: 1; }
+.flow-box-icon { font-size: 20px; margin-bottom: 6px; }
+.flow-box-num { font-size: 22px; font-weight: 800; font-family: 'JetBrains Mono', monospace; }
+.flow-box-label { font-size: 9px; color: var(--text3); letter-spacing: 1px; margin-top: 2px; }
+.flow-arrow { font-size: 16px; color: var(--text3); flex-shrink: 0; }
+
+.log-list { display: flex; flex-direction: column; gap: 0; }
+.log-item { display: flex; align-items: flex-start; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--border2); }
+.log-item:last-child { border-bottom: none; }
+.log-dot { width: 26px; height: 26px; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 11px; flex-shrink: 0; }
+.log-info { flex: 1; }
+.log-title { font-size: 11px; font-weight: 700; }
+.log-sub { font-size: 9px; color: var(--text2); margin-top: 2px; }
+.log-time { font-size: 9px; color: var(--text3); white-space: nowrap; margin-top: 3px; }
+
+/* ── QUICK ACTIONS SHEET ── */
+.qa-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+  z-index: 200; display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity 0.2s;
+}
+.qa-overlay.open { opacity: 1; pointer-events: all; }
+.qa-modal {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 18px;
+  width: 480px; overflow: hidden; transform: scale(0.96) translateY(10px); transition: transform 0.2s;
+}
+.qa-overlay.open .qa-modal { transform: scale(1) translateY(0); }
+.qa-header { padding: 20px 24px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.qa-title { font-size: 15px; font-weight: 800; }
+.qa-close { width: 30px; height: 30px; border-radius: 8px; background: var(--surface2); border: 1px solid var(--border); color: var(--text2); cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.qa-close:hover { background: var(--red); color: #fff; }
+.qa-body { padding: 20px 24px; display: flex; flex-direction: column; gap: 14px; }
+.qa-actions-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+.qa-action-btn {
+  display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 16px 10px;
+  border-radius: 12px; border: 2px solid var(--border); background: var(--surface2); cursor: pointer; transition: all 0.18s;
+}
+.qa-action-btn:hover { transform: translateY(-2px); }
+.qa-action-btn.install:hover { border-color: var(--green); background: rgba(46,204,138,0.06); }
+.qa-action-btn.remove:hover { border-color: var(--red); background: rgba(224,82,82,0.06); }
+.qa-action-btn.transfer:hover { border-color: var(--blue); background: rgba(74,158,255,0.06); }
+.qa-action-icon { font-size: 26px; }
+.qa-action-label { font-size: 10px; font-weight: 700; letter-spacing: 0.5px; color: var(--text2); }
+.qa-action-sub { font-size: 8px; color: var(--text3); }
+.qa-cad-btn {
+  display: flex; align-items: center; gap: 10px; padding: 14px 18px; border-radius: 10px;
+  border: 1px solid var(--border); background: none; cursor: pointer; transition: all 0.15s; color: var(--text2);
+  font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; width: 100%;
+}
+.qa-cad-btn:hover { background: var(--surface2); border-color: var(--border2); color: var(--text); }
+.qa-cad-btn .csb-icon { font-size: 18px; }
+.qa-cad-sub { font-size: 10px; color: var(--text3); font-weight: 400; margin-top: 1px; }
+
+/* Toast */
+.toast { position: fixed; bottom: 20px; right: 20px; background: var(--surface); border: 1px solid; border-radius: 10px; padding: 12px 18px; display: flex; align-items: center; gap: 10px; font-size: 12px; z-index: 999; transform: translateY(60px); opacity: 0; transition: all 0.3s cubic-bezier(.34,1.56,.64,1); pointer-events: none; box-shadow: 0 8px 32px rgba(0,0,0,0.5); }
+.toast.show { transform: translateY(0); opacity: 1; }
+.toast.ok { border-color: rgba(46,204,138,0.4); }
+
+::-webkit-scrollbar { width: 3px; height: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+.badge-monitor { background: rgba(74,158,255,0.12); color: #60a5fa; }
+.badge-receptor { background: rgba(167,139,250,0.12); color: #a78bfa; }
+.badge-radio { background: rgba(245,166,35,0.12); color: #fbbf24; }
+.badge-bordo { background: rgba(249,115,22,0.12); color: #f97316; }
+.badge-tela { background: rgba(46,204,138,0.12); color: #2ecc8a; }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="logo">
+    <div class="logo-mark">⚙</div>
+    <div>
+      <div class="logo-name">KRO<span>NOS</span></div>
+      <div class="logo-tagline">GESTÃO DE FROTA AGRÍCOLA</div>
+    </div>
+  </div>
+
+  <div class="tb-divider"></div>
+
+  <div class="tb-nav">
+    <div class="tb-nav-item active" onclick="navigate('board')">
+      <span class="tb-nav-icon">⊞</span> Quadro
+    </div>
+    <div class="tb-nav-item" onclick="navigate('dashboard')">
+      <span class="tb-nav-icon">📊</span> Dashboard
+    </div>
+    <div class="tb-nav-item">
+      <span class="tb-nav-icon">🕐</span> Histórico
+    </div>
+  </div>
+
+  <div class="tb-divider"></div>
+
+  <div class="tb-search">
+    <span style="color:var(--text3);font-size:13px">🔍</span>
+    <input placeholder="Buscar equipamento, S/N, patrimônio, máquina...">
+  </div>
+
+  <div class="tb-spacer"></div>
+
+  <div class="tb-stats">
+    <div class="stat-chip green">● 35 ativas</div>
+    <div class="stat-chip amber">⚠ 7 incompletas</div>
+    <div class="stat-chip red">🔧 13 manut.</div>
+    <div class="stat-chip blue">📦 45 estoque</div>
+  </div>
+
+  <div class="tb-divider"></div>
+
+  <button class="tb-action-btn" onclick="openQA()">+ Registrar</button>
+</div>
+
+<!-- VIEWS -->
+<div style="display:flex;flex:1;min-height:0;flex-direction:column;overflow:hidden">
+
+  <!-- ═══ QUADRO VIEW ═══ -->
+  <div class="view active" id="v-board">
+
+    <!-- Board filter bar -->
+    <div class="board-header">
+      <span style="font-size:9px;font-weight:700;letter-spacing:2px;color:var(--text3)">CAMPO:</span>
+      <button class="board-filter-btn active">Todos</button>
+      <button class="board-filter-btn">🌾 Campo A</button>
+      <button class="board-filter-btn">🌾 Campo B</button>
+      <button class="board-filter-btn">🌾 Campo C</button>
+      <button class="board-filter-btn">🌾 Campo D</button>
+      <div class="bh-spacer"></div>
+      <div class="bh-legend">
+        <span style="font-size:9px;font-weight:700;color:var(--text3);letter-spacing:1px">KIT:</span>
+        <div class="bh-leg-item"><div class="bh-leg-dot" style="background:var(--green)"></div> Completo</div>
+        <div class="bh-leg-item"><div class="bh-leg-dot" style="background:var(--accent)"></div> Parcial</div>
+        <div class="bh-leg-item"><div class="bh-leg-dot" style="background:var(--red)"></div> Crítico</div>
+      </div>
+    </div>
+
+    <!-- Board -->
+    <div class="board">
+
+      <!-- ── COLUNA: ESTOQUE ── -->
+      <div class="col">
+        <div class="col-header">
+          <div class="col-header-top">
+            <span class="col-icon">📦</span>
+            <span class="col-name">ESTOQUE</span>
+            <span class="col-count">45</span>
+          </div>
+          <div class="col-sub">Equipamentos disponíveis para instalação</div>
+        </div>
+        <div class="col-body">
+
+          <div style="font-size:8px;font-weight:700;letter-spacing:2px;color:var(--text3);padding:2px 0">MONITORES GPS</div>
+          <div class="eq-card" style="--ec:#60a5fa" onclick="selectEq(this)">
+            <div class="eq-card-top">
+              <span class="eq-badge badge-monitor">MONITOR</span>
+              <span class="eq-since">+127 dias</span>
+            </div>
+            <div class="eq-name">Monitor JD 4240</div>
+            <div class="eq-model">Universal Display · John Deere</div>
+            <div class="eq-meta">
+              <span class="eq-meta-item">S/N: <span>PC8080B-554433</span></span>
+              <span class="eq-meta-item">Pat: <span>PAT-0051</span></span>
+            </div>
+          </div>
+          <div class="eq-card" style="--ec:#60a5fa" onclick="selectEq(this)">
+            <div class="eq-card-top">
+              <span class="eq-badge badge-monitor">MONITOR</span>
+              <span class="eq-since">+42 dias</span>
+            </div>
+            <div class="eq-name">Monitor Trimble CFX-750</div>
+            <div class="eq-model">Field Display · Trimble</div>
+            <div class="eq-meta">
+              <span class="eq-meta-item">S/N: <span>CFX750-112233</span></span>
+              <span class="eq-meta-item">Pat: <span>PAT-0074</span></span>
+            </div>
+          </div>
+
+          <div style="font-size:8px;font-weight:700;letter-spacing:2px;color:var(--text3);padding:6px 0 2px">RÁDIOS</div>
+          <div class="eq-card" style="--ec:#fbbf24" onclick="selectEq(this)">
+            <div class="eq-card-top">
+              <span class="eq-badge badge-radio">RÁDIO</span>
+              <span class="eq-since">+15 dias</span>
+            </div>
+            <div class="eq-name">Rádio Kenwood TK-3000</div>
+            <div class="eq-model">UHF Portátil · Kenwood</div>
+            <div class="eq-meta">
+              <span class="eq-meta-item">S/N: <span>TK3K-221133</span></span>
+              <span class="eq-meta-item">Pat: <span>PAT-0178</span></span>
+            </div>
+          </div>
+          <div class="eq-card" style="--ec:#fbbf24" onclick="selectEq(this)">
+            <div class="eq-card-top">
+              <span class="eq-badge badge-radio">RÁDIO</span>
+              <span class="eq-since">+8 dias</span>
+            </div>
+            <div class="eq-name">Rádio Motorola DM3400</div>
+            <div class="eq-model">UHF Digital · Motorola</div>
+            <div class="eq-meta">
+              <span class="eq-meta-item">S/N: <span>DM34-BR-009988</span></span>
+              <span class="eq-meta-item">Pat: <span>PAT-0189</span></span>
+            </div>
+          </div>
+
+          <div style="font-size:8px;font-weight:700;letter-spacing:2px;color:var(--text3);padding:6px 0 2px">RECEPTORES</div>
+          <div class="eq-card" style="--ec:#a78bfa" onclick="selectEq(this)">
+            <div class="eq-card-top">
+              <span class="eq-badge badge-receptor">RECEPTOR</span>
+              <span class="eq-since">+61 dias</span>
+            </div>
+            <div class="eq-name">Receptor Trimble AG-372</div>
+            <div class="eq-model">RTK · Trimble</div>
+            <div class="eq-meta">
+              <span class="eq-meta-item">S/N: <span>AG372-445566</span></span>
+              <span class="eq-meta-item">Pat: <span>PAT-0096</span></span>
+            </div>
+          </div>
+
+          <button class="add-eq-btn">+ Cadastrar Equipamento</button>
+        </div>
+      </div>
+
+      <!-- ── COLUNA: FROTA ── -->
+      <div class="col" style="background: var(--bg)">
+        <div class="col-header" style="background:var(--surface)">
+          <div class="col-header-top">
+            <span class="col-icon">🚜</span>
+            <span class="col-name">FROTA ATIVA</span>
+            <span class="col-count">35 máquinas</span>
+          </div>
+          <div class="col-sub">Clique em uma máquina para ver os equipamentos instalados</div>
+        </div>
+        <div class="col-body">
+
+          <!-- Campo A -->
+          <div class="campo-section">
+            <div class="campo-label" onclick="toggleCampo('a')">
+              <span class="campo-label-text">🌾 CAMPO A</span>
+              <span class="campo-label-count">16 máquinas</span>
+              <span class="campo-arrow open" id="ca-arrow">›</span>
+            </div>
+            <div class="campo-machines" id="ca-machines">
+              <!-- Machine 1: Full kit -->
+              <div class="mach-card" onclick="toggleMachine('m1')">
+                <div class="mach-header">
+                  <div class="mach-icon-wrap">🚜</div>
+                  <div class="mach-info">
+                    <div class="mach-name">TRATOR JD 7815</div>
+                    <div class="mach-id">Frota #50486</div>
+                  </div>
+                  <div class="mach-right">
+                    <div class="mach-hw-pill full">✓ 4/4</div>
+                    <span class="mach-expand" id="m1-arr">▾</span>
+                  </div>
+                </div>
+                <!-- Equipment slots -->
+                <div class="mach-slots">
+                  <div class="slot filled monitor" title="Monitor JD 4640">
+                    <div class="slot-icon">🖥️</div>
+                    <div class="slot-label">MONITOR</div>
+                  </div>
+                  <div class="slot filled receptor" title="Receptor StarFire 6000">
+                    <div class="slot-icon">📡</div>
+                    <div class="slot-label">RECEPTOR</div>
+                  </div>
+                  <div class="slot filled radio" title="Rádio Motorola DM4400">
+                    <div class="slot-icon">📻</div>
+                    <div class="slot-label">RÁDIO</div>
+                  </div>
+                  <div class="slot filled bordo" title="Computador AFS Pro 700">
+                    <div class="slot-icon">💻</div>
+                    <div class="slot-label">BORDO</div>
+                  </div>
+                </div>
+                <!-- Expanded detail -->
+                <div class="mach-detail" id="m1-detail">
+                  <div class="mach-hw-list">
+                    <div class="mhw-item">
+                      <div class="mhw-dot" style="background:#60a5fa"></div>
+                      <div>
+                        <div class="mhw-name">Monitor JD 4640</div>
+                        <div class="mhw-sn">S/N: PC9080A-123456 · PAT-0042</div>
+                      </div>
+                      <div class="mhw-actions">
+                        <div class="mhw-btn" title="Transferir">⇄</div>
+                        <div class="mhw-btn danger" title="Remover">✕</div>
+                      </div>
+                    </div>
+                    <div class="mhw-item">
+                      <div class="mhw-dot" style="background:#a78bfa"></div>
+                      <div>
+                        <div class="mhw-name">Receptor StarFire 6000</div>
+                        <div class="mhw-sn">S/N: SF6-00A-789012 · PAT-0088</div>
+                      </div>
+                      <div class="mhw-actions">
+                        <div class="mhw-btn">⇄</div>
+                        <div class="mhw-btn danger">✕</div>
+                      </div>
+                    </div>
+                    <div class="mhw-item">
+                      <div class="mhw-dot" style="background:#fbbf24"></div>
+                      <div>
+                        <div class="mhw-name">Rádio Motorola DM4400</div>
+                        <div class="mhw-sn">S/N: DM4-BR-334455 · PAT-0167</div>
+                      </div>
+                      <div class="mhw-actions">
+                        <div class="mhw-btn">⇄</div>
+                        <div class="mhw-btn danger">✕</div>
+                      </div>
+                    </div>
+                    <div class="mhw-item">
+                      <div class="mhw-dot" style="background:#f97316"></div>
+                      <div>
+                        <div class="mhw-name">Computador AFS Pro 700</div>
+                        <div class="mhw-sn">S/N: AFS-P7-556677 · PAT-0211</div>
+                      </div>
+                      <div class="mhw-actions">
+                        <div class="mhw-btn">⇄</div>
+                        <div class="mhw-btn danger">✕</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="mach-detail-actions">
+                    <button class="mda-btn hist">📋 Histórico</button>
+                    <button class="mda-btn edit">✏️ Editar</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Machine 2: Partial kit (warning) -->
+              <div class="mach-card warning" onclick="toggleMachine('m2')">
+                <div class="mach-header">
+                  <div class="mach-icon-wrap">🌿</div>
+                  <div class="mach-info">
+                    <div class="mach-name">COLHEDORA JD CH570</div>
+                    <div class="mach-id">Frota #55795</div>
+                  </div>
+                  <div class="mach-right">
+                    <div class="mach-hw-pill full">✓ 5/5</div>
+                    <span class="mach-expand" id="m2-arr">▾</span>
+                  </div>
+                </div>
+                <div class="mach-slots">
+                  <div class="slot filled monitor"><div class="slot-icon">🖥️</div><div class="slot-label">MONITOR</div></div>
+                  <div class="slot filled receptor"><div class="slot-icon">📡</div><div class="slot-label">RECEPTOR</div></div>
+                  <div class="slot filled radio"><div class="slot-icon">📻</div><div class="slot-label">RÁDIO</div></div>
+                  <div class="slot filled bordo"><div class="slot-icon">💻</div><div class="slot-label">BORDO</div></div>
+                  <div class="slot filled tela"><div class="slot-icon">📟</div><div class="slot-label">TELA</div></div>
+                </div>
+                <div class="mach-detail" id="m2-detail">
+                  <div class="mach-hw-list">
+                    <div class="mhw-item"><div class="mhw-dot" style="background:#60a5fa"></div><div><div class="mhw-name">Monitor JD 4640</div><div class="mhw-sn">S/N: PC9080A-223344 · PAT-0043</div></div><div class="mhw-actions"><div class="mhw-btn">⇄</div><div class="mhw-btn danger">✕</div></div></div>
+                    <div class="mhw-item"><div class="mhw-dot" style="background:#a78bfa"></div><div><div class="mhw-name">Receptor StarFire 7500</div><div class="mhw-sn">S/N: SF7-00A-334455 · PAT-0089</div></div><div class="mhw-actions"><div class="mhw-btn">⇄</div><div class="mhw-btn danger">✕</div></div></div>
+                  </div>
+                  <button class="mach-add-hw" onclick="openQA()">+ Adicionar Equipamento</button>
+                  <div class="mach-detail-actions"><button class="mda-btn hist">📋 Histórico</button><button class="mda-btn edit">✏️ Editar</button></div>
+                </div>
+              </div>
+
+              <!-- Machine 3: Critical (missing equipment) -->
+              <div class="mach-card critical" onclick="toggleMachine('m3')">
+                <div class="mach-header">
+                  <div class="mach-icon-wrap">🚜</div>
+                  <div class="mach-info">
+                    <div class="mach-name">TRATOR JD 8335R</div>
+                    <div class="mach-id">Frota #51212</div>
+                  </div>
+                  <div class="mach-right">
+                    <div class="mach-hw-pill empty">⚠ 2/4</div>
+                    <span class="mach-expand" id="m3-arr">▾</span>
+                  </div>
+                </div>
+                <div class="mach-slots">
+                  <div class="slot filled monitor"><div class="slot-icon">🖥️</div><div class="slot-label">MONITOR</div></div>
+                  <div class="slot empty-slot"><div class="slot-icon" style="opacity:0.3">📡</div><div class="slot-label">RECEPTOR</div></div>
+                  <div class="slot empty-slot"><div class="slot-icon" style="opacity:0.3">📻</div><div class="slot-label">RÁDIO</div></div>
+                  <div class="slot filled bordo"><div class="slot-icon">💻</div><div class="slot-label">BORDO</div></div>
+                </div>
+                <div class="mach-detail" id="m3-detail">
+                  <div style="background:rgba(224,82,82,0.06);border:1px solid rgba(224,82,82,0.2);border-radius:8px;padding:10px 12px;margin-bottom:10px;font-size:10px;color:var(--red)">
+                    ⚠️ 2 equipamentos faltando: Receptor GPS e Rádio
+                  </div>
+                  <div class="mach-hw-list">
+                    <div class="mhw-item"><div class="mhw-dot" style="background:#60a5fa"></div><div><div class="mhw-name">Monitor JD 4240</div><div class="mhw-sn">S/N: PC8080B-667788 · PAT-0058</div></div><div class="mhw-actions"><div class="mhw-btn">⇄</div><div class="mhw-btn danger">✕</div></div></div>
+                    <div class="mhw-item"><div class="mhw-dot" style="background:#f97316"></div><div><div class="mhw-name">Computador AFS Pro 700</div><div class="mhw-sn">S/N: AFS-P7-889900 · PAT-0215</div></div><div class="mhw-actions"><div class="mhw-btn">⇄</div><div class="mhw-btn danger">✕</div></div></div>
+                  </div>
+                  <button class="mach-add-hw" onclick="openQA()">+ Instalar Equipamento Faltando</button>
+                  <div class="mach-detail-actions"><button class="mda-btn hist">📋 Histórico</button><button class="mda-btn edit">✏️ Editar</button></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Campo B -->
+          <div class="campo-section">
+            <div class="campo-label" onclick="toggleCampo('b')">
+              <span class="campo-label-text">🌾 CAMPO B</span>
+              <span class="campo-label-count">11 máquinas</span>
+              <span class="campo-arrow open" id="cb-arrow">›</span>
+            </div>
+            <div class="campo-machines" id="cb-machines">
+              <div class="mach-card" onclick="toggleMachine('m4')">
+                <div class="mach-header">
+                  <div class="mach-icon-wrap">🌿</div>
+                  <div class="mach-info">
+                    <div class="mach-name">COLHEDORA CASE A-8800</div>
+                    <div class="mach-id">Frota #53725</div>
+                  </div>
+                  <div class="mach-right">
+                    <div class="mach-hw-pill full">✓ 5/5</div>
+                    <span class="mach-expand" id="m4-arr">▾</span>
+                  </div>
+                </div>
+                <div class="mach-slots">
+                  <div class="slot filled monitor"><div class="slot-icon">🖥️</div><div class="slot-label">MONITOR</div></div>
+                  <div class="slot filled receptor"><div class="slot-icon">📡</div><div class="slot-label">RECEPTOR</div></div>
+                  <div class="slot filled radio"><div class="slot-icon">📻</div><div class="slot-label">RÁDIO</div></div>
+                  <div class="slot filled bordo"><div class="slot-icon">💻</div><div class="slot-label">BORDO</div></div>
+                  <div class="slot filled tela"><div class="slot-icon">📟</div><div class="slot-label">TELA</div></div>
+                </div>
+                <div class="mach-detail" id="m4-detail">
+                  <div class="mach-hw-list">
+                    <div class="mhw-item"><div class="mhw-dot" style="background:#60a5fa"></div><div><div class="mhw-name">Monitor Trimble GFX-750</div><div class="mhw-sn">S/N: GFX750-334411 · PAT-0062</div></div><div class="mhw-actions"><div class="mhw-btn">⇄</div><div class="mhw-btn danger">✕</div></div></div>
+                  </div>
+                  <div class="mach-detail-actions"><button class="mda-btn hist">📋 Histórico</button><button class="mda-btn edit">✏️ Editar</button></div>
+                </div>
+              </div>
+              <div class="mach-card warning" onclick="toggleMachine('m5')">
+                <div class="mach-header">
+                  <div class="mach-icon-wrap">🚜</div>
+                  <div class="mach-info">
+                    <div class="mach-name">TRATOR CASE PUMA 140</div>
+                    <div class="mach-id">Frota #56043</div>
+                  </div>
+                  <div class="mach-right">
+                    <div class="mach-hw-pill partial">⚡ 3/4</div>
+                    <span class="mach-expand" id="m5-arr">▾</span>
+                  </div>
+                </div>
+                <div class="mach-slots">
+                  <div class="slot filled monitor"><div class="slot-icon">🖥️</div><div class="slot-label">MONITOR</div></div>
+                  <div class="slot filled receptor"><div class="slot-icon">📡</div><div class="slot-label">RECEPTOR</div></div>
+                  <div class="slot empty-slot"><div class="slot-icon" style="opacity:0.3">📻</div><div class="slot-label">RÁDIO</div></div>
+                  <div class="slot filled bordo"><div class="slot-icon">💻</div><div class="slot-label">BORDO</div></div>
+                </div>
+                <div class="mach-detail" id="m5-detail">
+                  <div class="mach-detail-actions"><button class="mda-btn hist">📋 Histórico</button><button class="mda-btn edit">✏️ Editar</button></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ── COLUNA: MANUTENÇÃO / INATIVO ── -->
+      <div class="col">
+        <div class="col-header">
+          <div class="col-header-top">
+            <span class="col-icon">🔧</span>
+            <span class="col-name">FORA DE CAMPO</span>
+            <span class="col-count">20</span>
+          </div>
+          <div class="col-sub">Manutenção e equipamentos inativos</div>
+        </div>
+        <div class="col-body">
+          <div class="maint-label">MANUTENÇÃO</div>
+          <div class="maint-card manut" onclick="openQA()">
+            <div class="maint-top">
+              <span class="maint-badge manut">🔧 MANUTENÇÃO</span>
+              <span class="maint-since">Desde 08 Jun</span>
+            </div>
+            <div class="maint-name">Receptor Trimble AG-372</div>
+            <div class="maint-orig">Origem: TRATOR JD 50501</div>
+            <div class="maint-note">Aguardando peça de reposição</div>
+          </div>
+          <div class="maint-card manut">
+            <div class="maint-top">
+              <span class="maint-badge manut">🔧 MANUTENÇÃO</span>
+              <span class="maint-since">Desde 01 Jun</span>
+            </div>
+            <div class="maint-name">Monitor JD 4640</div>
+            <div class="maint-orig">Origem: COLHED. JD 61007</div>
+            <div class="maint-note">Tela danificada, em reparo</div>
+          </div>
+          <div class="maint-card manut">
+            <div class="maint-top">
+              <span class="maint-badge manut">🔧 MANUTENÇÃO</span>
+              <span class="maint-since">Desde 28 Mai</span>
+            </div>
+            <div class="maint-name">Rádio Motorola DM4400</div>
+            <div class="maint-orig">Origem: TRATOR JD 51212</div>
+            <div class="maint-note">Falha no circuito de TX</div>
+          </div>
+          <div class="maint-card manut">
+            <div class="maint-top">
+              <span class="maint-badge manut">🔧 MANUTENÇÃO</span>
+              <span class="maint-since">Desde 20 Mai</span>
+            </div>
+            <div class="maint-name">Computador AFS Pro 700</div>
+            <div class="maint-orig">Origem: TRATOR CASE 56042</div>
+            <div class="maint-note">Atualização de firmware</div>
+          </div>
+
+          <div class="maint-label" style="margin-top:8px">MÁQUINAS INATIVAS</div>
+          <div class="maint-card inativo">
+            <div class="maint-top">
+              <span class="maint-badge inativo">⛔ INATIVO</span>
+              <span class="maint-since">Desde 15 Mar</span>
+            </div>
+            <div class="maint-name">TRATOR JD 64086</div>
+            <div class="maint-orig">Frota #64086 · JD 7230J</div>
+            <div class="maint-note">Aguardando revisão geral</div>
+          </div>
+          <div class="maint-card inativo">
+            <div class="maint-top">
+              <span class="maint-badge inativo">⛔ INATIVO</span>
+              <span class="maint-since">Desde 02 Abr</span>
+            </div>
+            <div class="maint-name">COLHEDORA CASE A-8800</div>
+            <div class="maint-orig">Frota #55409</div>
+            <div class="maint-note">Fim de safra</div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /board -->
+  </div><!-- /v-board -->
+
+  <!-- ═══ DASHBOARD VIEW ═══ -->
+  <div class="view" id="v-dashboard">
+    <div style="padding:24px 28px;display:flex;flex-direction:column;gap:18px;overflow-y:auto;flex:1">
+      <div>
+        <div style="font-size:18px;font-weight:800;margin-bottom:4px">Dashboard Operacional</div>
+        <div style="font-size:10px;color:var(--text3)">Visão geral · 16 Jun 2026 · 09:41</div>
+      </div>
+      <div class="kpi-row">
+        <div class="kpi-card" style="--kc:var(--accent)">
+          <div class="kpi-label">FROTA ATIVA</div>
+          <div class="kpi-main"><div class="kpi-value">35</div><div class="kpi-total">/ 42</div></div>
+          <div class="kpi-sub">83% operacional</div>
+        </div>
+        <div class="kpi-card" style="--kc:var(--blue)">
+          <div class="kpi-label">EQUIP. INSTALADOS</div>
+          <div class="kpi-main"><div class="kpi-value">128</div><div class="kpi-total">/ 186</div></div>
+          <div class="kpi-sub">em 35 máquinas</div>
+        </div>
+        <div class="kpi-card" style="--kc:var(--red)">
+          <div class="kpi-label">MÁQUINAS INCOMPLETAS</div>
+          <div class="kpi-main"><div class="kpi-value" style="color:var(--red)">7</div></div>
+          <div class="kpi-sub">faltam equipamentos</div>
+        </div>
+        <div class="kpi-card" style="--kc:var(--green)">
+          <div class="kpi-label">EM ESTOQUE</div>
+          <div class="kpi-main"><div class="kpi-value">45</div></div>
+          <div class="kpi-sub">disponíveis</div>
+        </div>
+      </div>
+      <div class="dash-row">
+        <div class="dash-card">
+          <div class="dash-card-title">COBERTURA POR CAMPO</div>
+          <div class="progress-list">
+            <div class="prog-item">
+              <div class="prog-top"><span class="prog-name">🌾 Campo A</span><span class="prog-val">16/16</span></div>
+              <div class="prog-track"><div class="prog-fill" style="width:100%;background:var(--green)"></div></div>
+            </div>
+            <div class="prog-item">
+              <div class="prog-top"><span class="prog-name">🌾 Campo B</span><span class="prog-val">10/11</span></div>
+              <div class="prog-track"><div class="prog-fill" style="width:91%;background:var(--green)"></div></div>
+            </div>
+            <div class="prog-item">
+              <div class="prog-top"><span class="prog-name">🌾 Campo C</span><span class="prog-val">8/12</span></div>
+              <div class="prog-track"><div class="prog-fill" style="width:66%;background:var(--accent)"></div></div>
+            </div>
+            <div class="prog-item">
+              <div class="prog-top"><span class="prog-name">🌾 Campo D</span><span class="prog-val">3/6</span></div>
+              <div class="prog-track"><div class="prog-fill" style="width:50%;background:var(--red)"></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="dash-card">
+          <div class="dash-card-title">FLUXO DE EQUIPAMENTOS</div>
+          <div class="flow-diagram">
+            <div class="flow-box"><div class="flow-box-icon">📦</div><div class="flow-box-num">45</div><div class="flow-box-label">ESTOQUE</div></div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-box" style="background:rgba(245,166,35,0.06);border-color:rgba(245,166,35,0.2)"><div class="flow-box-icon">🚜</div><div class="flow-box-num" style="color:var(--accent)">128</div><div class="flow-box-label">NAS MÁQUINAS</div></div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-box"><div class="flow-box-icon">🔧</div><div class="flow-box-num">13</div><div class="flow-box-label">MANUTENÇÃO</div></div>
+          </div>
+        </div>
+        <div class="dash-card">
+          <div class="dash-card-title">ATIVIDADE RECENTE</div>
+          <div class="log-list">
+            <div class="log-item">
+              <div class="log-dot" style="background:rgba(46,204,138,0.12)">📥</div>
+              <div class="log-info"><div class="log-title">Monitor instalado</div><div class="log-sub">TRATOR JD 50486 · João S.</div><div class="log-time">há 23 min</div></div>
+            </div>
+            <div class="log-item">
+              <div class="log-dot" style="background:rgba(74,158,255,0.12)">🔄</div>
+              <div class="log-info"><div class="log-title">Receptor transferido</div><div class="log-sub">55795 → 55796 · Maria L.</div><div class="log-time">há 1h 15min</div></div>
+            </div>
+            <div class="log-item">
+              <div class="log-dot" style="background:rgba(224,82,82,0.12)">📤</div>
+              <div class="log-info"><div class="log-title">Rádio → Manutenção</div><div class="log-sub">TRATOR JD 51212 · Carlos R.</div><div class="log-time">há 3h</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /v-dashboard -->
+
+</div>
+
+<!-- ── QUICK ACTIONS MODAL ── -->
+<div class="qa-overlay" id="qaOverlay" onclick="closeQA()">
+  <div class="qa-modal" onclick="event.stopPropagation()">
+    <div class="qa-header">
+      <div class="qa-title">Novo Registro</div>
+      <button class="qa-close" onclick="closeQA()">✕</button>
+    </div>
+    <div class="qa-body">
+      <div class="qa-actions-grid">
+        <div class="qa-action-btn install" onclick="closeQA();showToast()">
+          <div class="qa-action-icon">📥</div>
+          <div class="qa-action-label">INSTALAR</div>
+          <div class="qa-action-sub">em máquina</div>
+        </div>
+        <div class="qa-action-btn remove" onclick="closeQA();showToast()">
+          <div class="qa-action-icon">📤</div>
+          <div class="qa-action-label">REMOVER</div>
+          <div class="qa-action-sub">de máquina</div>
+        </div>
+        <div class="qa-action-btn transfer" onclick="closeQA();showToast()">
+          <div class="qa-action-icon">🔄</div>
+          <div class="qa-action-label">TRANSFERIR</div>
+          <div class="qa-action-sub">entre máquinas</div>
+        </div>
+      </div>
+      <div style="height:1px;background:var(--border)"></div>
+      <button class="qa-cad-btn">
+        <span class="csb-icon">📦</span>
+        <div>
+          <div>Cadastrar Equipamento</div>
+          <div class="qa-cad-sub">Registrar novo hardware no sistema</div>
+        </div>
+      </button>
+      <button class="qa-cad-btn">
+        <span class="csb-icon">🚜</span>
+        <div>
+          <div>Cadastrar Máquina</div>
+          <div class="qa-cad-sub">Adicionar máquina à frota</div>
+        </div>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">
+  <span>✅</span> Ação registrada com sucesso!
+</div>
+
+<!-- LABEL -->
+<div style="position:fixed;bottom:12px;left:50%;transform:translateX(-50%);background:rgba(74,158,255,0.12);border:1px solid rgba(74,158,255,0.3);color:var(--blue);font-size:10px;font-weight:700;letter-spacing:2px;padding:6px 16px;border-radius:20px;pointer-events:none;z-index:99">
+  PROPOSTA B — QUADRO DE ALOCAÇÃO
+</div>
+
+<script>
+function navigate(view) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.tb-nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('v-' + view).classList.add('active');
+  // Mark active nav item
+  document.querySelectorAll('.tb-nav-item').forEach(n => {
+    if(n.textContent.toLowerCase().includes(view === 'board' ? 'quadro' : view === 'dashboard' ? 'dashboard' : 'hist'))
+      n.classList.add('active');
+  });
+}
+
+function toggleMachine(id) {
+  const detail = document.getElementById(id + '-detail');
+  const arr = document.getElementById(id + '-arr');
+  const isOpen = detail.classList.toggle('open');
+  arr.classList.toggle('open', isOpen);
+  // Close the card's parent border when collapsed
+  const card = detail.closest('.mach-card');
+  if (!isOpen) card.style.borderColor = '';
+}
+
+function toggleCampo(id) {
+  const machines = document.getElementById(id === 'a' ? 'ca-machines' : 'cb-machines');
+  const arrow = document.getElementById(id === 'a' ? 'ca-arrow' : 'cb-arrow');
+  const isOpen = machines.style.display !== 'none';
+  machines.style.display = isOpen ? 'none' : '';
+  arrow.classList.toggle('open', !isOpen);
+}
+
+function selectEq(el) {
+  document.querySelectorAll('.eq-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function openQA() { document.getElementById('qaOverlay').classList.add('open'); }
+function closeQA() { document.getElementById('qaOverlay').classList.remove('open'); }
+
+function showToast() {
+  const t = document.getElementById('toast');
+  t.classList.add('show', 'ok');
+  setTimeout(() => t.classList.remove('show', 'ok'), 2800);
+}
+</script>
+</body>
+</html>

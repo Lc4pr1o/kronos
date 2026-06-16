@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KRONOS — Proposta A: Hub Operacional</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f1520;
+  --surface: #161e30;
+  --surface2: #1c2640;
+  --surface3: #22304e;
+  --border: #2a3a54;
+  --border2: #344a68;
+  --accent: #f5a623;
+  --accent2: #e8870a;
+  --green: #2ecc8a;
+  --red: #e05252;
+  --blue: #4a9eff;
+  --purple: #a78bfa;
+  --text: #d4dce8;
+  --text2: #8899b5;
+  --text3: #4a5c7a;
+  --sidebar-w: 228px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: var(--bg); color: var(--text); font-family: 'JetBrains Mono', monospace; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+
+/* ── TOP BAR ── */
+.topbar {
+  height: 52px; display: flex; align-items: center; justify-content: space-between;
+  padding: 0 20px 0 0; background: var(--surface); border-bottom: 1px solid var(--border);
+  flex-shrink: 0; z-index: 50;
+}
+.tb-left { display: flex; align-items: center; width: var(--sidebar-w); padding: 0 20px; }
+.logo { display: flex; align-items: center; gap: 10px; }
+.logo-mark { width: 32px; height: 32px; background: var(--accent); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
+.logo-name { font-size: 18px; font-weight: 800; letter-spacing: 3px; }
+.logo-name span { color: var(--accent); }
+.tb-center { flex: 1; display: flex; align-items: center; gap: 8px; }
+.search-bar {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
+  padding: 7px 14px; width: 360px; cursor: text; transition: border-color 0.2s;
+}
+.search-bar:focus-within { border-color: var(--accent); }
+.search-bar input { background: none; border: none; color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 12px; outline: none; width: 100%; }
+.search-bar input::placeholder { color: var(--text3); }
+.search-icon { color: var(--text3); font-size: 13px; }
+.tb-right { display: flex; align-items: center; gap: 10px; }
+.tb-pill {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--surface2); border: 1px solid var(--border); border-radius: 20px;
+  padding: 5px 12px; font-size: 11px; color: var(--text2); cursor: pointer; transition: all 0.15s;
+}
+.tb-pill:hover { border-color: var(--border2); color: var(--text); }
+.tb-pill.online { border-color: rgba(46,204,138,0.4); color: var(--green); }
+.tb-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.7)} }
+.tb-btn {
+  width: 34px; height: 34px; border-radius: 8px; background: var(--surface2);
+  border: 1px solid var(--border); color: var(--text2); font-size: 15px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; transition: all 0.15s;
+}
+.tb-btn:hover { border-color: var(--border2); color: var(--text); }
+.tb-btn.primary { background: var(--accent); border-color: var(--accent); color: #000; font-weight: 700; font-size: 13px; width: auto; padding: 0 16px; gap: 6px; }
+.tb-btn.primary:hover { background: var(--accent2); }
+
+/* ── WORKSPACE ── */
+.workspace { display: flex; flex: 1; min-height: 0; }
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width: var(--sidebar-w); background: var(--surface); border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; flex-shrink: 0; overflow: hidden;
+}
+.nav-section { padding: 8px; display: flex; flex-direction: column; gap: 2px; }
+.nav-section + .nav-section { border-top: 1px solid var(--border); padding-top: 8px; }
+.nav-label { font-size: 8px; font-weight: 700; letter-spacing: 2px; color: var(--text3); padding: 8px 12px 4px; }
+.nav-item {
+  display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 8px;
+  cursor: pointer; transition: all 0.15s; color: var(--text2); font-size: 12px; font-weight: 600;
+  letter-spacing: 0.3px; position: relative;
+}
+.nav-item:hover { background: var(--surface2); color: var(--text); }
+.nav-item.active { background: rgba(245,166,35,0.1); color: var(--accent); border: 1px solid rgba(245,166,35,0.2); }
+.nav-icon { font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; }
+.nav-badge {
+  margin-left: auto; background: var(--red); color: #fff; font-size: 9px; font-weight: 800;
+  padding: 1px 6px; border-radius: 10px; display: none;
+}
+.nav-badge.show { display: inline; }
+.nav-count { margin-left: auto; font-size: 10px; color: var(--text3); }
+
+/* CAMPO SECTION in sidebar */
+.campo-group { border-left: 2px solid var(--border); margin-left: 22px; padding-left: 8px; margin-top: 2px; display: none; }
+.campo-group.open { display: block; }
+.campo-machine { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 6px; cursor: pointer; transition: all 0.15s; }
+.campo-machine:hover { background: var(--surface3); }
+.campo-machine.selected { background: rgba(245,166,35,0.08); }
+.cm-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.cm-name { font-size: 11px; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
+.cm-hw { font-size: 10px; color: var(--text3); }
+
+/* Sidebar bottom */
+.sidebar-bottom { margin-top: auto; padding: 12px 8px; border-top: 1px solid var(--border); }
+
+/* ── MAIN CONTENT ── */
+.main { flex: 1; display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
+
+/* ── VIEWS ── */
+.view { display: none; flex: 1; min-height: 0; overflow: hidden; }
+.view.active { display: flex; flex-direction: column; }
+
+/* ════════════════════════
+   DASHBOARD VIEW
+════════════════════════ */
+#v-dashboard { overflow-y: auto; padding: 28px 32px; gap: 22px; }
+#v-dashboard.active { display: flex; flex-direction: column; }
+
+.dash-header { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 4px; }
+.dash-title { font-size: 20px; font-weight: 800; }
+.dash-sub { font-size: 11px; color: var(--text3); margin-top: 4px; }
+.dash-date { font-size: 11px; color: var(--text3); font-family: 'JetBrains Mono', monospace; }
+
+/* KPI Strip */
+.kpi-strip { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; }
+.kpi {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  padding: 16px 18px; position: relative; overflow: hidden; transition: border-color 0.2s;
+}
+.kpi:hover { border-color: var(--border2); }
+.kpi::after { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--kc, var(--accent)); border-radius: 12px 12px 0 0; }
+.kpi-label { font-size: 8px; font-weight: 700; letter-spacing: 2px; color: var(--text3); margin-bottom: 8px; }
+.kpi-value { font-size: 32px; font-weight: 800; line-height: 1; font-family: 'JetBrains Mono', monospace; }
+.kpi-sub { font-size: 10px; color: var(--text2); margin-top: 6px; }
+
+/* Charts row */
+.charts-row { display: grid; grid-template-columns: 280px 1fr 1fr; gap: 14px; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px 22px; }
+.card-title { font-size: 8px; font-weight: 700; letter-spacing: 2.5px; color: var(--text3); margin-bottom: 16px; }
+
+/* Donut chart */
+.donut-wrap { display: flex; align-items: center; gap: 16px; }
+.donut-svg { flex-shrink: 0; }
+.donut-legend { display: flex; flex-direction: column; gap: 8px; flex: 1; }
+.dl { display: flex; align-items: center; gap: 8px; font-size: 11px; }
+.dl-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+.dl-label { color: var(--text2); flex: 1; }
+.dl-val { font-weight: 700; color: var(--text); font-family: 'JetBrains Mono', monospace; }
+
+/* Bar chart */
+.bar-chart { display: flex; flex-direction: column; gap: 10px; }
+.bar-row { display: flex; align-items: center; gap: 10px; }
+.bar-label { font-size: 10px; color: var(--text2); width: 80px; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bar-track { flex: 1; height: 8px; background: var(--surface2); border-radius: 4px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 4px; transition: width 0.6s cubic-bezier(.4,0,.2,1); }
+.bar-val { font-size: 10px; color: var(--text3); width: 24px; text-align: right; font-family: 'JetBrains Mono', monospace; }
+
+/* Alerts */
+.alerts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.alert-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px 22px; }
+.alert-list { display: flex; flex-direction: column; gap: 0; }
+.alert-item {
+  display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border2);
+  cursor: pointer; transition: all 0.15s;
+}
+.alert-item:last-child { border-bottom: none; }
+.alert-item:hover { opacity: 0.85; }
+.alert-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.alert-info { flex: 1; }
+.alert-name { font-size: 12px; font-weight: 600; }
+.alert-sub { font-size: 10px; color: var(--text3); margin-top: 2px; }
+.alert-tag { font-size: 9px; font-weight: 700; padding: 2px 8px; border-radius: 4px; white-space: nowrap; }
+
+/* Activity feed */
+.activity-list { display: flex; flex-direction: column; gap: 0; }
+.act-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border2); }
+.act-item:last-child { border-bottom: none; }
+.act-dot { width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; }
+.act-info { flex: 1; }
+.act-title { font-size: 12px; font-weight: 600; }
+.act-sub { font-size: 10px; color: var(--text2); margin-top: 2px; }
+.act-time { font-size: 10px; color: var(--text3); white-space: nowrap; margin-top: 3px; font-family: 'JetBrains Mono', monospace; }
+
+/* ════════════════════════
+   FROTA VIEW
+════════════════════════ */
+#v-frota { flex-direction: row; }
+#v-frota.active { display: flex; }
+
+.fleet-sidebar {
+  width: 280px; border-right: 1px solid var(--border); display: flex; flex-direction: column;
+  background: var(--surface); flex-shrink: 0;
+}
+.fs-search { padding: 14px 14px 10px; border-bottom: 1px solid var(--border); }
+.fs-input {
+  width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
+  padding: 9px 12px; color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 12px; outline: none;
+}
+.fs-input:focus { border-color: var(--accent); }
+.fs-filters { display: flex; gap: 5px; margin-top: 8px; }
+.fs-chip {
+  padding: 3px 9px; border-radius: 20px; font-size: 9px; font-weight: 700; letter-spacing: 0.5px;
+  border: 1px solid var(--border); color: var(--text3); cursor: pointer; transition: all 0.15s; background: none;
+}
+.fs-chip:hover { border-color: var(--border2); color: var(--text2); }
+.fs-chip.active { border-color: var(--accent); color: var(--accent); background: rgba(245,166,35,0.08); }
+
+.fs-list { flex: 1; overflow-y: auto; padding: 8px; }
+.fs-list::-webkit-scrollbar { width: 3px; }
+.fs-list::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+.fs-grupo { margin-bottom: 4px; }
+.fs-grupo-header {
+  display: flex; align-items: center; gap: 8px; padding: 8px 10px; cursor: pointer;
+  border-radius: 8px; transition: background 0.15s;
+}
+.fs-grupo-header:hover { background: var(--surface2); }
+.fs-grupo-icon { font-size: 14px; }
+.fs-grupo-name { font-size: 11px; font-weight: 700; color: var(--text2); flex: 1; }
+.fs-grupo-count { font-size: 10px; color: var(--text3); font-family: 'JetBrains Mono', monospace; }
+.fs-arrow { font-size: 9px; color: var(--text3); transition: transform 0.2s; }
+.fs-arrow.open { transform: rotate(90deg); }
+
+.fs-machines { padding-left: 8px; display: none; }
+.fs-machines.open { display: block; }
+.fs-machine {
+  display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-radius: 8px;
+  cursor: pointer; transition: all 0.15s; border-left: 2px solid transparent; margin-bottom: 1px;
+}
+.fs-machine:hover { background: var(--surface2); }
+.fs-machine.selected { background: rgba(245,166,35,0.07); border-left-color: var(--accent); }
+.fs-machine-icon { font-size: 13px; }
+.fs-machine-info { flex: 1; min-width: 0; }
+.fs-machine-name { font-size: 11px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fs-machine-id { font-size: 9px; color: var(--text3); margin-top: 1px; }
+.fs-machine-hw { font-size: 10px; font-weight: 700; color: var(--accent); background: rgba(245,166,35,0.1); padding: 1px 6px; border-radius: 8px; flex-shrink: 0; }
+.fs-machine-hw.zero { color: var(--text3); background: none; font-weight: 400; }
+
+.fs-divider { height: 1px; background: var(--border); margin: 6px 8px; }
+.fs-dest {
+  display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-radius: 8px;
+  cursor: pointer; transition: all 0.15s; border-left: 2px solid transparent;
+}
+.fs-dest:hover { background: var(--surface2); }
+.fs-dest.selected { border-left-color: var(--accent); background: rgba(245,166,35,0.06); }
+.fs-dest-icon { font-size: 13px; }
+.fs-dest-label { font-size: 11px; font-weight: 600; color: var(--text2); flex: 1; }
+.fs-dest-count { font-size: 10px; color: var(--text3); }
+
+/* MACHINE DETAIL */
+.machine-detail { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.detail-toolbar {
+  display: flex; align-items: center; justify-content: space-between; padding: 14px 24px;
+  border-bottom: 1px solid var(--border); background: var(--surface); flex-shrink: 0;
+}
+.breadcrumb { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text2); }
+.breadcrumb .sep { color: var(--text3); }
+.breadcrumb .cur { color: var(--text); font-weight: 700; }
+.toolbar-actions { display: flex; gap: 8px; }
+.btn { display: flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 7px; font-size: 11px; font-family: 'JetBrains Mono', monospace; font-weight: 600; cursor: pointer; border: none; transition: all 0.15s; }
+.btn-ghost { background: var(--surface2); border: 1px solid var(--border); color: var(--text2); }
+.btn-ghost:hover { border-color: var(--border2); color: var(--text); }
+.btn-accent { background: var(--accent); color: #000; font-weight: 700; }
+.btn-accent:hover { background: var(--accent2); }
+
+.detail-body { flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 20px; }
+.detail-body::-webkit-scrollbar { width: 3px; }
+.detail-body::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+.detail-hero {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+  padding: 22px 24px; display: grid; grid-template-columns: auto 1fr auto; gap: 18px; align-items: center;
+  position: relative; overflow: hidden;
+}
+.detail-hero::after { content: attr(data-bg); position: absolute; right: 20px; top: 50%; transform: translateY(-50%); font-size: 72px; opacity: 0.06; pointer-events: none; }
+.hero-icon { width: 60px; height: 60px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 28px; background: rgba(245,166,35,0.1); border: 1px solid rgba(245,166,35,0.25); }
+.hero-type { font-size: 9px; font-weight: 700; letter-spacing: 2px; color: var(--text3); margin-bottom: 4px; }
+.hero-name { font-size: 22px; font-weight: 800; }
+.hero-id { font-size: 12px; color: var(--text2); margin-top: 4px; }
+.hero-tags { display: flex; gap: 6px; margin-top: 8px; }
+.hero-tag { font-size: 9px; font-weight: 700; letter-spacing: 0.5px; padding: 3px 8px; border-radius: 4px; }
+.tag-campo { background: rgba(167,139,250,0.1); color: var(--purple); border: 1px solid rgba(167,139,250,0.25); }
+.tag-ativa { background: rgba(46,204,138,0.1); color: var(--green); border: 1px solid rgba(46,204,138,0.25); }
+.hero-stats { display: flex; flex-direction: column; gap: 6px; align-items: flex-end; z-index: 1; }
+.hs { text-align: right; }
+.hs-label { font-size: 8px; letter-spacing: 1.5px; color: var(--text3); }
+.hs-value { font-size: 24px; font-weight: 800; font-family: 'JetBrains Mono', monospace; }
+
+.sec-title { font-size: 8px; font-weight: 700; letter-spacing: 2.5px; color: var(--text3); display: flex; align-items: center; gap: 10px; }
+.sec-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+.sec-count { background: var(--surface3); border: 1px solid var(--border); border-radius: 10px; padding: 1px 8px; font-size: 10px; color: var(--text2); }
+
+.hw-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+.hw-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px;
+  transition: all 0.2s; cursor: pointer;
+}
+.hw-card:hover { border-color: var(--border2); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.35); }
+.hw-card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.hw-type-badge { font-size: 8px; font-weight: 700; letter-spacing: 1.5px; padding: 2px 7px; border-radius: 4px; }
+.hw-actions { display: flex; gap: 4px; }
+.hw-mini-btn { width: 24px; height: 24px; border-radius: 5px; background: var(--surface2); border: 1px solid var(--border); color: var(--text2); font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+.hw-mini-btn:hover { background: var(--accent); color: #000; border-color: var(--accent); }
+.hw-mini-btn.danger:hover { background: var(--red); color: #fff; border-color: var(--red); }
+.hw-name { font-size: 14px; font-weight: 700; margin-bottom: 3px; }
+.hw-model { font-size: 10px; color: var(--text2); margin-bottom: 10px; }
+.hw-fields { display: flex; flex-direction: column; gap: 4px; }
+.hw-field { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid var(--border2); }
+.hw-field:last-child { border-bottom: none; }
+.hf-label { font-size: 9px; color: var(--text3); }
+.hf-value { font-size: 10px; color: var(--text); font-weight: 500; }
+
+.timeline { display: flex; flex-direction: column; gap: 0; }
+.tl-item { display: flex; gap: 12px; padding: 10px 0; position: relative; }
+.tl-item::after { content: ''; position: absolute; left: 14px; top: 38px; bottom: -10px; width: 1px; background: var(--border); }
+.tl-item:last-child::after { display: none; }
+.tl-icon { width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; z-index: 1; }
+.tl-info { flex: 1; }
+.tl-action { font-size: 11px; font-weight: 700; }
+.tl-detail { font-size: 10px; color: var(--text2); margin-top: 2px; }
+.tl-time { font-size: 9px; color: var(--text3); margin-top: 4px; font-family: 'JetBrains Mono', monospace; }
+
+/* Empty state */
+.empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; color: var(--text3); }
+.empty-icon { font-size: 52px; opacity: 0.4; }
+.empty-title { font-size: 16px; font-weight: 700; color: var(--text2); }
+.empty-sub { font-size: 12px; }
+
+/* ════════════════════════
+   EQUIPAMENTOS VIEW
+════════════════════════ */
+#v-equipamentos { flex-direction: column; }
+#v-equipamentos.active { display: flex; }
+.eq-toolbar { padding: 14px 24px; border-bottom: 1px solid var(--border); background: var(--surface); display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.eq-search { display: flex; align-items: center; gap: 8px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 7px 12px; flex: 1; max-width: 320px; }
+.eq-search input { background: none; border: none; color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 12px; outline: none; width: 100%; }
+.eq-table-wrap { flex: 1; overflow: auto; }
+.eq-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.eq-table th { font-size: 8px; font-weight: 700; letter-spacing: 2px; color: var(--text3); text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--bg); white-space: nowrap; }
+.eq-table td { padding: 11px 16px; border-bottom: 1px solid var(--border2); vertical-align: middle; color: var(--text2); }
+.eq-table tr:hover td { background: var(--surface); color: var(--text); }
+.eq-table td:first-child { color: var(--text); font-weight: 600; }
+.status-badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px; border-radius: 4px; font-size: 9px; font-weight: 700; letter-spacing: 0.5px; }
+
+/* Toast */
+.toast {
+  position: fixed; bottom: 24px; right: 24px; background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; padding: 14px 18px; display: flex; align-items: center; gap: 10px; font-size: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5); z-index: 999; transform: translateY(80px); opacity: 0; transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1); pointer-events: none;
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+.toast.ok { border-color: rgba(46,204,138,0.4); }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+.badge-monitor { background: rgba(74,158,255,0.12); color: #60a5fa; }
+.badge-receptor { background: rgba(167,139,250,0.12); color: #a78bfa; }
+.badge-radio { background: rgba(245,166,35,0.12); color: #fbbf24; }
+.badge-bordo { background: rgba(249,115,22,0.12); color: #f97316; }
+.badge-tela { background: rgba(46,204,138,0.12); color: #2ecc8a; }
+.st-instalado { background: rgba(46,204,138,0.1); color: var(--green); }
+.st-estoque { background: rgba(74,158,255,0.1); color: var(--blue); }
+.st-manutencao { background: rgba(224,82,82,0.1); color: var(--red); }
+.st-inativo { background: rgba(74,84,104,0.1); color: var(--text3); }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="tb-left">
+    <div class="logo">
+      <div class="logo-mark">⚙</div>
+      <div class="logo-name">KRO<span>NOS</span></div>
+    </div>
+  </div>
+  <div class="tb-center">
+    <div class="search-bar">
+      <span class="search-icon">🔍</span>
+      <input placeholder="Buscar máquina, equipamento, S/N, patrimônio...">
+    </div>
+  </div>
+  <div class="tb-right">
+    <div class="tb-pill online"><div class="tb-dot"></div>Sincronizado</div>
+    <div class="tb-btn" title="Notificações">🔔</div>
+    <button class="tb-btn primary" onclick="showToast()">+ Registrar</button>
+  </div>
+</div>
+
+<!-- WORKSPACE -->
+<div class="workspace">
+
+  <!-- LEFT NAV -->
+  <div class="sidebar">
+    <div class="nav-section">
+      <div class="nav-label">PRINCIPAL</div>
+      <div class="nav-item active" onclick="navigate('dashboard')">
+        <span class="nav-icon">📊</span> Dashboard
+      </div>
+      <div class="nav-item" onclick="navigate('frota')">
+        <span class="nav-icon">🚜</span> Frota
+        <span class="nav-count">42</span>
+      </div>
+      <div class="nav-item" onclick="navigate('equipamentos')">
+        <span class="nav-icon">📦</span> Equipamentos
+        <span class="nav-count">186</span>
+      </div>
+    </div>
+
+    <div class="nav-section" style="flex:1;overflow-y:auto" id="navFrota" style="display:none">
+      <div class="nav-label">CAMPOS</div>
+      <!-- Campo A -->
+      <div class="nav-item" onclick="toggleCampo('ca')" style="padding:7px 12px">
+        <span class="nav-icon">🌾</span> Campo A
+        <span class="nav-count">16</span>
+        <span class="nav-badge show" style="background:var(--accent);color:#000">!</span>
+        <span class="fs-arrow open" id="arr-ca">›</span>
+      </div>
+      <div class="campo-group open" id="grp-ca">
+        <div class="campo-machine selected" onclick="selectMachine('50486')">
+          <div class="cm-dot" style="background:var(--accent)"></div>
+          <span class="cm-name">TRATOR JD 50486</span>
+          <span class="cm-hw">4</span>
+        </div>
+        <div class="campo-machine" onclick="selectMachine('55795')">
+          <div class="cm-dot" style="background:var(--green)"></div>
+          <span class="cm-name">COLHED. JD 55795</span>
+          <span class="cm-hw">5</span>
+        </div>
+        <div class="campo-machine" onclick="selectMachine('51212')">
+          <div class="cm-dot" style="background:var(--accent)"></div>
+          <span class="cm-name">TRATOR JD 51212</span>
+          <span class="cm-hw" style="color:var(--red)">2</span>
+        </div>
+      </div>
+      <!-- Campo B -->
+      <div class="nav-item" onclick="toggleCampo('cb')" style="padding:7px 12px">
+        <span class="nav-icon">🌾</span> Campo B
+        <span class="nav-count">12</span>
+        <span class="fs-arrow" id="arr-cb">›</span>
+      </div>
+      <div class="campo-group" id="grp-cb">
+        <div class="campo-machine" onclick="selectMachine('52294')">
+          <div class="cm-dot" style="background:var(--green)"></div>
+          <span class="cm-name">COLHED. JD 52294</span>
+          <span class="cm-hw">5</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">REGISTROS</div>
+      <div class="nav-item" onclick="navigate('historico')">
+        <span class="nav-icon">🕐</span> Histórico
+      </div>
+      <div class="nav-item">
+        <span class="nav-icon">📱</span> Técnicos
+        <span class="nav-badge show">3</span>
+      </div>
+    </div>
+    <div class="sidebar-bottom">
+      <div class="nav-item">
+        <span class="nav-icon">⚙️</span> Configurações
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="main">
+
+    <!-- ═══ DASHBOARD ═══ -->
+    <div class="view active" id="v-dashboard">
+
+      <div class="dash-header">
+        <div>
+          <div class="dash-title">Visão Geral da Operação</div>
+          <div class="dash-sub">Resumo em tempo real da frota e equipamentos</div>
+        </div>
+        <div class="dash-date">16 Jun 2026 · 09:41</div>
+      </div>
+
+      <!-- KPIs -->
+      <div class="kpi-strip">
+        <div class="kpi" style="--kc:var(--accent)">
+          <div class="kpi-label">MÁQUINAS ATIVAS</div>
+          <div class="kpi-value">35</div>
+          <div class="kpi-sub">de 42 no total</div>
+        </div>
+        <div class="kpi" style="--kc:var(--blue)">
+          <div class="kpi-label">EQUIP. INSTALADOS</div>
+          <div class="kpi-value">128</div>
+          <div class="kpi-sub">em 35 máquinas</div>
+        </div>
+        <div class="kpi" style="--kc:var(--green)">
+          <div class="kpi-label">EM ESTOQUE</div>
+          <div class="kpi-value">45</div>
+          <div class="kpi-sub">disponíveis</div>
+        </div>
+        <div class="kpi" style="--kc:var(--red)">
+          <div class="kpi-label">EM MANUTENÇÃO</div>
+          <div class="kpi-value">13</div>
+          <div class="kpi-sub">8 críticos</div>
+        </div>
+        <div class="kpi" style="--kc:#f59e0b">
+          <div class="kpi-label">SEM KIT COMPLETO</div>
+          <div class="kpi-value" style="color:var(--accent)">7</div>
+          <div class="kpi-sub">máquinas incompletas</div>
+        </div>
+        <div class="kpi" style="--kc:var(--text3)">
+          <div class="kpi-label">INATIVAS</div>
+          <div class="kpi-value" style="color:var(--text3)">7</div>
+          <div class="kpi-sub">fora de operação</div>
+        </div>
+      </div>
+
+      <!-- Charts -->
+      <div class="charts-row">
+        <!-- Donut -->
+        <div class="card">
+          <div class="card-title">STATUS DA FROTA</div>
+          <div class="donut-wrap">
+            <svg width="110" height="110" viewBox="0 0 110 110" class="donut-svg">
+              <circle cx="55" cy="55" r="42" fill="none" stroke="#1c2640" stroke-width="16"/>
+              <!-- Ativa: 35/42 = 83% → 219° -->
+              <circle cx="55" cy="55" r="42" fill="none" stroke="#f5a623" stroke-width="16"
+                stroke-dasharray="219 44" stroke-dashoffset="110" stroke-linecap="round"/>
+              <!-- Manut: 7/42 = 17% → 27° -->
+              <circle cx="55" cy="55" r="42" fill="none" stroke="#e05252" stroke-width="16"
+                stroke-dasharray="27 236" stroke-dashoffset="-109" stroke-linecap="round"/>
+              <text x="55" y="51" text-anchor="middle" fill="#d4dce8" font-size="18" font-weight="800" font-family="JetBrains Mono">35</text>
+              <text x="55" y="65" text-anchor="middle" fill="#4a5c7a" font-size="9" font-family="JetBrains Mono">ativas</text>
+            </svg>
+            <div class="donut-legend">
+              <div class="dl"><div class="dl-dot" style="background:var(--accent)"></div><span class="dl-label">Ativas</span><span class="dl-val">35</span></div>
+              <div class="dl"><div class="dl-dot" style="background:var(--red)"></div><span class="dl-label">Manutenção</span><span class="dl-val">7</span></div>
+              <div class="dl"><div class="dl-dot" style="background:var(--text3)"></div><span class="dl-label">Inativas</span><span class="dl-val">7</span></div>
+              <div class="dl"><div class="dl-dot" style="background:var(--blue)"></div><span class="dl-label">Estoque</span><span class="dl-val">45 eq.</span></div>
+            </div>
+          </div>
+        </div>
+        <!-- Bar Chart: Equipamentos por Tipo -->
+        <div class="card">
+          <div class="card-title">EQUIPAMENTOS POR TIPO</div>
+          <div class="bar-chart">
+            <div class="bar-row"><span class="bar-label">Monitor GPS</span><div class="bar-track"><div class="bar-fill" style="width:82%;background:#60a5fa"></div></div><span class="bar-val">41</span></div>
+            <div class="bar-row"><span class="bar-label">Receptor GPS</span><div class="bar-track"><div class="bar-fill" style="width:74%;background:#a78bfa"></div></div><span class="bar-val">37</span></div>
+            <div class="bar-row"><span class="bar-label">Rádio</span><div class="bar-track"><div class="bar-fill" style="width:60%;background:#fbbf24"></div></div><span class="bar-val">30</span></div>
+            <div class="bar-row"><span class="bar-label">Comp. Bordo</span><div class="bar-track"><div class="bar-fill" style="width:50%;background:#f97316"></div></div><span class="bar-val">25</span></div>
+            <div class="bar-row"><span class="bar-label">Tela / Display</span><div class="bar-track"><div class="bar-fill" style="width:42%;background:#2ecc8a"></div></div><span class="bar-val">21</span></div>
+          </div>
+        </div>
+        <!-- Coverage -->
+        <div class="card">
+          <div class="card-title">COBERTURA POR CAMPO</div>
+          <div class="bar-chart">
+            <div class="bar-row"><span class="bar-label">Campo A</span><div class="bar-track"><div class="bar-fill" style="width:100%;background:var(--green)"></div></div><span class="bar-val">16/16</span></div>
+            <div class="bar-row"><span class="bar-label">Campo B</span><div class="bar-track"><div class="bar-fill" style="width:91%;background:var(--green)"></div></div><span class="bar-val">10/11</span></div>
+            <div class="bar-row"><span class="bar-label">Campo C</span><div class="bar-track"><div class="bar-fill" style="width:66%;background:var(--accent)"></div></div><span class="bar-val">8/12</span></div>
+            <div class="bar-row"><span class="bar-label">Campo D</span><div class="bar-track"><div class="bar-fill" style="width:50%;background:var(--red)"></div></div><span class="bar-val">3/6</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Alerts + Activity -->
+      <div class="alerts-row">
+        <div class="alert-card">
+          <div class="card-title">⚠️ MÁQUINAS INCOMPLETAS</div>
+          <div class="alert-list">
+            <div class="alert-item" onclick="navigate('frota')">
+              <div class="alert-dot" style="background:var(--red)"></div>
+              <div class="alert-info">
+                <div class="alert-name">TRATOR JD 51212 · 8335R</div>
+                <div class="alert-sub">Faltam: Receptor GPS, Monitor</div>
+              </div>
+              <span class="alert-tag" style="background:rgba(224,82,82,0.1);color:var(--red)">CAMPO A</span>
+            </div>
+            <div class="alert-item">
+              <div class="alert-dot" style="background:var(--accent)"></div>
+              <div class="alert-info">
+                <div class="alert-name">COLHEDORA JD 61007 · CH570</div>
+                <div class="alert-sub">Faltam: Computador de Bordo</div>
+              </div>
+              <span class="alert-tag" style="background:rgba(245,166,35,0.1);color:var(--accent)">CAMPO C</span>
+            </div>
+            <div class="alert-item">
+              <div class="alert-dot" style="background:var(--accent)"></div>
+              <div class="alert-info">
+                <div class="alert-name">TRATOR CASE 56042 · PUMA140</div>
+                <div class="alert-sub">Faltam: Rádio</div>
+              </div>
+              <span class="alert-tag" style="background:rgba(245,166,35,0.1);color:var(--accent)">CAMPO D</span>
+            </div>
+            <div class="alert-item">
+              <div class="alert-dot" style="background:var(--red)"></div>
+              <div class="alert-info">
+                <div class="alert-name">TRATOR JD 56252 · 6115J</div>
+                <div class="alert-sub">Faltam: Monitor, Receptor, Rádio</div>
+              </div>
+              <span class="alert-tag" style="background:rgba(224,82,82,0.1);color:var(--red)">CAMPO D</span>
+            </div>
+          </div>
+        </div>
+        <div class="alert-card">
+          <div class="card-title">🕐 ATIVIDADE RECENTE</div>
+          <div class="activity-list">
+            <div class="act-item">
+              <div class="act-dot" style="background:rgba(46,204,138,0.15)">📥</div>
+              <div class="act-info">
+                <div class="act-title">Monitor JD instalado</div>
+                <div class="act-sub">TRATOR JD 50486 · Campo A</div>
+                <div class="act-time">Técnico: João S. · há 23 min</div>
+              </div>
+            </div>
+            <div class="act-item">
+              <div class="act-dot" style="background:rgba(74,158,255,0.15)">🔄</div>
+              <div class="act-info">
+                <div class="act-title">Receptor transferido</div>
+                <div class="act-sub">COLHED. 55795 → COLHED. 55796</div>
+                <div class="act-time">Técnico: Maria L. · há 1h 15min</div>
+              </div>
+            </div>
+            <div class="act-item">
+              <div class="act-dot" style="background:rgba(224,82,82,0.15)">📤</div>
+              <div class="act-info">
+                <div class="act-title">Rádio removido p/ Manutenção</div>
+                <div class="act-sub">TRATOR JD 51212 · Campo A</div>
+                <div class="act-time">Técnico: Carlos R. · há 3h</div>
+              </div>
+            </div>
+            <div class="act-item">
+              <div class="act-dot" style="background:rgba(46,204,138,0.15)">📥</div>
+              <div class="act-info">
+                <div class="act-title">Computador de Bordo instalado</div>
+                <div class="act-sub">COLHED. CASE 53725 · Campo B</div>
+                <div class="act-time">Técnico: Pedro A. · há 4h 30min</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /dashboard -->
+
+    <!-- ═══ FROTA ═══ -->
+    <div class="view" id="v-frota">
+      <!-- Fleet sidebar -->
+      <div class="fleet-sidebar">
+        <div class="fs-search">
+          <input class="fs-input" placeholder="🔍 Buscar máquina...">
+          <div class="fs-filters">
+            <button class="fs-chip active">Todos</button>
+            <button class="fs-chip">Tratores</button>
+            <button class="fs-chip">Colhedoras</button>
+          </div>
+        </div>
+        <div class="fs-list">
+          <!-- Campo A -->
+          <div class="fs-grupo">
+            <div class="fs-grupo-header" onclick="toggleFS('fsa')">
+              <span class="fs-grupo-icon">🌾</span>
+              <span class="fs-grupo-name">Campo A</span>
+              <span class="fs-grupo-count">16 máq.</span>
+              <span class="fs-arrow open" id="fsa-arr">›</span>
+            </div>
+            <div class="fs-machines open" id="fsa-machines">
+              <div class="fs-machine selected" onclick="selectMachine('50486')">
+                <span class="fs-machine-icon">🚜</span>
+                <div class="fs-machine-info">
+                  <div class="fs-machine-name">TRATOR JD 7815</div>
+                  <div class="fs-machine-id">Frota #50486</div>
+                </div>
+                <span class="fs-machine-hw">4</span>
+              </div>
+              <div class="fs-machine" onclick="selectMachine('55795')">
+                <span class="fs-machine-icon">🌿</span>
+                <div class="fs-machine-info">
+                  <div class="fs-machine-name">COLHEDORA JD CH570</div>
+                  <div class="fs-machine-id">Frota #55795</div>
+                </div>
+                <span class="fs-machine-hw">5</span>
+              </div>
+              <div class="fs-machine" onclick="selectMachine('51212')">
+                <span class="fs-machine-icon">🚜</span>
+                <div class="fs-machine-info">
+                  <div class="fs-machine-name">TRATOR JD 8335R</div>
+                  <div class="fs-machine-id">Frota #51212</div>
+                </div>
+                <span class="fs-machine-hw" style="color:var(--red)">2 ⚠</span>
+              </div>
+            </div>
+          </div>
+          <!-- Campo B -->
+          <div class="fs-grupo">
+            <div class="fs-grupo-header" onclick="toggleFS('fsb')">
+              <span class="fs-grupo-icon">🌾</span>
+              <span class="fs-grupo-name">Campo B</span>
+              <span class="fs-grupo-count">11 máq.</span>
+              <span class="fs-arrow" id="fsb-arr">›</span>
+            </div>
+            <div class="fs-machines" id="fsb-machines">
+              <div class="fs-machine" onclick="selectMachine('52294')">
+                <span class="fs-machine-icon">🌿</span>
+                <div class="fs-machine-info">
+                  <div class="fs-machine-name">COLHEDORA JD CH570</div>
+                  <div class="fs-machine-id">Frota #52294</div>
+                </div>
+                <span class="fs-machine-hw">5</span>
+              </div>
+              <div class="fs-machine">
+                <span class="fs-machine-icon">🚜</span>
+                <div class="fs-machine-info">
+                  <div class="fs-machine-name">TRATOR CASE PUMA140</div>
+                  <div class="fs-machine-id">Frota #56043</div>
+                </div>
+                <span class="fs-machine-hw">4</span>
+              </div>
+            </div>
+          </div>
+          <div class="fs-divider"></div>
+          <div class="fs-dest" onclick="selectMachine('estoque')">
+            <span class="fs-dest-icon">📦</span>
+            <span class="fs-dest-label">Estoque</span>
+            <span class="fs-dest-count">45 equip.</span>
+          </div>
+          <div class="fs-dest">
+            <span class="fs-dest-icon">🔧</span>
+            <span class="fs-dest-label">Manutenção</span>
+            <span class="fs-dest-count">13 equip.</span>
+          </div>
+          <div class="fs-dest">
+            <span class="fs-dest-icon">⛔</span>
+            <span class="fs-dest-label">Inativo</span>
+            <span class="fs-dest-count">7 máq.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Machine Detail -->
+      <div class="machine-detail">
+        <div class="detail-toolbar">
+          <div class="breadcrumb">
+            <span class="breadcrumb-back">Frota</span>
+            <span class="sep">›</span>
+            <span>Campo A</span>
+            <span class="sep">›</span>
+            <span class="cur">TRATOR JD 7815</span>
+          </div>
+          <div class="toolbar-actions">
+            <button class="btn btn-ghost">📋 Histórico</button>
+            <button class="btn btn-ghost">✏️ Editar</button>
+            <button class="btn btn-accent">+ Equipamento</button>
+          </div>
+        </div>
+        <div class="detail-body">
+          <!-- Hero -->
+          <div class="detail-hero" data-bg="🚜">
+            <div class="hero-icon">🚜</div>
+            <div>
+              <div class="hero-type">TRATOR</div>
+              <div class="hero-name">TRATOR JD 7815</div>
+              <div class="hero-id">Frota #50486 · John Deere 7815</div>
+              <div class="hero-tags">
+                <span class="hero-tag tag-campo">🌾 Campo A</span>
+                <span class="hero-tag tag-ativa">● Ativo</span>
+              </div>
+            </div>
+            <div class="hero-stats">
+              <div class="hs"><div class="hs-label">EQUIP.</div><div class="hs-value" style="color:var(--accent)">4</div></div>
+              <div class="hs"><div class="hs-label">INSTALADO</div><div class="hs-value" style="font-size:13px;color:var(--text3)">há 127d</div></div>
+            </div>
+          </div>
+
+          <!-- Hardware Instalado -->
+          <div>
+            <div class="sec-title">HARDWARE INSTALADO <span class="sec-count">4 itens</span></div>
+          </div>
+          <div class="hw-grid">
+            <div class="hw-card">
+              <div class="hw-card-top">
+                <span class="hw-type-badge badge-monitor">MONITOR GPS</span>
+                <div class="hw-actions">
+                  <button class="hw-mini-btn" title="Transferir">⇄</button>
+                  <button class="hw-mini-btn danger" title="Remover">✕</button>
+                </div>
+              </div>
+              <div class="hw-name">Monitor JD 4640</div>
+              <div class="hw-model">Universal Display · John Deere</div>
+              <div class="hw-fields">
+                <div class="hw-field"><span class="hf-label">S/N</span><span class="hf-value">PC9080A-123456</span></div>
+                <div class="hw-field"><span class="hf-label">Patrimônio</span><span class="hf-value">PAT-0042</span></div>
+                <div class="hw-field"><span class="hf-label">Instalado</span><span class="hf-value">10 Jan 2026</span></div>
+              </div>
+            </div>
+            <div class="hw-card">
+              <div class="hw-card-top">
+                <span class="hw-type-badge badge-receptor">RECEPTOR GPS</span>
+                <div class="hw-actions">
+                  <button class="hw-mini-btn">⇄</button>
+                  <button class="hw-mini-btn danger">✕</button>
+                </div>
+              </div>
+              <div class="hw-name">Receptor StarFire 6000</div>
+              <div class="hw-model">RTK Receiver · John Deere</div>
+              <div class="hw-fields">
+                <div class="hw-field"><span class="hf-label">S/N</span><span class="hf-value">SF6-00A-789012</span></div>
+                <div class="hw-field"><span class="hf-label">Patrimônio</span><span class="hf-value">PAT-0088</span></div>
+                <div class="hw-field"><span class="hf-label">Instalado</span><span class="hf-value">10 Jan 2026</span></div>
+              </div>
+            </div>
+            <div class="hw-card">
+              <div class="hw-card-top">
+                <span class="hw-type-badge badge-radio">RÁDIO</span>
+                <div class="hw-actions">
+                  <button class="hw-mini-btn">⇄</button>
+                  <button class="hw-mini-btn danger">✕</button>
+                </div>
+              </div>
+              <div class="hw-name">Rádio Motorola DM4400</div>
+              <div class="hw-model">UHF Digital · Motorola</div>
+              <div class="hw-fields">
+                <div class="hw-field"><span class="hf-label">S/N</span><span class="hf-value">DM4-BR-334455</span></div>
+                <div class="hw-field"><span class="hf-label">Patrimônio</span><span class="hf-value">PAT-0167</span></div>
+                <div class="hw-field"><span class="hf-label">Instalado</span><span class="hf-value">15 Jan 2026</span></div>
+              </div>
+            </div>
+            <div class="hw-card">
+              <div class="hw-card-top">
+                <span class="hw-type-badge badge-bordo">COMP. BORDO</span>
+                <div class="hw-actions">
+                  <button class="hw-mini-btn">⇄</button>
+                  <button class="hw-mini-btn danger">✕</button>
+                </div>
+              </div>
+              <div class="hw-name">Computador AFS Pro 700</div>
+              <div class="hw-model">Field Computer · CNH</div>
+              <div class="hw-fields">
+                <div class="hw-field"><span class="hf-label">S/N</span><span class="hf-value">AFS-P7-556677</span></div>
+                <div class="hw-field"><span class="hf-label">Patrimônio</span><span class="hf-value">PAT-0211</span></div>
+                <div class="hw-field"><span class="hf-label">Instalado</span><span class="hf-value">22 Jan 2026</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Timeline -->
+          <div style="margin-top:4px">
+            <div class="sec-title">HISTÓRICO DE MOVIMENTAÇÕES</div>
+          </div>
+          <div class="timeline">
+            <div class="tl-item">
+              <div class="tl-icon" style="background:rgba(46,204,138,0.12)">📥</div>
+              <div class="tl-info">
+                <div class="tl-action" style="color:var(--green)">Instalação — Monitor JD 4640</div>
+                <div class="tl-detail">Técnico: João Silva · Campo A</div>
+                <div class="tl-time">16 Jun 2026 · 09:18</div>
+              </div>
+            </div>
+            <div class="tl-item">
+              <div class="tl-icon" style="background:rgba(74,158,255,0.12)">🔄</div>
+              <div class="tl-info">
+                <div class="tl-action" style="color:var(--blue)">Transferência — Rádio Motorola</div>
+                <div class="tl-detail">De: TRATOR JD 50501 · Técnico: Carlos Rocha</div>
+                <div class="tl-time">15 Jan 2026 · 14:33</div>
+              </div>
+            </div>
+            <div class="tl-item">
+              <div class="tl-icon" style="background:rgba(46,204,138,0.12)">📥</div>
+              <div class="tl-info">
+                <div class="tl-action" style="color:var(--green)">Instalação — Receptor StarFire 6000</div>
+                <div class="tl-detail">Técnico: João Silva · Estoque → Máquina</div>
+                <div class="tl-time">10 Jan 2026 · 08:55</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /frota -->
+
+    <!-- ═══ EQUIPAMENTOS ═══ -->
+    <div class="view" id="v-equipamentos">
+      <div class="eq-toolbar">
+        <div class="eq-search">
+          <span style="color:var(--text3);font-size:13px">🔍</span>
+          <input placeholder="Buscar S/N, patrimônio, modelo...">
+        </div>
+        <button class="btn btn-ghost">Tipo ▾</button>
+        <button class="btn btn-ghost">Status ▾</button>
+        <button class="btn btn-ghost">Campo ▾</button>
+        <div style="flex:1"></div>
+        <button class="btn btn-accent">+ Cadastrar Equipamento</button>
+      </div>
+      <div class="eq-table-wrap">
+        <table class="eq-table">
+          <thead>
+            <tr>
+              <th>MODELO</th>
+              <th>TIPO</th>
+              <th>S/N</th>
+              <th>PATRIMÔNIO</th>
+              <th>FABRICANTE</th>
+              <th>STATUS</th>
+              <th>ALOCAÇÃO ATUAL</th>
+              <th>ÚLTIMA MOVIM.</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Monitor JD 4640</td>
+              <td><span class="hw-type-badge badge-monitor" style="font-size:8px;padding:2px 7px">MONITOR</span></td>
+              <td>PC9080A-123456</td>
+              <td>PAT-0042</td>
+              <td>John Deere</td>
+              <td><span class="status-badge st-instalado">● Instalado</span></td>
+              <td>TRATOR JD 50486 · Campo A</td>
+              <td>16 Jun 2026</td>
+            </tr>
+            <tr>
+              <td>Receptor StarFire 6000</td>
+              <td><span class="hw-type-badge badge-receptor" style="font-size:8px;padding:2px 7px">RECEPTOR</span></td>
+              <td>SF6-00A-789012</td>
+              <td>PAT-0088</td>
+              <td>John Deere</td>
+              <td><span class="status-badge st-instalado">● Instalado</span></td>
+              <td>TRATOR JD 50486 · Campo A</td>
+              <td>10 Jan 2026</td>
+            </tr>
+            <tr>
+              <td>Monitor JD 4240</td>
+              <td><span class="hw-type-badge badge-monitor" style="font-size:8px;padding:2px 7px">MONITOR</span></td>
+              <td>PC8080B-554433</td>
+              <td>PAT-0051</td>
+              <td>John Deere</td>
+              <td><span class="status-badge st-estoque">◆ Estoque</span></td>
+              <td>—</td>
+              <td>12 Mai 2026</td>
+            </tr>
+            <tr>
+              <td>Rádio Motorola DM4400</td>
+              <td><span class="hw-type-badge badge-radio" style="font-size:8px;padding:2px 7px">RÁDIO</span></td>
+              <td>DM4-BR-334455</td>
+              <td>PAT-0167</td>
+              <td>Motorola</td>
+              <td><span class="status-badge st-instalado">● Instalado</span></td>
+              <td>TRATOR JD 50486 · Campo A</td>
+              <td>15 Jan 2026</td>
+            </tr>
+            <tr>
+              <td>Receptor Trimble AG-372</td>
+              <td><span class="hw-type-badge badge-receptor" style="font-size:8px;padding:2px 7px">RECEPTOR</span></td>
+              <td>AG372-BR-998877</td>
+              <td>PAT-0093</td>
+              <td>Trimble</td>
+              <td><span class="status-badge st-manutencao">⚠ Manutenção</span></td>
+              <td>Oficina Central</td>
+              <td>08 Jun 2026</td>
+            </tr>
+            <tr>
+              <td>Computador AFS Pro 700</td>
+              <td><span class="hw-type-badge badge-bordo" style="font-size:8px;padding:2px 7px">BORDO</span></td>
+              <td>AFS-P7-556677</td>
+              <td>PAT-0211</td>
+              <td>CNH</td>
+              <td><span class="status-badge st-instalado">● Instalado</span></td>
+              <td>TRATOR JD 50486 · Campo A</td>
+              <td>22 Jan 2026</td>
+            </tr>
+            <tr>
+              <td>Rádio Kenwood TK-3000</td>
+              <td><span class="hw-type-badge badge-radio" style="font-size:8px;padding:2px 7px">RÁDIO</span></td>
+              <td>TK3K-BR-221133</td>
+              <td>PAT-0178</td>
+              <td>Kenwood</td>
+              <td><span class="status-badge st-estoque">◆ Estoque</span></td>
+              <td>—</td>
+              <td>01 Jun 2026</td>
+            </tr>
+            <tr>
+              <td>Monitor Trimble GFX-750</td>
+              <td><span class="hw-type-badge badge-monitor" style="font-size:8px;padding:2px 7px">MONITOR</span></td>
+              <td>GFX750-117799</td>
+              <td>PAT-0067</td>
+              <td>Trimble</td>
+              <td><span class="status-badge st-inativo">✕ Inativo</span></td>
+              <td>—</td>
+              <td>15 Mar 2026</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div><!-- /equipamentos -->
+
+  </div><!-- /main -->
+</div><!-- /workspace -->
+
+<!-- Toast -->
+<div class="toast" id="toast">
+  <span>✅</span> Registro enviado com sucesso!
+</div>
+
+<!-- LABEL -->
+<div style="position:fixed;bottom:12px;left:50%;transform:translateX(-50%);background:rgba(245,166,35,0.12);border:1px solid rgba(245,166,35,0.3);color:var(--accent);font-size:10px;font-weight:700;letter-spacing:2px;padding:6px 16px;border-radius:20px;pointer-events:none;z-index:99">
+  PROPOSTA A — HUB OPERACIONAL
+</div>
+
+<script>
+function navigate(view) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('v-' + view).classList.add('active');
+}
+
+function toggleFS(id) {
+  const machines = document.getElementById(id + '-machines');
+  const arr = document.getElementById(id + '-arr');
+  machines.classList.toggle('open');
+  arr.classList.toggle('open');
+}
+
+function toggleCampo(id) {
+  const grp = document.getElementById('grp-' + id);
+  const arr = document.getElementById('arr-' + id);
+  grp.classList.toggle('open');
+  arr.classList.toggle('open');
+}
+
+function selectMachine(id) {
+  document.querySelectorAll('.fs-machine, .campo-machine').forEach(m => m.classList.remove('selected'));
+  navigate('frota');
+}
+
+function showToast() {
+  const t = document.getElementById('toast');
+  t.classList.add('show', 'ok');
+  setTimeout(() => t.classList.remove('show', 'ok'), 2800);
+}
+</script>
+</body>
+</html>
