@@ -1890,11 +1890,8 @@
               <div class="hs-label">CADASTRO</div>
               <div class="hs-value" id="heroCadastro" style="font-size:11px;color:var(--text2)">—</div>
             </div>
+            <button class="btn btn-ghost" id="heroEditBtn" style="display:none;font-size:11px;padding:6px 12px;margin-top:6px;align-self:flex-end">✏️ Editar</button>
           </div>
-        </div>
-
-        <div id="machineEditBtnRow" style="display:none;justify-content:flex-end">
-          <button class="btn btn-ghost" style="font-size:12px" id="machineEditBtn">✏️ Editar Máquina</button>
         </div>
 
         <div class="minfo-grid" id="machineInfoGrid"></div>
@@ -2283,6 +2280,15 @@
           <label class="form-label">PATRIMÔNIO</label>
           <input type="text" class="form-input" id="editMachPat">
         </div>
+      </div>
+      <div style="border-top:1px solid var(--border);margin-top:4px;padding-top:16px">
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none">
+          <input type="checkbox" id="editMachPermitirDup" style="width:15px;height:15px;accent-color:var(--accent);cursor:pointer">
+          <div>
+            <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--text2)">PERMITIR TIPOS DUPLICADOS</div>
+            <div style="font-size:10px;color:var(--text3);margin-top:2px">Permite instalar mais de um equipamento do mesmo tipo nesta máquina</div>
+          </div>
+        </label>
       </div>
     </div>
     <div class="modal-footer">
@@ -2685,6 +2691,7 @@ function sheetsToMachines(rawMachines, rawHardwares) {
       chassi: m.chassi || '',
       patrimony: String(m.patrimonio || ''),
       createdAt: m.criadoEm,
+      permitirTipoDuplicado: m.permitirTipoDuplicado === true,
       hardware: rawHardwares
         .filter(h => String(h.maquinaAtual ?? '') === id)
         .map(mapRawHw)
@@ -3367,11 +3374,10 @@ function renderDetail(id) {
   document.getElementById('heroCard').setAttribute('data-bg', m.name);
 
   // Botão de edição — só para máquinas reais
-  const editRow = document.getElementById('machineEditBtnRow');
-  const editBtn = document.getElementById('machineEditBtn');
-  if (editRow && editBtn) {
-    editRow.style.display = REAL_TYPES.has(m.type) ? 'flex' : 'none';
-    editBtn.onclick = () => openMachineEdit(m.id);
+  const heroEditBtn = document.getElementById('heroEditBtn');
+  if (heroEditBtn) {
+    heroEditBtn.style.display = REAL_TYPES.has(m.type) ? 'flex' : 'none';
+    heroEditBtn.onclick = () => openMachineEdit(m.id);
   }
   document.getElementById('heroType').textContent = cfg.label;
   document.getElementById('heroName').textContent = m.name;
@@ -3582,16 +3588,17 @@ async function renderHistory(machineId) {
     if (secCount) secCount.textContent = registros.length;
 
     list.innerHTML = registros.map(r => {
-      const cfg = HIST_ACTION_CFG[r.acao] || { label: r.acao || '—', color: '#888888', icon: '•' };
-      const acaoNorm = HIST_ACAO_NORM[r.acao] || r.acao;
+      const acaoKey = (r.acao || '').toLowerCase();
+      const cfg = HIST_ACTION_CFG[acaoKey] || { label: r.acao || '—', color: '#888888', icon: '•' };
+      const acaoNorm = HIST_ACAO_NORM[acaoKey] || acaoKey;
       const curId = String(machineId);
       const mId   = String(r.maquinaId || '');
       const dId   = String(r.maquinaDestinoId || '');
 
       let sub = `Técnico: ${r.tecnico || '—'}`;
       if (acaoNorm === 'install') {
-        const from = r.maquinaNome || mId || '—';
-        sub += ` · ${from} → Instalado aqui`;
+        const from = r.maquinaNome || mId || '';
+        if (from) sub += ` · ${from} → Instalado aqui`;
       } else if (acaoNorm === 'remove') {
         sub += ` · Removido → ${r.maquinaDestinoNome || dId || '—'}`;
       } else if (acaoNorm === 'transfer') {
@@ -3599,17 +3606,23 @@ async function renderHistory(machineId) {
         else sub += ` · Para: ${r.maquinaDestinoNome || dId || '—'}`;
       }
 
-      const nome = r.hardwareNome || '';
-      const mod  = r.hardwareModelo || '';
-      const hwLabel = (nome && mod && nome !== mod) ? `${nome} ${mod}` : (nome || mod);
+      const nome = (r.hardwareNome || '').trim();
+      const mod  = (r.hardwareModelo || '').trim();
+      const hwLabel = (nome && mod && nome.toLowerCase() !== mod.toLowerCase()) ? `${nome} ${mod}` : (nome || mod);
       const title   = `${cfg.label} – ${hwLabel || r.hardwareSN || r.hardwarePatrimonio || '—'}`;
       const obs     = r.observacoes ? `<div class="hist-obs">"${r.observacoes}"</div>` : '';
+
+      const snInfo  = r.hardwareSN ? `S/N: ${r.hardwareSN}` : '';
+      const patInfo = r.hardwarePatrimonio ? `Pat. ${r.hardwarePatrimonio}` : '';
+      const hwInfo  = [snInfo, patInfo].filter(Boolean).join(' · ');
+      const hwInfoHtml = hwInfo ? `<div class="hist-obs" style="color:var(--text3)">${hwInfo}</div>` : '';
 
       return `<div class="hist-item">
         <div class="hist-avatar" style="background:${cfg.color}22;color:${cfg.color};border:1px solid ${cfg.color}44">${cfg.icon}</div>
         <div class="hist-content">
           <div class="hist-title" style="color:${cfg.color}">${title}</div>
           <div class="hist-sub">${sub}</div>
+          ${hwInfoHtml}
           ${obs}
           <div class="hist-date">${formatHistDate(r.dataHora)}</div>
         </div>
@@ -3963,9 +3976,9 @@ async function addHardware() {
 
   const m = machines.find(x => x.id === targetMachineId);
   const conflicting = !DEST_TYPES.includes(m.type) && m.hardware.find(h => h.type === type);
-  if (conflicting) {
-    _pendingHwInstall = { type, pat, model, sn, manuf, targetMachineId, hwUniqueId, licAtivada, licExpira, licCodigo };
-    openHwConflictModal(conflicting, m);
+  if (conflicting && !m.permitirTipoDuplicado) {
+    const hcfg = hwConfig[type] || {};
+    showToast('warning', '⚠️', 'Tipo já instalado', `${m.name} já possui um ${hcfg.label || type}. Habilite "Permitir tipos duplicados" nas configurações da máquina para instalar mais.`);
     return;
   }
 
@@ -4485,6 +4498,7 @@ function openMachineEdit(machineId) {
   document.getElementById('editMachUnidade').value = m.unidade || '';
   document.getElementById('editMachChassi').value  = m.chassi || '';
   document.getElementById('editMachPat').value     = m.patrimony || '';
+  document.getElementById('editMachPermitirDup').checked = m.permitirTipoDuplicado || false;
   openModal('machineEditModal');
 }
 
@@ -4495,11 +4509,13 @@ async function saveMachineEdit() {
   const name    = document.getElementById('editMachName').value.trim();
   const year    = document.getElementById('editMachYear').value.trim();
   const unidade = document.getElementById('editMachUnidade').value;
-  const chassi  = document.getElementById('editMachChassi').value.trim();
-  const pat     = document.getElementById('editMachPat').value.trim();
+  const chassi     = document.getElementById('editMachChassi').value.trim();
+  const pat        = document.getElementById('editMachPat').value.trim();
+  const permitirDup = document.getElementById('editMachPermitirDup').checked;
   if (!name) { showToast('warning','⚠️','Campos obrigatórios','Preencha o nome'); return; }
 
   m.type = tipo; m.name = name; m.year = year; m.unidade = unidade; m.chassi = chassi; m.patrimony = pat;
+  m.permitirTipoDuplicado = permitirDup;
   closeModal('machineEditModal');
   renderAll();
   showToast('success','✅','Máquina atualizada', name);
@@ -4508,7 +4524,7 @@ async function saveMachineEdit() {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/maquinas?id=eq.${encodeURIComponent(editingMachineEditId)}`, {
       method: 'PATCH',
       headers: { ...sbHeaders, 'Prefer': 'return=minimal' },
-      body: JSON.stringify({ tipo, nome: name, ano: year, unidade, chassi, patrimonio: pat }),
+      body: JSON.stringify({ tipo, nome: name, ano: year, unidade, chassi, patrimonio: pat, permitirTipoDuplicado: permitirDup }),
     });
     if (!res.ok) {
       const err = await res.json().catch(()=>({}));
