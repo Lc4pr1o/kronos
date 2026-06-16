@@ -728,16 +728,19 @@
 
   /* Machine info fields grid */
   .minfo-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 8px;
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
   }
 
   .minfo-field {
     background: var(--surface2);
     border: 1px solid var(--border);
     border-radius: 8px;
-    padding: 10px 14px;
+    padding: 8px 12px;
+    min-width: 0;
+    flex: 1;
+    min-width: 120px;
   }
 
   .minfo-label {
@@ -745,12 +748,12 @@
     font-weight: 700;
     letter-spacing: 1.5px;
     color: var(--text3);
-    margin-bottom: 4px;
+    margin-bottom: 3px;
   }
 
   .minfo-value {
-    font-size: 13px;
-    font-weight: 600;
+    font-size: 12px;
+    font-weight: 700;
     color: var(--text);
     font-family: 'JetBrains Mono', monospace;
     white-space: nowrap;
@@ -866,14 +869,21 @@
   }
 
   .detail-hero::after {
-    content: attr(data-emoji);
+    content: attr(data-bg);
     position: absolute;
-    right: 24px;
+    right: 20px;
     top: 50%;
     transform: translateY(-50%);
-    font-size: 80px;
-    opacity: 0.06;
+    font-size: 64px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    color: var(--text);
+    opacity: 0.04;
     pointer-events: none;
+    white-space: nowrap;
+    overflow: hidden;
+    max-width: 60%;
+    font-family: 'JetBrains Mono', monospace;
   }
 
   .hero-icon-wrap {
@@ -1005,8 +1015,8 @@
 
   .hw-type-section-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 12px;
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    gap: 10px;
   }
 
   .hw-card {
@@ -1036,6 +1046,14 @@
     justify-content: space-between;
     margin-bottom: 12px;
   }
+
+  .hw-card-actions {
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .hw-card:hover .hw-card-actions { opacity: 1; }
 
   .hw-type-badge {
     font-size: 9px;
@@ -3255,7 +3273,7 @@ function renderDetail(id) {
   document.getElementById('breadcrumbCurrent').textContent = `${m.name} (${m.id})`;
   document.getElementById('heroEmoji').innerHTML = renderIcon(cfg.emoji, 34, cfg.color || 'currentColor');
   document.getElementById('heroIcon').className = `hero-icon-wrap ${m.type}`;
-  document.getElementById('heroCard').setAttribute('data-emoji', cfg.label || m.type?.toUpperCase() || '');
+  document.getElementById('heroCard').setAttribute('data-bg', m.name);
 
   // Botão de edição — só para máquinas reais
   const editRow = document.getElementById('machineEditBtnRow');
@@ -3266,7 +3284,11 @@ function renderDetail(id) {
   }
   document.getElementById('heroType').textContent = cfg.label;
   document.getElementById('heroName').textContent = m.name;
-  document.getElementById('heroId').textContent = m.id;
+  document.getElementById('heroId').textContent = [
+    m.id ? `Frota #${m.id}` : null,
+    m.unidade || null,
+    m.year ? m.year : null,
+  ].filter(Boolean).join(' · ');
   document.getElementById('heroHwCount').textContent = m.hardware.length;
   document.getElementById('heroCadastro').textContent = m.createdAt || '—';
 
@@ -3330,22 +3352,27 @@ function renderDetail(id) {
       const card = document.createElement('div');
       card.className = 'hw-card animate-in';
       card.dataset.hwId = hw.id;
-      card.title = 'Clique duplo para ver detalhes';
       card.ondblclick = () => showHwDetail(m.id, hw.id);
       card.innerHTML = `
         <div class="hw-card-header">
           <span class="hw-type-badge" style="${badgeStyle}">${hcfg.label}</span>
+          <div class="hw-card-actions">
+            <button class="hw-mini-btn" title="Ver detalhes" onclick="event.stopPropagation();showHwDetail('${m.id}','${hw.id}')">👁</button>
+            <button class="hw-mini-btn transfer-btn" title="Transferir" onclick="event.stopPropagation();openTransfer('${m.id}','${hw.id}')">⇌</button>
+            <button class="hw-mini-btn" title="Editar" onclick="event.stopPropagation();openEditHw('${m.id}','${hw.id}')">✏</button>
+            <button class="hw-mini-btn remove-btn" title="Remover" onclick="event.stopPropagation();removeHardware('${m.id}','${hw.id}')">✕</button>
+          </div>
         </div>
         <div class="hw-name">${hw.name}</div>
         <div class="hw-model">${hw.manufacturer ?? '—'}</div>
         <div class="hw-fields">
           <div class="hw-field">
-            <span class="hf-label">Patrimônio</span>
-            <span class="hf-value">${hw.patrimony || '—'}</span>
+            <span class="hf-label">S/N</span>
+            <span class="hf-value">${hw.sn || '—'}</span>
           </div>
           <div class="hw-field">
-            <span class="hf-label">Nº Série</span>
-            <span class="hf-value">${hw.sn || '—'}</span>
+            <span class="hf-label">Patrimônio</span>
+            <span class="hf-value">${hw.patrimony || '—'}</span>
           </div>
         </div>
         <div class="hw-install-date">
