@@ -7,21 +7,21 @@
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #0a0c0f;
-    --surface: #111318;
-    --surface2: #181c24;
-    --surface3: #1e2330;
-    --border: #252b38;
-    --border2: #2e3648;
+    --bg: #121829;
+    --surface: #192238;
+    --surface2: #1e2a42;
+    --surface3: #24334f;
+    --border: #2d3e58;
+    --border2: #374d6c;
     --accent: #f5a623;
     --accent2: #e8870a;
     --green: #2ecc8a;
     --red: #e05252;
     --blue: #4a9eff;
     --purple: #9b59b6;
-    --text: #e8ecf4;
-    --text2: #8a94a8;
-    --text3: #4a5468;
+    --text: #d4dce8;
+    --text2: #8899b5;
+    --text3: #506282;
     --trator: #f5a623;
     --motoniveladora: #4a9eff;
     --colhedora: #2ecc8a;
@@ -4263,7 +4263,7 @@ function renderDashboard() {
     { label: 'Em Campo',     value: d.hwCampo.length,      color: '#2ecc8a' },
     { label: 'Estoque',      value: d.hwEstoque.length,    color: '#4a9eff' },
     { label: 'Manutenção',   value: d.hwManutencao.length, color: '#e05252' },
-    { label: 'Inativo',      value: d.hwInativo.length,    color: '#4a5468' },
+    { label: 'Inativo',      value: d.hwInativo.length,    color: '#506282' },
   ].filter(s => s.value > 0);
 
   requestAnimationFrame(() => {
@@ -4334,11 +4334,11 @@ function drawDonut(canvasId, segs, total) {
   if (segs.length === 0 || total === 0) {
     ctx.beginPath();
     ctx.arc(cx, cy, outerR, 0, Math.PI * 2);
-    ctx.fillStyle = '#1e2330';
+    ctx.fillStyle = '#24334f';
     ctx.fill();
     ctx.beginPath();
     ctx.arc(cx, cy, innerR, 0, Math.PI * 2);
-    ctx.fillStyle = '#111318';
+    ctx.fillStyle = '#192238';
     ctx.fill();
     return;
   }
@@ -4359,16 +4359,16 @@ function drawDonut(canvasId, segs, total) {
 
   ctx.beginPath();
   ctx.arc(cx, cy, innerR, 0, Math.PI * 2);
-  ctx.fillStyle = '#111318';
+  ctx.fillStyle = '#192238';
   ctx.fill();
 
-  ctx.fillStyle = '#e8ecf4';
+  ctx.fillStyle = '#d4dce8';
   ctx.font = `bold 22px 'JetBrains Mono', monospace`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(total, cx, cy - 7);
   ctx.font = `10px 'JetBrains Mono', monospace`;
-  ctx.fillStyle = '#4a5468';
+  ctx.fillStyle = '#506282';
   ctx.fillText('TOTAL', cx, cy + 13);
 }
 
@@ -4391,7 +4391,7 @@ function drawBars(canvasId, bars) {
   bars.forEach(bar => {
     const barW = Math.max((bar.value / maxVal) * barAreaW, 0);
 
-    ctx.fillStyle = '#1e2330';
+    ctx.fillStyle = '#24334f';
     roundRectFill(ctx, labelW, y, barAreaW, barH, 5);
 
     if (barW > 0) {
@@ -4399,13 +4399,13 @@ function drawBars(canvasId, bars) {
       roundRectFill(ctx, labelW, y, barW, barH, 5);
     }
 
-    ctx.fillStyle = '#8a94a8';
+    ctx.fillStyle = '#8899b5';
     ctx.font = `11px 'JetBrains Mono', monospace`;
     ctx.textAlign = 'right';
     ctx.textBaseline = 'middle';
     ctx.fillText(bar.label.slice(0, 12), labelW - 8, y + barH / 2);
 
-    ctx.fillStyle = '#e8ecf4';
+    ctx.fillStyle = '#d4dce8';
     ctx.font = `bold 11px 'JetBrains Mono', monospace`;
     ctx.textAlign = 'left';
     ctx.fillText(bar.value, labelW + barAreaW + 8, y + barH / 2);
