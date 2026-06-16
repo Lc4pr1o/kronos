@@ -1693,6 +1693,68 @@
   }
   .consultas-empty-icon { font-size: 40px; }
   .consultas-empty-text { font-size: 13px; }
+
+  /* ── Histórico de Movimentações ── */
+  .hist-list {
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 8px;
+  }
+  .hist-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .hist-item:last-child { border-bottom: none; }
+  .hist-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .hist-content { flex: 1; min-width: 0; }
+  .hist-title {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    margin-bottom: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .hist-sub {
+    font-size: 11px;
+    color: var(--text2);
+    margin-bottom: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .hist-obs {
+    font-size: 10px;
+    color: var(--text3);
+    font-style: italic;
+    margin-bottom: 3px;
+  }
+  .hist-date {
+    font-size: 10px;
+    color: var(--text3);
+    letter-spacing: 0.5px;
+  }
+  .hist-empty, .hist-loading {
+    padding: 20px 0;
+    text-align: center;
+    color: var(--text3);
+    font-size: 12px;
+  }
 </style>
 </head>
 <body>
@@ -1812,6 +1874,8 @@
 
         <div class="sec-title">HARDWARE INSTALADO <span class="sec-count" id="hwSecCount">0</span></div>
         <div class="hw-grid" id="hwGrid"></div>
+        <div class="sec-title" id="histSecTitle" style="display:none">HISTÓRICO DE MOVIMENTAÇÕES <span class="sec-count" id="histSecCount"></span></div>
+        <div class="hist-list" id="histList"></div>
       </div>
     </div>
   </div>
@@ -3430,6 +3494,95 @@ function renderDetail(id) {
     addCard.onclick = openAddHwModal;
     addCard.innerHTML = `<div class="add-icon">＋</div><span>Adicionar Hardware</span>`;
     grid.appendChild(addCard);
+  }
+
+  renderHistory(id);
+}
+
+// =========================================
+// HISTÓRICO DE MOVIMENTAÇÕES
+// =========================================
+const HIST_ACTION_CFG = {
+  install:  { label: 'Instalação',    color: '#2ecc8a', icon: '↓' },
+  remove:   { label: 'Remoção',       color: '#f5a623', icon: '↑' },
+  transfer: { label: 'Transferência', color: '#4a9eff', icon: '⇌' },
+};
+
+function formatHistDate(dateStr) {
+  if (!dateStr) return '—';
+  try {
+    const d = new Date(dateStr);
+    const months = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+    const day = String(d.getDate()).padStart(2, '0');
+    const h = String(d.getHours()).padStart(2, '0');
+    const min = String(d.getMinutes()).padStart(2, '0');
+    return `${day} ${months[d.getMonth()]} ${d.getFullYear()} · ${h}:${min}`;
+  } catch { return dateStr; }
+}
+
+async function renderHistory(machineId) {
+  const list = document.getElementById('histList');
+  const secTitle = document.getElementById('histSecTitle');
+  const secCount = document.getElementById('histSecCount');
+  if (!list || !secTitle) return;
+
+  list.innerHTML = '<div class="hist-loading">Carregando histórico...</div>';
+  secTitle.style.display = '';
+
+  try {
+    const id = encodeURIComponent(machineId);
+    const url = `${SUPABASE_URL}/rest/v1/registros?or=(maquinaId.eq.${id},maquinaDestinoId.eq.${id})&order=dataHora.desc&limit=50`;
+    const res = await fetch(url, { headers: sbHeaders });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const registros = await res.json();
+
+    // Race condition guard
+    if (String(selectedMachineId) !== String(machineId)) return;
+
+    if (!registros.length) {
+      secTitle.style.display = 'none';
+      list.innerHTML = '';
+      return;
+    }
+
+    if (secCount) secCount.textContent = registros.length;
+
+    list.innerHTML = registros.map(r => {
+      const cfg = HIST_ACTION_CFG[r.acao] || { label: r.acao || '—', color: 'var(--text2)', icon: '•' };
+      const curId = String(machineId);
+      const mId   = String(r.maquinaId || '');
+      const dId   = String(r.maquinaDestinoId || '');
+
+      let sub = `Técnico: ${r.tecnico || '—'}`;
+      if (r.acao === 'install') {
+        const from = r.maquinaNome || mId || '—';
+        sub += ` · ${from} → Instalado aqui`;
+      } else if (r.acao === 'remove') {
+        sub += ` · Removido → ${r.maquinaDestinoNome || dId || '—'}`;
+      } else if (r.acao === 'transfer') {
+        if (dId === curId) sub += ` · De: ${r.maquinaNome || mId || '—'}`;
+        else sub += ` · Para: ${r.maquinaDestinoNome || dId || '—'}`;
+      }
+
+      const hwLabel = [r.hardwareNome, r.hardwareModelo].filter(Boolean).join(' ');
+      const title   = `${cfg.label} – ${hwLabel || r.hardwareSN || r.hardwarePatrimonio || '—'}`;
+      const obs     = r.observacoes ? `<div class="hist-obs">"${r.observacoes}"</div>` : '';
+
+      return `<div class="hist-item">
+        <div class="hist-avatar" style="background:${cfg.color}22;color:${cfg.color};border:1px solid ${cfg.color}44">${cfg.icon}</div>
+        <div class="hist-content">
+          <div class="hist-title" style="color:${cfg.color}">${title}</div>
+          <div class="hist-sub">${sub}</div>
+          ${obs}
+          <div class="hist-date">${formatHistDate(r.dataHora)}</div>
+        </div>
+      </div>`;
+    }).join('');
+
+  } catch(e) {
+    if (String(selectedMachineId) !== String(machineId)) return;
+    list.innerHTML = '<div class="hist-empty">Não foi possível carregar o histórico</div>';
+    console.error('renderHistory:', e);
   }
 }
 
