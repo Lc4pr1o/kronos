@@ -1024,16 +1024,19 @@
     display: grid;
     grid-template-columns: repeat(5, 1fr);
     gap: 10px;
+    align-items: stretch;
   }
 
   .hw-card {
     background: var(--surface2);
     border: 1px solid var(--border);
     border-radius: 12px;
-    padding: 18px;
+    padding: 12px;
     transition: all 0.2s;
     position: relative;
     cursor: pointer;
+    display: flex;
+    flex-direction: column;
   }
 
   .hw-card:hover {
@@ -1051,12 +1054,12 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
   }
 
   .hw-card-actions {
     display: flex;
-    gap: 4px;
+    gap: 3px;
     opacity: 0;
     transition: opacity 0.15s;
   }
@@ -1065,7 +1068,7 @@
   .hw-type-badge {
     font-size: 9px;
     letter-spacing: 1.5px;
-    padding: 3px 8px;
+    padding: 2px 7px;
     border-radius: 4px;
     font-weight: 700;
   }
@@ -1080,13 +1083,13 @@
   .hw-card.search-found { animation: hwPulse 1.8s ease forwards; }
 
   .hw-mini-btn {
-    width: 26px;
-    height: 26px;
-    border-radius: 6px;
+    width: 22px;
+    height: 22px;
+    border-radius: 5px;
     background: var(--surface3);
     border: 1px solid var(--border);
     color: var(--text2);
-    font-size: 11px;
+    font-size: 10px;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -1111,50 +1114,67 @@
     color: #fff;
   }
 
-  .hw-name { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
-
-  .hw-model {
-    font-size: 11px;
-    color: var(--text2);
-    margin-bottom: 12px;
+  .hw-name {
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
-  .hw-fields { display: flex; flex-direction: column; gap: 6px; }
+  .hw-model {
+    font-size: 10px;
+    color: var(--text2);
+    margin-bottom: 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .hw-fields { display: flex; flex-direction: column; gap: 4px; }
 
   .hw-field {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 6px 0;
+    padding: 4px 0;
     border-bottom: 1px solid var(--border);
+    gap: 6px;
   }
 
   .hw-field:last-child { border-bottom: none; }
 
   .hf-label {
-    font-size: 10px;
+    font-size: 9px;
     color: var(--text3);
     letter-spacing: 0.5px;
+    flex-shrink: 0;
   }
 
   .hf-value {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
+    font-size: 10px;
     color: var(--text);
     font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: right;
   }
 
   .hw-install-date {
-    margin-top: 12px;
-    padding-top: 10px;
+    margin-top: auto;
+    padding-top: 8px;
     border-top: 1px solid var(--border);
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 4px;
   }
 
-  .hid-label { font-size: 9px; color: var(--text3); letter-spacing: 1px; }
-  .hid-value { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text2); }
+  .hid-label { font-size: 9px; color: var(--text3); letter-spacing: 1px; flex-shrink: 0; }
+  .hid-value { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text2); white-space: nowrap; }
 
   /* EMPTY HW STATE */
   .hw-empty {
@@ -3419,7 +3439,7 @@ function renderDetail(id) {
 
     function buildHwCard(hw) {
       const hcfg = hwConfig[hw.type] || { label: hw.type || '?', color: '#888' };
-      const badgeStyle = `background:${hcfg.color}22;color:${hcfg.color};border:1px solid ${hcfg.color}55;font-size:10px;font-weight:700;letter-spacing:1px;padding:3px 8px;border-radius:6px`;
+      const badgeStyle = `background:${hcfg.color}22;color:${hcfg.color};border:1px solid ${hcfg.color}55`;
       const card = document.createElement('div');
       card.className = 'hw-card animate-in';
       card.dataset.hwId = hw.id;
@@ -3441,14 +3461,10 @@ function renderDetail(id) {
             <span class="hf-label">S/N</span>
             <span class="hf-value">${hw.sn || '—'}</span>
           </div>
-          <div class="hw-field">
-            <span class="hf-label">Patrimônio</span>
-            <span class="hf-value">${hw.patrimony || '—'}</span>
-          </div>
         </div>
         <div class="hw-install-date">
-          <span class="hid-label">INSTALADO EM</span>
-          <span class="hid-value">${hw.installedAt || '—'}</span>
+          <span class="hid-label">INSTALADO</span>
+          <span class="hid-value">${fmtInstallDate(hw.installedAt)}</span>
         </div>
       `;
       return card;
@@ -3517,15 +3533,24 @@ const HIST_ACTION_CFG = {
 };
 const HIST_ACAO_NORM = { instalar: 'install', remover: 'remove', transferir: 'transfer' };
 
+const MONTHS_PT = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+
+function fmtInstallDate(iso) {
+  if (!iso) return '—';
+  try {
+    const d = new Date(iso);
+    return `${String(d.getDate()).padStart(2,'0')} ${MONTHS_PT[d.getMonth()]} ${d.getFullYear()}`;
+  } catch { return iso; }
+}
+
 function formatHistDate(dateStr) {
   if (!dateStr) return '—';
   try {
     const d = new Date(dateStr);
-    const months = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
     const day = String(d.getDate()).padStart(2, '0');
     const h = String(d.getHours()).padStart(2, '0');
     const min = String(d.getMinutes()).padStart(2, '0');
-    return `${day} ${months[d.getMonth()]} ${d.getFullYear()} · ${h}:${min}`;
+    return `${day} ${MONTHS_PT[d.getMonth()]} ${d.getFullYear()} · ${h}:${min}`;
   } catch { return dateStr; }
 }
 
