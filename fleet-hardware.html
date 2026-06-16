@@ -1708,6 +1708,7 @@
       <div class="toolbar-actions">
         <button class="btn btn-ghost" onclick="exportPlanilhaGeral()" title="Exportar planilha geral (CSV)">⬇ Exportar</button>
         <button class="btn btn-ghost" onclick="openModal('batchModal')" title="Importar em lote">⬆ Lote</button>
+        <button class="btn btn-ghost" onclick="openBatchTransfer()" title="Transferir equipamentos em lote">↔ Transferir</button>
         <button class="btn btn-ghost" onclick="openModal('addMachineModal')">+ Máquina</button>
         <button class="btn btn-primary" id="addHwBtnNav" onclick="openAddHwModal()" style="display:none">+ Hardware</button>
       </div>
@@ -1814,6 +1815,7 @@
       <div style="margin-left:auto;display:flex;gap:8px;flex-shrink:0">
         <button class="btn btn-ghost" onclick="exportPlanilhaGeral()" title="Exportar planilha geral (CSV)">⬇ Exportar</button>
         <button class="btn btn-ghost" onclick="openModal('batchModal')" title="Importar em lote">⬆ Lote</button>
+        <button class="btn btn-ghost" onclick="openBatchTransfer()" title="Transferir equipamentos em lote">↔ Transferir</button>
         <button class="btn btn-ghost" onclick="openModal('addMachineModal')">+ Máquina</button>
         <button class="btn btn-primary" onclick="openAddHwModal()">+ Hardware</button>
       </div>
@@ -1886,6 +1888,63 @@
       <button class="btn btn-ghost" onclick="closeModal('batchModal')">Cancelar</button>
       <button class="btn btn-ghost" onclick="previewBatch()">Visualizar</button>
       <button class="btn btn-primary" onclick="submitBatch()">⬆ Importar</button>
+    </div>
+  </div>
+</div>
+
+<!-- BATCH TRANSFER -->
+<div class="modal-overlay" id="batchTransferModal">
+  <div class="modal" style="max-width:640px" role="dialog" aria-modal="true" aria-labelledby="batchTransferModalTitle">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="batchTransferModalTitle">↔ Transferência em Lote</div>
+        <div class="modal-sub">Mova múltiplos equipamentos de uma vez para outro destino</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('batchTransferModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">ORIGEM (localização atual)</label>
+          <select class="form-select" id="btSourceFilter" onchange="renderBatchTransferList()">
+            <option value="">— Todos —</option>
+            <option value="estoque">Estoque</option>
+            <option value="manutencao">Manutenção</option>
+            <option value="inativo">Inativo</option>
+            <option value="campo">Em Campo</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">TIPO DE HARDWARE</label>
+          <select class="form-select" id="btTypeFilter" onchange="renderBatchTransferList()">
+            <option value="">— Todos —</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <label class="form-label" style="margin:0">EQUIPAMENTOS <span id="btSelectedCount" style="color:var(--accent);font-weight:700"></span></label>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-ghost" style="padding:3px 10px;font-size:10px" onclick="btSelectAll()">Todos</button>
+            <button class="btn btn-ghost" style="padding:3px 10px;font-size:10px" onclick="btSelectNone()">Nenhum</button>
+          </div>
+        </div>
+        <div id="btHwList" style="max-height:260px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;background:var(--surface2)"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">DESTINO <span class="req">*</span></label>
+        <select class="form-select" id="btDestSelect">
+          <option value="" disabled selected hidden>— Selecione o destino —</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">OBSERVAÇÕES <span style="font-size:9px;color:var(--text3);font-weight:400">(opcional)</span></label>
+        <input type="text" class="form-input" id="btNotes" placeholder="Ex: Envio para manutenção preventiva">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('batchTransferModal')">Cancelar</button>
+      <button class="btn btn-primary" id="btConfirmBtn" onclick="submitBatchTransfer()">↔ Transferir Selecionados</button>
     </div>
   </div>
 </div>
@@ -5079,6 +5138,184 @@ async function submitBatch() {
   const sub = [fail ? `${fail} falha(s)` : '', skipped ? `${skipped} ignorado(s)` : ''].filter(Boolean).join(' · ') || 'Sincronize para ver os novos registros';
   showToast(fail ? 'warning' : 'success', fail ? '⚠️' : '✅', `${ok} importado(s)`, sub);
   if (ok) await loadFromSheets();
+}
+
+// =========================================
+// BATCH TRANSFER
+// =========================================
+let _btSelectedIds = new Set();
+
+function openBatchTransfer() {
+  _btSelectedIds = new Set();
+
+  // Popula filtro de tipo de HW
+  const typeSel = document.getElementById('btTypeFilter');
+  typeSel.innerHTML = '<option value="">— Todos —</option>';
+  Object.entries(hwConfig).forEach(([k, v]) => {
+    const opt = document.createElement('option');
+    opt.value = k;
+    const emo = safeEmoji(v.emoji);
+    opt.textContent = emo ? `${emo} ${v.label}` : v.label;
+    typeSel.appendChild(opt);
+  });
+
+  // Popula select de destino
+  const dstSel = document.getElementById('btDestSelect');
+  dstSel.innerHTML = '<option value="" disabled selected hidden>— Selecione o destino —</option>';
+  machines.forEach(m => {
+    const cfg = machineConfig[m.type] || { emoji: '', label: m.type };
+    const opt = document.createElement('option');
+    opt.value = m.id;
+    const emo = safeEmoji(cfg.emoji);
+    opt.textContent = emo ? `${emo} ${m.name}` : m.name;
+    dstSel.appendChild(opt);
+  });
+
+  document.getElementById('btSourceFilter').value = '';
+  document.getElementById('btTypeFilter').value = '';
+  document.getElementById('btNotes').value = '';
+  renderBatchTransferList();
+  openModal('batchTransferModal');
+}
+
+function renderBatchTransferList() {
+  const sourceFilter = document.getElementById('btSourceFilter').value;
+  const typeFilter   = document.getElementById('btTypeFilter').value;
+  const list = document.getElementById('btHwList');
+  list.innerHTML = '';
+
+  const items = [];
+  machines.forEach(m => {
+    const isVirtual = DEST_TYPES.includes(m.type);
+    const mGroup = isVirtual ? m.type : 'campo';
+    if (sourceFilter && mGroup !== sourceFilter) return;
+    m.hardware.forEach(hw => {
+      if (typeFilter && hw.type !== typeFilter) return;
+      items.push({ hw, machine: m });
+    });
+  });
+
+  if (!items.length) {
+    list.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text3);font-size:12px">Nenhum equipamento encontrado com esses filtros</div>';
+    updateBtCount();
+    return;
+  }
+
+  items.forEach(({ hw, machine }) => {
+    const hcfg = hwConfig[hw.type] || { label: hw.type, color: '#888', emoji: '' };
+    const checked = _btSelectedIds.has(hw.id);
+    const row = document.createElement('label');
+    row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--border);user-select:none';
+    row.innerHTML = `
+      <input type="checkbox" value="${hw.id}" ${checked ? 'checked' : ''} onchange="btToggle(this)" style="flex-shrink:0;width:15px;height:15px;cursor:pointer">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${hw.name}</div>
+        <div style="font-size:10px;color:var(--text3)">${hw.id}${hw.sn ? ` · S/N: ${hw.sn}` : ''}${hw.patrimony ? ` · Pat: ${hw.patrimony}` : ''}</div>
+      </div>
+      <span style="font-size:10px;font-weight:700;color:${hcfg.color};letter-spacing:.5px;flex-shrink:0">${hcfg.label}</span>
+      <span style="font-size:10px;color:var(--text3);max-width:130px;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex-shrink:0">${machine.name}</span>
+    `;
+    list.appendChild(row);
+  });
+  updateBtCount();
+}
+
+function btToggle(checkbox) {
+  if (checkbox.checked) _btSelectedIds.add(checkbox.value);
+  else _btSelectedIds.delete(checkbox.value);
+  updateBtCount();
+}
+
+function btSelectAll() {
+  document.querySelectorAll('#btHwList input[type=checkbox]').forEach(cb => {
+    cb.checked = true;
+    _btSelectedIds.add(cb.value);
+  });
+  updateBtCount();
+}
+
+function btSelectNone() {
+  document.querySelectorAll('#btHwList input[type=checkbox]').forEach(cb => {
+    cb.checked = false;
+    _btSelectedIds.delete(cb.value);
+  });
+  updateBtCount();
+}
+
+function updateBtCount() {
+  const el = document.getElementById('btSelectedCount');
+  const n = _btSelectedIds.size;
+  el.textContent = n ? `(${n} selecionado${n > 1 ? 's' : ''})` : '';
+}
+
+async function submitBatchTransfer() {
+  const destId = document.getElementById('btDestSelect').value;
+  if (!destId) { markFieldError('btDestSelect'); showToast('warning', '⚠️', 'Selecione um destino', ''); return; }
+  if (!_btSelectedIds.size) { showToast('warning', '⚠️', 'Nenhum equipamento selecionado', 'Marque ao menos um item'); return; }
+
+  const destMachine = machines.find(m => m.id === destId);
+  const notes    = document.getElementById('btNotes').value.trim();
+  const dateTime = new Date().toISOString().slice(0, 16);
+  const techName = analystName || 'Analista';
+
+  const btn = document.getElementById('btConfirmBtn');
+  btn.disabled = true; btn.textContent = 'Transferindo...';
+
+  let ok = 0, fail = 0;
+
+  for (const hwId of _btSelectedIds) {
+    let sourceMachine = null, hw = null;
+    for (const m of machines) {
+      const found = m.hardware.find(h => h.id === hwId);
+      if (found) { sourceMachine = m; hw = found; break; }
+    }
+    if (!sourceMachine || !hw) { fail++; continue; }
+
+    // Atualiza estado local de forma otimista
+    sourceMachine.hardware = sourceMachine.hardware.filter(h => h.id !== hwId);
+    hw.installedAt = localDateStr();
+    destMachine.hardware.push(hw);
+
+    try {
+      await saveRecord({
+        id: `REG-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        action: 'transferir',
+        techName,
+        machineId: sourceMachine.id,
+        machineName: sourceMachine.name,
+        machineDestId: destId,
+        machineDestName: destMachine.name,
+        hwId: hw.id,
+        hwSn: hw.sn,
+        hwName: hw.name,
+        hwType: hw.type,
+        hwModelo: hw.name,
+        hwPatrimonio: hw.patrimony,
+        hwManuf: hw.manufacturer,
+        gpsLat: '', gpsLng: '', gpsAcc: '',
+        dateTime,
+        notes,
+      });
+      ok++;
+    } catch(e) {
+      console.error('batchTransfer item fail:', e, hw.id);
+      fail++;
+    }
+  }
+
+  btn.disabled = false; btn.textContent = '↔ Transferir Selecionados';
+
+  // Recarrega do servidor para garantir estado canônico
+  await loadFromSheets();
+
+  if (fail === 0) {
+    closeModal('batchTransferModal');
+    showToast('success', '↔', `${ok} transferido(s)`, `Para ${destMachine.name}`);
+  } else {
+    showToast(ok > 0 ? 'warning' : 'error', ok > 0 ? '⚠️' : '❌',
+      `${ok} transferido(s), ${fail} falha(s)`,
+      ok > 0 ? 'Os itens com erro podem estar em estado inconsistente' : 'Sem conexão — nenhuma alteração salva');
+  }
 }
 </script>
 </body>
