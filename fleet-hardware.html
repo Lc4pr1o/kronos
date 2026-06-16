@@ -1933,9 +1933,20 @@
       </div>
       <div class="form-group">
         <label class="form-label">DESTINO <span class="req">*</span></label>
-        <select class="form-select" id="btDestSelect">
+        <select class="form-select" id="btDestType" onchange="onBtDestTypeChange()">
           <option value="" disabled selected hidden>— Selecione o destino —</option>
+          <option value="ESTOQUE">Estoque</option>
+          <option value="MANUTENCAO">Manutenção</option>
+          <option value="INATIVO">Inativo</option>
+          <option value="maquina">Máquina específica...</option>
         </select>
+      </div>
+      <div id="btMachineSearchWrap" style="display:none;margin-top:-4px">
+        <input type="text" class="form-input" id="btMachineSearchInput" placeholder="Buscar frota ou nome..." oninput="renderBtMachineGrid()" style="margin-bottom:8px">
+        <div style="max-height:200px;overflow-y:auto;border-radius:8px;border:1px solid var(--border)">
+          <div class="machine-select-grid" id="btMachineGrid"></div>
+        </div>
+        <div id="btMachineSelected" style="display:none;margin-top:8px;padding:8px 12px;background:var(--surface3);border:1px solid var(--accent);border-radius:8px;font-size:12px;color:var(--text)"></div>
       </div>
       <div class="form-group">
         <label class="form-label">OBSERVAÇÕES <span style="font-size:9px;color:var(--text3);font-weight:400">(opcional)</span></label>
@@ -5144,9 +5155,11 @@ async function submitBatch() {
 // BATCH TRANSFER
 // =========================================
 let _btSelectedIds = new Set();
+let _btSelectedMachineId = null;
 
 function openBatchTransfer() {
   _btSelectedIds = new Set();
+  _btSelectedMachineId = null;
 
   // Popula filtro de tipo de HW
   const typeSel = document.getElementById('btTypeFilter');
@@ -5159,23 +5172,65 @@ function openBatchTransfer() {
     typeSel.appendChild(opt);
   });
 
-  // Popula select de destino
-  const dstSel = document.getElementById('btDestSelect');
-  dstSel.innerHTML = '<option value="" disabled selected hidden>— Selecione o destino —</option>';
-  machines.forEach(m => {
-    const cfg = machineConfig[m.type] || { emoji: '', label: m.type };
-    const opt = document.createElement('option');
-    opt.value = m.id;
-    const emo = safeEmoji(cfg.emoji);
-    opt.textContent = emo ? `${emo} ${m.name}` : m.name;
-    dstSel.appendChild(opt);
-  });
-
   document.getElementById('btSourceFilter').value = '';
   document.getElementById('btTypeFilter').value = '';
+  document.getElementById('btDestType').value = '';
+  document.getElementById('btMachineSearchWrap').style.display = 'none';
+  document.getElementById('btMachineSearchInput').value = '';
+  document.getElementById('btMachineSelected').style.display = 'none';
   document.getElementById('btNotes').value = '';
   renderBatchTransferList();
   openModal('batchTransferModal');
+}
+
+function onBtDestTypeChange() {
+  const val = document.getElementById('btDestType').value;
+  const wrap = document.getElementById('btMachineSearchWrap');
+  _btSelectedMachineId = null;
+  document.getElementById('btMachineSelected').style.display = 'none';
+  if (val === 'maquina') {
+    wrap.style.display = 'block';
+    document.getElementById('btMachineSearchInput').value = '';
+    renderBtMachineGrid();
+  } else {
+    wrap.style.display = 'none';
+  }
+}
+
+function renderBtMachineGrid() {
+  const term = (document.getElementById('btMachineSearchInput').value || '').toLowerCase().trim();
+  const grid = document.getElementById('btMachineGrid');
+  grid.innerHTML = '';
+
+  const realMachines = machines.filter(m => !DEST_TYPES.includes(m.type));
+  const list = term
+    ? realMachines.filter(m => m.name.toLowerCase().includes(term) || String(m.id).toLowerCase().includes(term))
+    : realMachines;
+
+  if (!list.length) {
+    grid.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text3);font-size:12px">Nenhuma máquina encontrada</div>';
+    return;
+  }
+
+  list.forEach(m => {
+    const cfg = machineConfig[m.type] || { emoji: '🚛', color: 'currentColor' };
+    const isSelected = _btSelectedMachineId === m.id;
+    const div = document.createElement('div');
+    div.className = `msq-item${isSelected ? ' selected-target' : ''}`;
+    div.innerHTML = `
+      <div class="msq-icon">${renderIcon(cfg.emoji, 20, cfg.color || 'currentColor')}</div>
+      <div class="msq-name">${m.name}</div>
+      <div class="msq-id">${m.id}</div>
+    `;
+    div.onclick = () => {
+      _btSelectedMachineId = m.id;
+      const selEl = document.getElementById('btMachineSelected');
+      selEl.style.display = 'block';
+      selEl.innerHTML = `<span style="color:var(--text3);font-size:10px">SELECIONADA: </span><strong>${m.name}</strong> <span style="color:var(--text3)">(${m.id})</span>`;
+      renderBtMachineGrid();
+    };
+    grid.appendChild(div);
+  });
 }
 
 function renderBatchTransferList() {
@@ -5249,8 +5304,10 @@ function updateBtCount() {
 }
 
 async function submitBatchTransfer() {
-  const destId = document.getElementById('btDestSelect').value;
-  if (!destId) { markFieldError('btDestSelect'); showToast('warning', '⚠️', 'Selecione um destino', ''); return; }
+  const destType = document.getElementById('btDestType').value;
+  if (!destType) { markFieldError('btDestType'); showToast('warning', '⚠️', 'Selecione um destino', ''); return; }
+  const destId = destType === 'maquina' ? _btSelectedMachineId : destType;
+  if (!destId) { showToast('warning', '⚠️', 'Selecione uma máquina', 'Busque e clique na máquina de destino'); return; }
   if (!_btSelectedIds.size) { showToast('warning', '⚠️', 'Nenhum equipamento selecionado', 'Marque ao menos um item'); return; }
 
   const destMachine = machines.find(m => m.id === destId);
