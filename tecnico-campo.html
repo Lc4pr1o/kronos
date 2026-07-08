@@ -491,6 +491,14 @@
   /* ── HISTORY SCREEN ── */
   .history-list { display: flex; flex-direction: column; gap: 10px; }
 
+  .hist-toolbar { display: flex; justify-content: flex-end; margin-bottom: 12px; }
+  .hist-export-btn {
+    font-size: 12px; font-family: 'JetBrains Mono', monospace; font-weight: 700;
+    background: rgba(46,204,138,0.12); border: 1px solid rgba(46,204,138,0.4);
+    color: var(--green); padding: 8px 14px; border-radius: 8px; cursor: pointer;
+  }
+  .hist-export-btn:disabled { opacity: 0.4; cursor: default; }
+
   .history-card {
     background: var(--surface2);
     border: 1px solid var(--border);
@@ -1250,6 +1258,9 @@
 
 <!-- ══════════════ HISTÓRICO ══════════════ -->
 <div class="screen" id="screen-historico">
+  <div class="hist-toolbar" id="histToolbar">
+    <button class="hist-export-btn" id="exportWaBtn" onclick="exportDailyLogWhatsApp()">📤 Exportar (WhatsApp)</button>
+  </div>
   <div id="historyList" class="history-list"></div>
 </div>
 
@@ -2554,6 +2565,77 @@ function renderHistory() {
     `;
     container.appendChild(card);
   });
+
+  const exportBtn = document.getElementById('exportWaBtn');
+  if (exportBtn) exportBtn.disabled = getTodayRecords().length === 0;
+}
+
+function recordLocalDateStr(r) {
+  if (r.dateTime) return r.dateTime.slice(0, 10);
+  if (!r.createdAt) return '';
+  const d = new Date(r.createdAt);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function getTodayRecords() {
+  const today = localDateStr();
+  return getLocalRecords().filter(r => recordLocalDateStr(r) === today);
+}
+
+function formatWaBlock(r, index) {
+  const label = actionLabels[r.action] || r.action;
+  const hwParts = [r.hwName, (r.hwModelo && r.hwModelo !== r.hwName) ? r.hwModelo : null].filter(Boolean);
+  const hwTitle = hwParts.join(' ') || r.hwId || '—';
+  const hwDetail = [r.hwSn && `S/N: ${r.hwSn}`, r.hwPatrimonio && `Pat. ${r.hwPatrimonio}`].filter(Boolean).join(' · ');
+
+  let machineLine;
+  if (r.action === 'instalar') machineLine = `Máquina: ${r.machineDestName || r.machineName || '—'}`;
+  else if (r.action === 'transferir') machineLine = `De: ${r.machineName || '—'} → Para: ${r.machineDestName || '—'}`;
+  else machineLine = `Máquina: ${r.machineName || '—'}`;
+
+  const time = r.dateTime ? r.dateTime.slice(11, 16) : '—';
+  const lines = [
+    `*${index}. ${label}*`,
+    `Equipamento: _${hwTitle}${hwDetail ? ` (${hwDetail})` : ''}_`,
+    machineLine,
+    `Horário: _${time}_`,
+  ];
+  if (r.notes) lines.push(`Obs: _${r.notes}_`);
+  return lines.join('\n');
+}
+
+function buildWhatsAppSummary(records) {
+  const tech = localStorage.getItem('techName') || (records[0] && records[0].techName) || 'Técnico';
+  const [y, m, d] = localDateStr().split('-');
+  const sorted = records.slice().sort((a, b) => (a.dateTime || '').localeCompare(b.dateTime || ''));
+  const header = [
+    `*🔧 KRONOS — Registro do Dia*`,
+    `_Técnico: ${tech}_`,
+    `_Data: ${d}/${m}/${y}_`,
+    `_Total: ${sorted.length} ação(ões)_`,
+  ].join('\n');
+  return [header, ...sorted.map((r, i) => formatWaBlock(r, i + 1))].join('\n\n');
+}
+
+async function exportDailyLogWhatsApp() {
+  const records = getTodayRecords();
+  if (!records.length) { showToast('err', '📋', 'Nenhum registro hoje para exportar'); return; }
+
+  const text = buildWhatsAppSummary(records);
+  let shared = false;
+  if (navigator.share) {
+    try { await navigator.share({ text }); shared = true; }
+    catch (e) { shared = false; }
+  }
+  if (!shared) {
+    try {
+      await navigator.clipboard.writeText(text);
+      showToast('ok', '📋', 'Texto copiado para a área de transferência');
+    } catch (e) {
+      console.error('exportDailyLogWhatsApp clipboard:', e);
+      showToast('err', '⚠️', 'Não foi possível copiar o texto');
+    }
+  }
 }
 
 // ══════════════════════════════════════════

@@ -3560,6 +3560,146 @@ function formatHistDate(dateStr) {
   } catch { return dateStr; }
 }
 
+function parseRegIdMs(id) {
+  const m = /^REG-(\d+)/.exec(String(id || ''));
+  return m ? Number(m[1]) : null;
+}
+
+function hwLabelOf(r) {
+  const nome = (r.hardwareNome || '').trim();
+  const mod  = (r.hardwareModelo || '').trim();
+  return (nome && mod && nome.toLowerCase() !== mod.toLowerCase()) ? `${nome} ${mod}` : (nome || mod);
+}
+
+function hwInfoOf(r) {
+  const snInfo  = r.hardwareSN ? `S/N: ${r.hardwareSN}` : '';
+  const patInfo = r.hardwarePatrimonio ? `Pat. ${r.hardwarePatrimonio}` : '';
+  return [snInfo, patInfo].filter(Boolean).join(' · ');
+}
+
+const HW_SWAP_PAIR_WINDOW_MS = 30000;
+
+// Agrupa pares "troca de hardware" (conflito de tipo em confirmHwConflict gera
+// 2 registros — um de saída, um de entrada — para a mesma máquina/técnico).
+function groupHistoryRecords(registros, machineId) {
+  const curId = String(machineId);
+  const consumed = new Set();
+  const items = [];
+
+  for (let i = 0; i < registros.length; i++) {
+    if (consumed.has(i)) continue;
+    const rOut = registros[i];
+    const outNorm = HIST_ACAO_NORM[(rOut.acao || '').toLowerCase()] || (rOut.acao || '').toLowerCase();
+    const isOut = outNorm === 'transfer' && String(rOut.maquinaId || '') === curId;
+    if (!isOut) continue;
+
+    let bestJ = -1, bestDelta = Infinity;
+    for (let j = 0; j < registros.length; j++) {
+      if (j === i || consumed.has(j)) continue;
+      const rIn = registros[j];
+      const inNorm = HIST_ACAO_NORM[(rIn.acao || '').toLowerCase()] || (rIn.acao || '').toLowerCase();
+      const isIn = (inNorm === 'install' || inNorm === 'transfer') && String(rIn.maquinaDestinoId || '') === curId;
+      if (!isIn) continue;
+      if ((rOut.tecnico || '') !== (rIn.tecnico || '')) continue;
+      const tipoOut = (rOut.hardwareTipo || '').toLowerCase();
+      const tipoIn  = (rIn.hardwareTipo || '').toLowerCase();
+      if (!tipoOut || !tipoIn || tipoOut !== tipoIn) continue;
+      const idOut = rOut.hardwareId || rOut.hardwareSN || '';
+      const idIn  = rIn.hardwareId || rIn.hardwareSN || '';
+      if (idOut && idIn && idOut === idIn) continue;
+
+      const msOut = parseRegIdMs(rOut.id);
+      const msIn  = parseRegIdMs(rIn.id);
+      let matches, delta;
+      if (msOut !== null && msIn !== null) {
+        delta = Math.abs(msOut - msIn);
+        matches = delta <= HW_SWAP_PAIR_WINDOW_MS;
+      } else {
+        matches = rOut.dataHora && rOut.dataHora === rIn.dataHora;
+        delta = 0;
+      }
+      if (matches && delta < bestDelta) { bestDelta = delta; bestJ = j; }
+    }
+
+    if (bestJ !== -1) {
+      consumed.add(i);
+      consumed.add(bestJ);
+      items.push({ type: 'swap', out: rOut, in: registros[bestJ] });
+    }
+  }
+
+  registros.forEach((r, idx) => {
+    if (!consumed.has(idx)) items.push({ type: 'single', record: r });
+  });
+
+  // Preserva a ordem original (dataHora desc) entre os itens agrupados.
+  items.sort((a, b) => {
+    const idxA = a.type === 'swap' ? registros.indexOf(a.out) : registros.indexOf(a.record);
+    const idxB = b.type === 'swap' ? registros.indexOf(b.out) : registros.indexOf(b.record);
+    return idxA - idxB;
+  });
+
+  return items;
+}
+
+function renderHistSingle(r, machineId) {
+  const acaoKey = (r.acao || '').toLowerCase();
+  const cfg = HIST_ACTION_CFG[acaoKey] || { label: r.acao || '—', color: '#888888', icon: '•' };
+  const acaoNorm = HIST_ACAO_NORM[acaoKey] || acaoKey;
+  const curId = String(machineId);
+  const mId   = String(r.maquinaId || '');
+  const dId   = String(r.maquinaDestinoId || '');
+
+  let sub = `Técnico: ${r.tecnico || '—'}`;
+  if (acaoNorm === 'install') {
+    const from = r.maquinaNome || mId || '';
+    if (from) sub += ` · ${from} → Instalado aqui`;
+  } else if (acaoNorm === 'remove') {
+    sub += ` · Removido → ${r.maquinaDestinoNome || dId || '—'}`;
+  } else if (acaoNorm === 'transfer') {
+    if (dId === curId) sub += ` · De: ${r.maquinaNome || mId || '—'}`;
+    else sub += ` · Para: ${r.maquinaDestinoNome || dId || '—'}`;
+  }
+
+  const hwLabel = hwLabelOf(r);
+  const title   = `${cfg.label} – ${hwLabel || r.hardwareSN || r.hardwarePatrimonio || '—'}`;
+  const obs     = r.observacoes ? `<div class="hist-obs">"${r.observacoes}"</div>` : '';
+
+  const hwInfo  = hwInfoOf(r);
+  const hwInfoHtml = hwInfo ? `<div class="hist-obs" style="color:var(--text3)">${hwInfo}</div>` : '';
+
+  return `<div class="hist-item">
+    <div class="hist-avatar" style="background:${cfg.color}22;color:${cfg.color};border:1px solid ${cfg.color}44">${cfg.icon}</div>
+    <div class="hist-content">
+      <div class="hist-title" style="color:${cfg.color}">${title}</div>
+      <div class="hist-sub">${sub}</div>
+      ${hwInfoHtml}
+      ${obs}
+      <div class="hist-date">${formatHistDate(r.dataHora)}</div>
+    </div>
+  </div>`;
+}
+
+function renderHistSwap(rOut, rIn) {
+  const tecnico = rOut.tecnico || rIn.tecnico || '—';
+  const outLabel = hwLabelOf(rOut) || rOut.hardwareSN || rOut.hardwarePatrimonio || '—';
+  const inLabel  = hwLabelOf(rIn)  || rIn.hardwareSN  || rIn.hardwarePatrimonio  || '—';
+  const outInfo = hwInfoOf(rOut);
+  const inInfo  = hwInfoOf(rIn);
+  const dataHora = rIn.dataHora || rOut.dataHora;
+
+  return `<div class="hist-item">
+    <div class="hist-avatar" style="background:#4a9eff22;color:#4a9eff;border:1px solid #4a9eff44">⇌</div>
+    <div class="hist-content">
+      <div class="hist-title" style="color:#4a9eff">Troca de hardware</div>
+      <div class="hist-sub">Técnico: ${tecnico}</div>
+      <div class="hist-obs" style="color:var(--text3)">↑ Saiu: ${outLabel}${outInfo ? ` (${outInfo})` : ''} → ${rOut.maquinaDestinoNome || '—'}</div>
+      <div class="hist-obs" style="color:var(--text3)">↓ Entrou: ${inLabel}${inInfo ? ` (${inInfo})` : ''}</div>
+      <div class="hist-date">${formatHistDate(dataHora)}</div>
+    </div>
+  </div>`;
+}
+
 async function renderHistory(machineId) {
   const list = document.getElementById('histList');
   const secTitle = document.getElementById('histSecTitle');
@@ -3585,49 +3725,12 @@ async function renderHistory(machineId) {
       return;
     }
 
-    if (secCount) secCount.textContent = registros.length;
+    const items = groupHistoryRecords(registros, machineId);
+    if (secCount) secCount.textContent = items.length;
 
-    list.innerHTML = registros.map(r => {
-      const acaoKey = (r.acao || '').toLowerCase();
-      const cfg = HIST_ACTION_CFG[acaoKey] || { label: r.acao || '—', color: '#888888', icon: '•' };
-      const acaoNorm = HIST_ACAO_NORM[acaoKey] || acaoKey;
-      const curId = String(machineId);
-      const mId   = String(r.maquinaId || '');
-      const dId   = String(r.maquinaDestinoId || '');
-
-      let sub = `Técnico: ${r.tecnico || '—'}`;
-      if (acaoNorm === 'install') {
-        const from = r.maquinaNome || mId || '';
-        if (from) sub += ` · ${from} → Instalado aqui`;
-      } else if (acaoNorm === 'remove') {
-        sub += ` · Removido → ${r.maquinaDestinoNome || dId || '—'}`;
-      } else if (acaoNorm === 'transfer') {
-        if (dId === curId) sub += ` · De: ${r.maquinaNome || mId || '—'}`;
-        else sub += ` · Para: ${r.maquinaDestinoNome || dId || '—'}`;
-      }
-
-      const nome = (r.hardwareNome || '').trim();
-      const mod  = (r.hardwareModelo || '').trim();
-      const hwLabel = (nome && mod && nome.toLowerCase() !== mod.toLowerCase()) ? `${nome} ${mod}` : (nome || mod);
-      const title   = `${cfg.label} – ${hwLabel || r.hardwareSN || r.hardwarePatrimonio || '—'}`;
-      const obs     = r.observacoes ? `<div class="hist-obs">"${r.observacoes}"</div>` : '';
-
-      const snInfo  = r.hardwareSN ? `S/N: ${r.hardwareSN}` : '';
-      const patInfo = r.hardwarePatrimonio ? `Pat. ${r.hardwarePatrimonio}` : '';
-      const hwInfo  = [snInfo, patInfo].filter(Boolean).join(' · ');
-      const hwInfoHtml = hwInfo ? `<div class="hist-obs" style="color:var(--text3)">${hwInfo}</div>` : '';
-
-      return `<div class="hist-item">
-        <div class="hist-avatar" style="background:${cfg.color}22;color:${cfg.color};border:1px solid ${cfg.color}44">${cfg.icon}</div>
-        <div class="hist-content">
-          <div class="hist-title" style="color:${cfg.color}">${title}</div>
-          <div class="hist-sub">${sub}</div>
-          ${hwInfoHtml}
-          ${obs}
-          <div class="hist-date">${formatHistDate(r.dataHora)}</div>
-        </div>
-      </div>`;
-    }).join('');
+    list.innerHTML = items.map(item =>
+      item.type === 'swap' ? renderHistSwap(item.out, item.in) : renderHistSingle(item.record, machineId)
+    ).join('');
 
   } catch(e) {
     if (String(selectedMachineId) !== String(machineId)) return;
