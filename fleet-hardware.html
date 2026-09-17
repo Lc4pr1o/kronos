@@ -103,7 +103,7 @@ select option { background: var(--surface); color: var(--text); }
 .sidebar.expanded .nav-item .badge { display: inline-block; }
 .nav-item.active .badge { background: rgba(23,25,35,0.2); color: #171923; }
 
-.sidebar-bottom .nav-item { color: var(--text3); }
+.sidebar-bottom .nav-item:not(.active) { color: var(--text3); }
 
 /* ── MAIN ── */
 .main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
@@ -388,7 +388,7 @@ h1.page-title { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
       </button>
     </nav>
     <div class="sidebar-bottom">
-      <button class="nav-item" onclick="openSettings()">
+      <button class="nav-item" onclick="navigate('configuracoes', this)">
         <span class="material-symbols-outlined">settings</span><span class="nav-label">Configurações</span>
       </button>
     </div>
@@ -509,6 +509,55 @@ h1.page-title { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
           <button class="btn btn-primary" onclick="openAddTecnico()"><span class="material-symbols-outlined">add</span>Técnico</button>
         </div>
         <div class="tech-grid" id="tecnicosGrid"></div>
+      </section>
+
+      <!-- CONFIGURAÇÕES -->
+      <section id="view-configuracoes" class="view">
+        <h1 class="page-title">Configurações</h1>
+        <p class="page-sub">Perfil e catálogos — cada alteração é salva na hora, direto no banco</p>
+
+        <div class="panel" style="margin-bottom:18px">
+          <div class="field" style="max-width:320px">
+            <label>NOME DO ANALISTA</label>
+            <input id="stAnalystName" placeholder="Seu nome" onchange="saveAnalystNameField()">
+          </div>
+        </div>
+
+        <div class="panel-grid" style="margin-bottom:18px">
+          <div class="panel">
+            <div class="detail-hw-header" style="margin-bottom:14px">
+              <h3 style="margin:0">Tipos de Hardware</h3>
+              <button class="btn btn-ghost" style="padding:6px 12px;font-size:11.5px" onclick="addHwTypeRow()"><span class="material-symbols-outlined" style="font-size:14px">add</span>Novo tipo</button>
+            </div>
+            <div class="settings-list" id="stHwTypesList"></div>
+          </div>
+          <div class="panel">
+            <div class="detail-hw-header" style="margin-bottom:14px">
+              <h3 style="margin:0">Tipos de Máquina</h3>
+              <button class="btn btn-ghost" style="padding:6px 12px;font-size:11.5px" onclick="addMachineTypeRow()"><span class="material-symbols-outlined" style="font-size:14px">add</span>Novo tipo</button>
+            </div>
+            <div class="settings-list" id="stMachineTypesList"></div>
+          </div>
+        </div>
+
+        <div class="panel-grid">
+          <div class="panel">
+            <h3>Unidades</h3>
+            <div class="settings-list" id="stUnidadesList"></div>
+            <div class="target-search" style="margin-top:10px">
+              <input id="stNovaUnidade" placeholder="Nova unidade (ex: FAZENDA X)" onkeydown="if(event.key==='Enter'){event.preventDefault();addUnidade();}">
+              <button class="btn btn-ghost" style="padding:6px 12px;font-size:11.5px;flex-shrink:0" onclick="addUnidade()">Adicionar</button>
+            </div>
+          </div>
+          <div class="panel">
+            <h3>Fabricantes</h3>
+            <div class="settings-list" id="stFabricantesList"></div>
+            <div class="target-search" style="margin-top:10px">
+              <input id="stNovoFabricante" placeholder="Novo fabricante (ex: New Holland)" onkeydown="if(event.key==='Enter'){event.preventDefault();addFabricante();}">
+              <button class="btn btn-ghost" style="padding:6px 12px;font-size:11.5px;flex-shrink:0" onclick="addFabricante()">Adicionar</button>
+            </div>
+          </div>
+        </div>
       </section>
 
     </main>
@@ -713,62 +762,6 @@ h1.page-title { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
   </div>
 </div>
 
-<!-- MODAL: CONFIGURAÇÕES -->
-<div class="modal-overlay" id="settingsModal" onclick="if(event.target===this) closeModal('settingsModal')">
-  <div class="modal wide">
-    <div class="modal-header">
-      <div>
-        <div class="modal-title">⚙️ Configurações</div>
-        <div class="modal-sub">Perfil e catálogos — cada alteração é salva na hora, direto no banco</div>
-      </div>
-      <button class="modal-close" onclick="closeModal('settingsModal')">✕</button>
-    </div>
-    <div class="modal-body">
-      <div class="field">
-        <label>NOME DO ANALISTA</label>
-        <input id="stAnalystName" placeholder="Seu nome" onchange="saveAnalystNameField()">
-      </div>
-
-      <div class="settings-section">
-        <div class="detail-hw-header" style="margin-bottom:10px">
-          <h3 style="margin:0">Tipos de Hardware</h3>
-          <button class="btn btn-ghost" style="padding:6px 12px;font-size:11.5px" onclick="addHwTypeRow()"><span class="material-symbols-outlined" style="font-size:14px">add</span>Novo tipo</button>
-        </div>
-        <div class="settings-list" id="stHwTypesList"></div>
-      </div>
-
-      <div class="settings-section">
-        <div class="detail-hw-header" style="margin-bottom:10px">
-          <h3 style="margin:0">Tipos de Máquina</h3>
-          <button class="btn btn-ghost" style="padding:6px 12px;font-size:11.5px" onclick="addMachineTypeRow()"><span class="material-symbols-outlined" style="font-size:14px">add</span>Novo tipo</button>
-        </div>
-        <div class="settings-list" id="stMachineTypesList"></div>
-      </div>
-
-      <div class="settings-section">
-        <h3>Unidades</h3>
-        <div class="settings-list" id="stUnidadesList"></div>
-        <div class="target-search" style="margin-top:10px">
-          <input id="stNovaUnidade" placeholder="Nova unidade (ex: FAZENDA X)" onkeydown="if(event.key==='Enter'){event.preventDefault();addUnidade();}">
-          <button class="btn btn-ghost" style="padding:6px 12px;font-size:11.5px;flex-shrink:0" onclick="addUnidade()">Adicionar</button>
-        </div>
-      </div>
-
-      <div class="settings-section">
-        <h3>Fabricantes</h3>
-        <div class="settings-list" id="stFabricantesList"></div>
-        <div class="target-search" style="margin-top:10px">
-          <input id="stNovoFabricante" placeholder="Novo fabricante (ex: New Holland)" onkeydown="if(event.key==='Enter'){event.preventDefault();addFabricante();}">
-          <button class="btn btn-ghost" style="padding:6px 12px;font-size:11.5px;flex-shrink:0" onclick="addFabricante()">Adicionar</button>
-        </div>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button type="button" class="btn btn-primary" onclick="closeModal('settingsModal')">Fechar</button>
-    </div>
-  </div>
-</div>
-
 <div class="toast-wrap" id="toastWrap"></div>
 
 <script>
@@ -787,7 +780,7 @@ h1.page-title { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
 function navigate(view, el) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.getElementById('view-' + view).classList.add('active');
-  document.querySelectorAll('.sidebar > nav .nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelectorAll('.sidebar nav .nav-item, .sidebar-bottom .nav-item').forEach(n => n.classList.remove('active'));
   if (el) el.classList.add('active');
   document.body.classList.remove('open');
 }
@@ -1055,6 +1048,7 @@ function renderAllViews() {
   renderTecnicos();
   renderHistoricoList();
   renderDashboard();
+  renderSettingsLists();
   if (currentDetailMachineId) renderMachineDetail();
 }
 function renderTecnicos() {
@@ -1750,13 +1744,8 @@ function saveAnalystNameField() {
   showToast('✅', 'Nome salvo', analystName);
 }
 
-function openSettings() {
-  document.getElementById('stAnalystName').value = analystName;
-  renderSettingsLists();
-  openModal('settingsModal');
-}
-
 function renderSettingsLists() {
+  document.getElementById('stAnalystName').value = analystName;
   document.getElementById('stHwTypesList').innerHTML = Object.entries(HW_TYPES).map(([tipo, cfg]) => `
     <div class="settings-row" data-tipo="${tipo}">
       <span class="icon">${renderIcon(cfg.icon, 20, cfg.color)}</span>
