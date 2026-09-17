@@ -226,6 +226,94 @@ h1.page-title { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
 .tech-stat b { display: block; font-size: 16px; }
 .tech-stat span { font-size: 10px; color: var(--text3); }
 
+/* ── VIEW HEADER / BOTÕES DE AÇÃO ── */
+.view-header { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
+.btn {
+  padding: 10px 18px; border-radius: 12px; border: none; font-family: inherit;
+  font-size: 12.5px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+}
+.btn .material-symbols-outlined { font-size: 16px; }
+.btn-primary { background: var(--gradient); color: #171923; }
+.btn-ghost { background: var(--surface); color: var(--text2); border: 1px solid var(--card-border); }
+.btn-ghost:hover { color: var(--text); }
+
+/* ── MODAIS ── */
+.modal-overlay {
+  display: none; position: fixed; inset: 0; z-index: 100;
+  background: rgba(8,9,14,0.6); align-items: center; justify-content: center; padding: 20px;
+}
+.modal-overlay.active { display: flex; animation: fadeIn 0.15s ease; }
+.modal {
+  background: var(--surface); border-radius: 20px; width: 100%; max-width: 480px;
+  max-height: 86vh; overflow-y: auto; box-shadow: var(--shadow); border: 1px solid var(--card-border);
+}
+.modal.wide { max-width: 760px; }
+.modal-header { display: flex; align-items: flex-start; justify-content: space-between; padding: 20px 24px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.modal-title { font-size: 16px; font-weight: 700; }
+.modal-sub { font-size: 11.5px; color: var(--text2); margin-top: 3px; }
+.modal-close {
+  width: 30px; height: 30px; border-radius: 9px; background: rgba(255,255,255,0.05); border: none;
+  color: var(--text2); cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.modal-close:hover { background: rgba(255,255,255,0.1); color: var(--text); }
+.modal-body { padding: 20px 24px; display: flex; flex-direction: column; gap: 16px; }
+.modal-footer { display: flex; justify-content: flex-end; gap: 10px; padding: 16px 24px; border-top: 1px solid rgba(255,255,255,0.05); }
+
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field label { font-size: 10.5px; color: var(--text2); font-weight: 700; letter-spacing: 0.4px; }
+.field input, .field select {
+  background: rgba(255,255,255,0.04); border: 1px solid var(--card-border); border-radius: 10px;
+  padding: 10px 12px; color: var(--text); font-family: inherit; font-size: 13px;
+}
+.field input:focus, .field select:focus { outline: none; border-color: #f5a623; }
+.field-row { display: flex; gap: 12px; }
+.field-row .field { flex: 1; }
+
+.detail-hero { display: flex; align-items: center; gap: 16px; }
+.detail-hero .ic-icon { width: 54px; height: 54px; font-size: 26px; border-radius: 14px; flex-shrink: 0; }
+.detail-hero-info h2 { font-size: 17px; font-weight: 700; }
+.detail-hero-info .meta { font-size: 11.5px; color: var(--text2); margin-top: 2px; }
+.detail-info-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.detail-info-grid .fld { background: rgba(255,255,255,0.03); border-radius: 10px; padding: 8px 10px; }
+.detail-info-grid .fld .l { font-size: 9px; color: var(--text3); letter-spacing: 0.5px; }
+.detail-info-grid .fld .v { font-size: 12.5px; font-weight: 700; margin-top: 2px; }
+.detail-hw-header { display: flex; align-items: center; justify-content: space-between; }
+.detail-hw-header h3 { font-size: 13.5px; font-weight: 700; }
+.detail-hw-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; }
+.hw-mini-card { background: rgba(255,255,255,0.03); border: 1px solid var(--card-border); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 7px; }
+.hw-mini-top { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.hw-mini-badge { font-size: 9px; font-weight: 700; padding: 2px 8px; border-radius: 10px; white-space: nowrap; }
+.hw-mini-actions { display: flex; gap: 4px; }
+.hw-mini-btn {
+  width: 24px; height: 24px; border-radius: 7px; background: rgba(255,255,255,0.06); border: none;
+  color: var(--text2); display: flex; align-items: center; justify-content: center; cursor: pointer;
+}
+.hw-mini-btn:hover { background: rgba(255,255,255,0.14); color: var(--text); }
+.hw-mini-name { font-size: 13px; font-weight: 700; }
+.hw-mini-meta { font-size: 10.5px; color: var(--text3); }
+.hw-empty-state { grid-column: 1 / -1; text-align: center; padding: 28px 10px; color: var(--text2); font-size: 13px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+
+.target-search { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.04); border: 1px solid var(--card-border); border-radius: 10px; padding: 9px 12px; }
+.target-search input { flex: 1; background: none; border: none; outline: none; color: var(--text); font-family: inherit; font-size: 13px; }
+.target-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; max-height: 260px; overflow-y: auto; }
+.target-item { background: rgba(255,255,255,0.03); border: 1px solid var(--card-border); border-radius: 12px; padding: 12px 8px; text-align: center; cursor: pointer; font-size: 11.5px; font-weight: 600; }
+.target-item:hover { border-color: rgba(245,166,35,0.45); }
+.target-item.selected { background: var(--gradient); color: #171923; border-color: transparent; }
+.target-item.disabled { opacity: 0.3; pointer-events: none; }
+.target-item .ti-icon { font-size: 18px; margin-bottom: 4px; }
+.target-item .ti-id { font-size: 9.5px; opacity: 0.7; margin-top: 2px; font-weight: 400; }
+
+.toast-wrap { position: fixed; bottom: 24px; right: 24px; display: flex; flex-direction: column; gap: 10px; z-index: 200; }
+.toast {
+  background: var(--surface); border: 1px solid var(--card-border); box-shadow: var(--shadow); border-radius: 14px;
+  padding: 13px 16px; display: flex; gap: 11px; align-items: flex-start; min-width: 250px; max-width: 320px;
+  animation: toastIn 0.2s ease; transition: opacity 0.2s ease, transform 0.2s ease;
+}
+@keyframes toastIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.toast-icon { font-size: 17px; flex-shrink: 0; }
+.toast-title { font-size: 12.5px; font-weight: 700; }
+.toast-sub { font-size: 11px; color: var(--text2); margin-top: 2px; }
+
 .burger { display: none; }
 @media (max-width: 880px) {
   .sidebar { position: fixed; z-index: 40; height: 100vh; width: 232px; transform: translateX(-100%); }
@@ -263,7 +351,7 @@ h1.page-title { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
         <span class="material-symbols-outlined">grid_view</span><span class="nav-label">Dashboard</span>
       </button>
       <button class="nav-item" onclick="navigate('frota', this)">
-        <span class="material-symbols-outlined">agriculture</span><span class="nav-label">Frota</span><span class="badge">111</span>
+        <span class="material-symbols-outlined">agriculture</span><span class="nav-label">Frota</span><span class="badge" id="frotaBadge">—</span>
       </button>
       <button class="nav-item" onclick="navigate('hardwares', this)">
         <span class="material-symbols-outlined">memory</span><span class="nav-label">Hardwares</span>
@@ -304,22 +392,22 @@ h1.page-title { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
         <div class="kpi-grid">
           <div class="kpi-card primary">
             <div class="kpi-top"><span class="kpi-label">Máquinas na frota</span><div class="kpi-icon"><span class="material-symbols-outlined">agriculture</span></div></div>
-            <div class="kpi-value">111</div>
+            <div class="kpi-value" id="kpiMaquinas">—</div>
             <div class="kpi-delta">5 unidades ativas</div>
           </div>
           <div class="kpi-card">
             <div class="kpi-top"><span class="kpi-label">Hardwares instalados</span><div class="kpi-icon"><span class="material-symbols-outlined">memory</span></div></div>
-            <div class="kpi-value">284</div>
-            <div class="kpi-delta">↑ 12 este mês</div>
+            <div class="kpi-value" id="kpiHardwares">—</div>
+            <div class="kpi-delta">nas máquinas da frota</div>
           </div>
           <div class="kpi-card">
-            <div class="kpi-top"><span class="kpi-label">Movimentações (mês)</span><div class="kpi-icon"><span class="material-symbols-outlined">sync_alt</span></div></div>
-            <div class="kpi-value">37</div>
-            <div class="kpi-delta">↑ 8% vs. mês anterior</div>
+            <div class="kpi-top"><span class="kpi-label">Movimentações</span><div class="kpi-icon"><span class="material-symbols-outlined">sync_alt</span></div></div>
+            <div class="kpi-value" id="kpiMovs">—</div>
+            <div class="kpi-delta">registradas na sessão</div>
           </div>
           <div class="kpi-card warn">
             <div class="kpi-top"><span class="kpi-label">Sem hardware</span><div class="kpi-icon"><span class="material-symbols-outlined">warning</span></div></div>
-            <div class="kpi-value">9</div>
+            <div class="kpi-value" id="kpiSemHw">—</div>
             <div class="kpi-delta">requer atenção</div>
           </div>
         </div>
@@ -335,29 +423,20 @@ h1.page-title { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
           </div>
           <div class="panel">
             <h3>Últimas movimentações</h3>
-            <div class="timeline-item">
-              <div class="tl-dot install">↓</div>
-              <div class="tl-body"><div class="tl-title">GS3 instalado — TRATOR JD (7230J)</div><div class="tl-sub">João Silva · Fazenda Pedra</div></div>
-              <div class="tl-time">14:32</div>
-            </div>
-            <div class="timeline-item">
-              <div class="tl-dot transfer">⇄</div>
-              <div class="tl-body"><div class="tl-title">StarFire 6000 transferido — Estoque → COLHEDORA CASE</div><div class="tl-sub">Marcos Lima · Fazenda Cedro</div></div>
-              <div class="tl-time">11:05</div>
-            </div>
-            <div class="timeline-item">
-              <div class="tl-dot remove">↑</div>
-              <div class="tl-body"><div class="tl-title">MAG 100 removido — MOTONIVELADORA JD (620G)</div><div class="tl-sub">João Silva · Fazenda Buriti</div></div>
-              <div class="tl-time">09:47</div>
-            </div>
+            <div id="dashTimeline"></div>
           </div>
         </div>
       </section>
 
       <!-- FROTA -->
       <section id="view-frota" class="view">
-        <h1 class="page-title">Frota</h1>
-        <p class="page-sub">111 máquinas cadastradas</p>
+        <div class="view-header">
+          <div>
+            <h1 class="page-title">Frota</h1>
+            <p class="page-sub" id="frotaSub">111 máquinas cadastradas</p>
+          </div>
+          <button class="btn btn-primary" onclick="openAddMachine()"><span class="material-symbols-outlined">add</span>Máquina</button>
+        </div>
         <div class="filters">
           <button class="chip active" onclick="filterFrota('todos', this)">Todos</button>
           <button class="chip" onclick="filterFrota('trator', this)">🚜 Trator</button>
@@ -373,8 +452,13 @@ h1.page-title { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
 
       <!-- HARDWARES -->
       <section id="view-hardwares" class="view">
-        <h1 class="page-title">Hardwares</h1>
-        <p class="page-sub">Piloto automático e Solinftec — por tipo</p>
+        <div class="view-header">
+          <div>
+            <h1 class="page-title">Hardwares</h1>
+            <p class="page-sub">Piloto automático e Solinftec — por tipo</p>
+          </div>
+          <button class="btn btn-primary" onclick="openAddHw()"><span class="material-symbols-outlined">add</span>Hardware</button>
+        </div>
         <div class="grid-cards" id="hwGrid"></div>
       </section>
 
@@ -395,6 +479,154 @@ h1.page-title { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
     </main>
   </div>
 </div>
+
+<!-- MODAL: DETALHE DA MÁQUINA -->
+<div class="modal-overlay" id="machineModal" onclick="if(event.target===this) closeModal('machineModal')">
+  <div class="modal wide">
+    <div class="modal-header">
+      <div class="detail-hero">
+        <div class="ic-icon" id="mdIcon">🚜</div>
+        <div class="detail-hero-info">
+          <h2 id="mdName">—</h2>
+          <div class="meta" id="mdMeta">—</div>
+        </div>
+      </div>
+      <button class="modal-close" onclick="closeModal('machineModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="detail-info-grid" id="mdInfoGrid"></div>
+      <div class="detail-hw-header">
+        <h3>Hardware instalado (<span id="mdHwCount">0</span>)</h3>
+      </div>
+      <div class="detail-hw-grid" id="mdHwGrid"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('machineModal')">Fechar</button>
+      <button class="btn btn-primary" onclick="openAddHw(currentDetailMachineId)"><span class="material-symbols-outlined">add</span>Instalar Hardware</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: TRANSFERIR HARDWARE -->
+<div class="modal-overlay" id="transferModal" onclick="if(event.target===this) closeModal('transferModal')">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">🔄 Transferir Hardware</div>
+        <div class="modal-sub" id="trHwName">—</div>
+        <div class="modal-sub" id="trHwMeta">—</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('transferModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="target-search">
+        <span class="material-symbols-outlined" style="font-size:16px;color:var(--text3)">search</span>
+        <input id="transferSearch" placeholder="Buscar máquina de destino..." oninput="renderTransferTargets()">
+      </div>
+      <div class="target-grid" id="transferTargets"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('transferModal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmTransfer()">Confirmar transferência</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: ADICIONAR HARDWARE -->
+<div class="modal-overlay" id="addHwModal" onclick="if(event.target===this) closeModal('addHwModal')">
+  <div class="modal">
+    <form onsubmit="submitAddHw(event)">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title">Novo Hardware</div>
+          <div class="modal-sub">Instalar em uma máquina da frota</div>
+        </div>
+        <button type="button" class="modal-close" onclick="closeModal('addHwModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="field">
+          <label>MÁQUINA</label>
+          <select id="addHwMachine" required></select>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>TIPO</label>
+            <select id="addHwTipo" onchange="updateHwModelos()" required></select>
+          </div>
+          <div class="field">
+            <label>MODELO</label>
+            <select id="addHwModelo" required></select>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>NÚMERO DE SÉRIE</label>
+            <input id="addHwSn" placeholder="Gerado automaticamente se vazio">
+          </div>
+          <div class="field">
+            <label>FABRICANTE</label>
+            <input id="addHwFab" placeholder="Ex: John Deere">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" onclick="closeModal('addHwModal')">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Salvar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: ADICIONAR MÁQUINA -->
+<div class="modal-overlay" id="addMachineModal" onclick="if(event.target===this) closeModal('addMachineModal')">
+  <div class="modal">
+    <form onsubmit="submitAddMachine(event)">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title">Nova Máquina</div>
+          <div class="modal-sub">Cadastrar máquina na frota</div>
+        </div>
+        <button type="button" class="modal-close" onclick="closeModal('addMachineModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="field">
+          <label>NOME</label>
+          <input id="amNome" placeholder="Ex: TRATOR JD (7230J)" required>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>TIPO</label>
+            <select id="amTipo" required></select>
+          </div>
+          <div class="field">
+            <label>UNIDADE</label>
+            <select id="amUnidade" required></select>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>ANO</label>
+            <input id="amAno" type="number" placeholder="2024">
+          </div>
+          <div class="field">
+            <label>CHASSI</label>
+            <input id="amChassi" placeholder="Opcional">
+          </div>
+          <div class="field">
+            <label>PATRIMÔNIO</label>
+            <input id="amPatrimonio" placeholder="Opcional">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" onclick="closeModal('addMachineModal')">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Salvar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
 
 <script>
 (function setupSidebarHover() {
@@ -417,96 +649,393 @@ function navigate(view, el) {
   document.body.classList.remove('open');
 }
 
-const TIPO_ICON = { trator: '🚜', colhedora: '🌾', motoniveladora: '🛞' };
+// =========================================
+// DADOS (mock — sem conexão com o Apps Script ainda)
+// =========================================
+const MACHINE_TYPES = {
+  trator: { icon: '🚜', label: 'Trator' },
+  colhedora: { icon: '🌾', label: 'Colhedora' },
+  motoniveladora: { icon: '🛞', label: 'Motoniveladora' },
+};
+const TIPOS_LIST = Object.keys(MACHINE_TYPES);
 const UNIDADES = ['PEDRA', 'CEDRO', 'BURITI', 'IPÊ', 'PEDRA/LOCAÇÃO'];
-const TIPOS = ['trator', 'colhedora', 'motoniveladora'];
 
-const maquinasDemo = Array.from({ length: 24 }, (_, i) => {
-  const tipo = TIPOS[i % 3];
-  const unidade = UNIDADES[i % UNIDADES.length];
-  const hwCount = tipo === 'motoniveladora' ? 0 : (i % 5);
+const HW_TYPES = {
+  monitor:  { icon: '🖥️', label: 'Monitor',  sistema: 'Piloto Automático', color: '#f5a623', modelos: ['RAVEN', 'CFX 750', 'EZ GUIDE', 'OMNI', 'PRO 700', 'GS3', 'GS4', 'XCN 1050', 'XCN 1060'] },
+  receptor: { icon: '📡', label: 'Receptor', sistema: 'Piloto Automático', color: '#4fd1ff', modelos: ['StarFire 3000', 'StarFire 6000', 'StarFire 7000'] },
+  radio:    { icon: '📻', label: 'Rádio',    sistema: 'Piloto Automático', color: '#8b9dff', modelos: ['450'] },
+  tela:     { icon: '📱', label: 'Tela',     sistema: 'Solinftec',        color: '#2ecc8a', modelos: ['S7', 'SOL7'] },
+  bordo:    { icon: '🔧', label: 'Bordo',    sistema: 'Solinftec',        color: '#e05252', modelos: ['MAG 100', 'MAG X'] },
+};
+const FABRICANTES = ['John Deere', 'Case IH', 'Trimble', 'Solinftec'];
+
+function localDateStr() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+let hwSeq = 1;
+function makeHw(tipo) {
+  const cfg = HW_TYPES[tipo];
   return {
+    id: 'HW-' + String(hwSeq++).padStart(4, '0'),
+    tipo,
+    modelo: cfg.modelos[Math.floor(Math.random() * cfg.modelos.length)],
+    sn: 'SN-' + Math.floor(100000 + Math.random() * 899999),
+    fabricante: FABRICANTES[Math.floor(Math.random() * FABRICANTES.length)],
+    instaladoEm: localDateStr(),
+  };
+}
+
+let machineSeq = 1;
+const machines = Array.from({ length: 24 }, (_, i) => {
+  const tipo = TIPOS_LIST[i % 3];
+  const unidade = UNIDADES[i % UNIDADES.length];
+  const hwCount = tipo === 'motoniveladora' ? 0 : (i % 4);
+  const hwTiposList = Object.keys(HW_TYPES);
+  const hardware = Array.from({ length: hwCount }, (_, j) => makeHw(hwTiposList[j % hwTiposList.length]));
+  return {
+    id: 'M' + String(machineSeq++).padStart(3, '0'),
     nome: tipo.toUpperCase() + ' ' + (i % 2 === 0 ? 'JD' : 'CASE') + ' (' + (7000 + i * 13) + ')',
-    tipo, unidade, hwCount
+    tipo, unidade,
+    ano: 2018 + (i % 7),
+    chassi: 'CHS-' + (100000 + i * 37),
+    patrimonio: String(50000 + i * 11),
+    hardware,
   };
 });
+machines.push({ id: 'ESTOQUE', nome: 'Estoque', tipo: 'estoque', unidade: '—', hardware: [makeHw('receptor'), makeHw('tela')] });
+machines.push({ id: 'MANUTENCAO', nome: 'Manutenção', tipo: 'manutencao', unidade: '—', hardware: [] });
 
-function renderFrota(filter) {
-  const grid = document.getElementById('frotaGrid');
-  const list = filter && filter !== 'todos' ? maquinasDemo.filter(m => m.tipo === filter) : maquinasDemo;
-  grid.innerHTML = list.map(m => `
-    <div class="item-card">
-      <div class="ic-top">
-        <div class="ic-icon">${TIPO_ICON[m.tipo]}</div>
-        <span class="ic-tag">${m.unidade}</span>
-      </div>
-      <div class="ic-name">${m.nome}</div>
-      <div class="ic-meta">${m.tipo.charAt(0).toUpperCase() + m.tipo.slice(1)}</div>
-      <div class="ic-foot">
-        <div class="ic-hw-count"><span class="material-symbols-outlined" style="font-size:14px">memory</span>${m.hwCount} hardwares</div>
-        ${m.hwCount === 0 ? '<span style="color:#e05252;font-weight:700">sem hw</span>' : ''}
-      </div>
-    </div>
-  `).join('');
-}
-function filterFrota(tipo, el) {
-  document.querySelectorAll('#view-frota .chip').forEach(c => c.classList.remove('active'));
-  el.classList.add('active');
-  renderFrota(tipo);
-}
-renderFrota('todos');
+function findMachine(id) { return machines.find(m => m.id === id); }
 
-const hwTipos = [
-  { icon: '🖥️', nome: 'Monitor', sistema: 'Piloto Automático', total: 79, modelos: 'RAVEN, CFX 750, GS3, GS4, XCN 1060' },
-  { icon: '📡', nome: 'Receptor', sistema: 'Piloto Automático', total: 68, modelos: 'StarFire 3000, 6000, 7000' },
-  { icon: '📻', nome: 'Rádio', sistema: 'Piloto Automático', total: 53, modelos: '450' },
-  { icon: '📱', nome: 'Tela', sistema: 'Solinftec', total: 42, modelos: 'S7, SOL7' },
-  { icon: '🔧', nome: 'Bordo', sistema: 'Solinftec', total: 42, modelos: 'MAG 100, MAG X' },
-];
-document.getElementById('hwGrid').innerHTML = hwTipos.map(h => `
-  <div class="item-card">
-    <div class="ic-top">
-      <div class="ic-icon">${h.icon}</div>
-      <span class="ic-tag">${h.sistema}</span>
-    </div>
-    <div class="ic-name">${h.nome}</div>
-    <div class="ic-meta">${h.modelos}</div>
-    <div class="ic-foot"><div class="ic-hw-count"><b style="color:var(--text);font-size:16px">${h.total}</b>&nbsp;unidades</div></div>
-  </div>
-`).join('');
-
-const historicoDemo = [
+let historico = [
   { tipo: 'install', titulo: 'GS3 instalado — TRATOR JD (7230J)', sub: 'João Silva · Fazenda Pedra', tempo: 'Hoje, 14:32' },
   { tipo: 'transfer', titulo: 'StarFire 6000 transferido — Estoque → COLHEDORA CASE', sub: 'Marcos Lima · Fazenda Cedro', tempo: 'Hoje, 11:05' },
   { tipo: 'remove', titulo: 'MAG 100 removido — MOTONIVELADORA JD (620G)', sub: 'João Silva · Fazenda Buriti', tempo: 'Hoje, 09:47' },
   { tipo: 'install', titulo: 'SOL7 instalado — TRATOR VALTRA (A950)', sub: 'Ana Paula · Fazenda Ipê', tempo: 'Ontem, 17:20' },
   { tipo: 'transfer', titulo: 'CFX 750 transferido — TRATOR FENDT → Manutenção', sub: 'Marcos Lima · Fazenda Pedra/Locação', tempo: 'Ontem, 10:12' },
 ];
-const tlIcon = { install: '↓', remove: '↑', transfer: '⇄' };
-document.getElementById('historicoList').innerHTML = historicoDemo.map(h => `
-  <div class="timeline-item">
-    <div class="tl-dot ${h.tipo}">${tlIcon[h.tipo]}</div>
-    <div class="tl-body"><div class="tl-title">${h.titulo}</div><div class="tl-sub">${h.sub}</div></div>
-    <div class="tl-time">${h.tempo}</div>
-  </div>
-`).join('');
-
 const tecnicosDemo = [
   { nome: 'João Silva', regs: 42, hoje: 5 },
   { nome: 'Marcos Lima', regs: 37, hoje: 3 },
   { nome: 'Ana Paula', regs: 29, hoje: 2 },
 ];
-document.getElementById('tecnicosGrid').innerHTML = tecnicosDemo.map(t => `
-  <div class="tech-card">
-    <div class="tech-avatar">${t.nome.split(' ').map(n => n[0]).join('')}</div>
-    <div class="tech-name">${t.nome}</div>
-    <div class="tech-role">Técnico de campo</div>
-    <div class="tech-stats">
-      <div class="tech-stat"><b>${t.regs}</b><span>TOTAL</span></div>
-      <div class="tech-stat"><b>${t.hoje}</b><span>HOJE</span></div>
+const TL_ICON = { install: '↓', remove: '↑', transfer: '⇄' };
+
+// =========================================
+// DASHBOARD
+// =========================================
+function renderDashboard() {
+  const reais = machines.filter(m => TIPOS_LIST.includes(m.tipo));
+  document.getElementById('kpiMaquinas').textContent = reais.length;
+  document.getElementById('kpiHardwares').textContent = reais.reduce((s, m) => s + m.hardware.length, 0);
+  document.getElementById('kpiMovs').textContent = historico.length;
+  document.getElementById('kpiSemHw').textContent = reais.filter(m => m.hardware.length === 0).length;
+  renderDashboardTimeline();
+}
+function renderDashboardTimeline() {
+  document.getElementById('dashTimeline').innerHTML = historico.slice(0, 3).map(h => `
+    <div class="timeline-item">
+      <div class="tl-dot ${h.tipo}">${TL_ICON[h.tipo]}</div>
+      <div class="tl-body"><div class="tl-title">${h.titulo}</div><div class="tl-sub">${h.sub}</div></div>
+      <div class="tl-time">${h.tempo}</div>
     </div>
-  </div>
-`).join('');
+  `).join('');
+}
+
+// =========================================
+// FROTA
+// =========================================
+let currentFrotaChip = 'todos';
+function renderFrota(filter, term) {
+  currentFrotaChip = filter || currentFrotaChip;
+  term = (term ?? '').toLowerCase().trim();
+  let list = machines.filter(m => TIPOS_LIST.includes(m.tipo));
+  if (currentFrotaChip !== 'todos') list = list.filter(m => m.tipo === currentFrotaChip);
+  if (term) list = list.filter(m => m.nome.toLowerCase().includes(term) || m.chassi.toLowerCase().includes(term) || m.patrimonio.includes(term) || m.id.toLowerCase().includes(term));
+
+  document.getElementById('frotaSub').textContent = `${list.length} de ${machines.filter(m => TIPOS_LIST.includes(m.tipo)).length} máquinas`;
+  document.getElementById('frotaGrid').innerHTML = list.map(m => `
+    <div class="item-card" onclick="openMachineDetail('${m.id}')">
+      <div class="ic-top">
+        <div class="ic-icon">${MACHINE_TYPES[m.tipo].icon}</div>
+        <span class="ic-tag">${m.unidade}</span>
+      </div>
+      <div class="ic-name">${m.nome}</div>
+      <div class="ic-meta">${MACHINE_TYPES[m.tipo].label} · ${m.id}</div>
+      <div class="ic-foot">
+        <div class="ic-hw-count"><span class="material-symbols-outlined" style="font-size:14px">memory</span>${m.hardware.length} hardwares</div>
+        ${m.hardware.length === 0 ? '<span style="color:#e05252;font-weight:700">sem hw</span>' : ''}
+      </div>
+    </div>
+  `).join('') || '<p style="color:var(--text3);font-size:13px">Nenhuma máquina encontrada.</p>';
+}
+function filterFrota(tipo, el) {
+  document.querySelectorAll('#view-frota .chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  renderFrota(tipo, document.getElementById('globalSearch').value);
+}
+
+// =========================================
+// HARDWARES
+// =========================================
+function renderHardwares(term) {
+  term = (term ?? '').toLowerCase().trim();
+  const entries = Object.entries(HW_TYPES).map(([tipo, cfg]) => ({
+    tipo, cfg, total: machines.reduce((s, m) => s + m.hardware.filter(h => h.tipo === tipo).length, 0),
+  })).filter(e => !term || e.cfg.label.toLowerCase().includes(term) || e.cfg.modelos.join(' ').toLowerCase().includes(term));
+
+  document.getElementById('hwGrid').innerHTML = entries.map(e => `
+    <div class="item-card" style="cursor:default">
+      <div class="ic-top">
+        <div class="ic-icon">${e.cfg.icon}</div>
+        <span class="ic-tag">${e.cfg.sistema}</span>
+      </div>
+      <div class="ic-name">${e.cfg.label}</div>
+      <div class="ic-meta">${e.cfg.modelos.join(', ')}</div>
+      <div class="ic-foot"><div class="ic-hw-count"><b style="color:var(--text);font-size:16px">${e.total}</b>&nbsp;unidades</div></div>
+    </div>
+  `).join('') || '<p style="color:var(--text3);font-size:13px">Nenhum tipo encontrado.</p>';
+}
+
+// =========================================
+// TÉCNICOS
+// =========================================
+function renderTecnicos() {
+  document.getElementById('tecnicosGrid').innerHTML = tecnicosDemo.map(t => `
+    <div class="tech-card">
+      <div class="tech-avatar">${t.nome.split(' ').map(n => n[0]).join('')}</div>
+      <div class="tech-name">${t.nome}</div>
+      <div class="tech-role">Técnico de campo</div>
+      <div class="tech-stats">
+        <div class="tech-stat"><b>${t.regs}</b><span>TOTAL</span></div>
+        <div class="tech-stat"><b>${t.hoje}</b><span>HOJE</span></div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// =========================================
+// HISTÓRICO
+// =========================================
+function addHistorico(tipo, titulo, sub) {
+  historico.unshift({ tipo, titulo, sub, tempo: 'agora mesmo' });
+  renderHistoricoList();
+  renderDashboard();
+}
+function renderHistoricoList() {
+  document.getElementById('historicoList').innerHTML = historico.map(h => `
+    <div class="timeline-item">
+      <div class="tl-dot ${h.tipo}">${TL_ICON[h.tipo]}</div>
+      <div class="tl-body"><div class="tl-title">${h.titulo}</div><div class="tl-sub">${h.sub}</div></div>
+      <div class="tl-time">${h.tempo}</div>
+    </div>
+  `).join('');
+}
+
+// =========================================
+// MODAL GENÉRICO + TOAST
+// =========================================
+function openModal(id) { document.getElementById(id).classList.add('active'); }
+function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+function showToast(icon, title, sub) {
+  const wrap = document.getElementById('toastWrap');
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.innerHTML = `<div class="toast-icon">${icon}</div><div><div class="toast-title">${title}</div><div class="toast-sub">${sub}</div></div>`;
+  wrap.appendChild(el);
+  setTimeout(() => {
+    el.style.opacity = '0'; el.style.transform = 'translateY(8px)';
+    setTimeout(() => el.remove(), 200);
+  }, 2600);
+}
+
+// =========================================
+// DETALHE DA MÁQUINA
+// =========================================
+let currentDetailMachineId = null;
+function openMachineDetail(id) {
+  currentDetailMachineId = id;
+  renderMachineDetail();
+  openModal('machineModal');
+}
+function renderMachineDetail() {
+  const m = findMachine(currentDetailMachineId);
+  if (!m) return;
+  const cfg = MACHINE_TYPES[m.tipo] || { icon: m.tipo === 'estoque' ? '📦' : '🔧', label: m.tipo };
+  document.getElementById('mdIcon').textContent = cfg.icon;
+  document.getElementById('mdName').textContent = m.nome;
+  document.getElementById('mdMeta').textContent = `${cfg.label} · ${m.id}`;
+  document.getElementById('mdInfoGrid').innerHTML = [
+    ['UNIDADE', m.unidade], ['ANO', m.ano || '—'], ['CHASSI', m.chassi || '—'], ['PATRIMÔNIO', m.patrimonio || '—'],
+  ].map(([l, v]) => `<div class="fld"><div class="l">${l}</div><div class="v">${v}</div></div>`).join('');
+  document.getElementById('mdHwCount').textContent = m.hardware.length;
+
+  const hwGrid = document.getElementById('mdHwGrid');
+  if (m.hardware.length === 0) {
+    hwGrid.innerHTML = `<div class="hw-empty-state">
+      <span class="material-symbols-outlined" style="font-size:30px">inventory_2</span>
+      <div>Nenhum hardware instalado</div>
+    </div>`;
+  } else {
+    hwGrid.innerHTML = m.hardware.map(hw => {
+      const hcfg = HW_TYPES[hw.tipo];
+      return `
+      <div class="hw-mini-card">
+        <div class="hw-mini-top">
+          <span class="hw-mini-badge" style="background:${hcfg.color}22;color:${hcfg.color}">${hcfg.label}</span>
+          <div class="hw-mini-actions">
+            <button class="hw-mini-btn" title="Transferir" onclick="openTransfer('${m.id}','${hw.id}')"><span class="material-symbols-outlined" style="font-size:14px">sync_alt</span></button>
+            <button class="hw-mini-btn" title="Remover" onclick="removeHardware('${m.id}','${hw.id}')"><span class="material-symbols-outlined" style="font-size:14px">delete</span></button>
+          </div>
+        </div>
+        <div class="hw-mini-name">${hw.modelo}</div>
+        <div class="hw-mini-meta">S/N ${hw.sn} · ${hw.fabricante}</div>
+      </div>`;
+    }).join('');
+  }
+}
+function removeHardware(machineId, hwId) {
+  const m = findMachine(machineId);
+  const idx = m.hardware.findIndex(h => h.id === hwId);
+  if (idx === -1) return;
+  const [hw] = m.hardware.splice(idx, 1);
+  findMachine('ESTOQUE').hardware.push(hw);
+  if (currentDetailMachineId === machineId) renderMachineDetail();
+  renderFrota(); renderHardwares(document.getElementById('globalSearch').value);
+  addHistorico('remove', `${hw.modelo} removido — ${m.nome} → Estoque`, 'Você · agora mesmo');
+  showToast('🗑️', 'Hardware removido', `${hw.modelo} voltou para o estoque`);
+}
+
+// =========================================
+// TRANSFERÊNCIA
+// =========================================
+let transferCtx = { machineId: null, hwId: null, targetId: null };
+function openTransfer(machineId, hwId) {
+  transferCtx = { machineId, hwId, targetId: null };
+  const m = findMachine(machineId);
+  const hw = m.hardware.find(h => h.id === hwId);
+  const hcfg = HW_TYPES[hw.tipo];
+  document.getElementById('trHwName').textContent = `${hcfg.label} · ${hw.modelo}`;
+  document.getElementById('trHwMeta').textContent = `${hw.id} · S/N ${hw.sn} · atualmente em ${m.nome}`;
+  document.getElementById('transferSearch').value = '';
+  renderTransferTargets();
+  openModal('transferModal');
+}
+function renderTransferTargets() {
+  const term = document.getElementById('transferSearch').value.toLowerCase().trim();
+  const list = machines.filter(m => m.id !== transferCtx.machineId && (!term || m.nome.toLowerCase().includes(term) || m.id.toLowerCase().includes(term)));
+  document.getElementById('transferTargets').innerHTML = list.map(m => {
+    const cfg = MACHINE_TYPES[m.tipo] || { icon: m.tipo === 'estoque' ? '📦' : '🔧' };
+    const sel = transferCtx.targetId === m.id ? ' selected' : '';
+    return `<div class="target-item${sel}" onclick="selectTransferTarget('${m.id}')">
+      <div class="ti-icon">${cfg.icon}</div>
+      <div>${m.nome}</div>
+      <div class="ti-id">${m.id}</div>
+    </div>`;
+  }).join('') || '<p style="grid-column:1/-1;color:var(--text3);font-size:12.5px">Nenhum destino encontrado.</p>';
+}
+function selectTransferTarget(id) { transferCtx.targetId = id; renderTransferTargets(); }
+function confirmTransfer() {
+  if (!transferCtx.targetId) { showToast('⚠️', 'Selecione um destino', 'Escolha a máquina de destino'); return; }
+  const source = findMachine(transferCtx.machineId);
+  const target = findMachine(transferCtx.targetId);
+  const hwIdx = source.hardware.findIndex(h => h.id === transferCtx.hwId);
+  const [hw] = source.hardware.splice(hwIdx, 1);
+  target.hardware.push(hw);
+  closeModal('transferModal');
+  if (currentDetailMachineId === source.id) renderMachineDetail();
+  renderFrota(); renderHardwares(document.getElementById('globalSearch').value);
+  addHistorico('transfer', `${hw.modelo} transferido — ${source.nome} → ${target.nome}`, 'Você · agora mesmo');
+  showToast('🔄', 'Transferência concluída', `${hw.modelo} movido para ${target.nome}`);
+}
+
+// =========================================
+// ADICIONAR HARDWARE
+// =========================================
+function openAddHw(machineId) {
+  document.getElementById('addHwMachine').innerHTML = machines.map(m => `<option value="${m.id}">${m.nome}</option>`).join('');
+  if (machineId) document.getElementById('addHwMachine').value = machineId;
+  document.getElementById('addHwTipo').innerHTML = Object.entries(HW_TYPES).map(([t, c]) => `<option value="${t}">${c.icon} ${c.label}</option>`).join('');
+  updateHwModelos();
+  document.getElementById('addHwSn').value = '';
+  document.getElementById('addHwFab').value = '';
+  openModal('addHwModal');
+}
+function updateHwModelos() {
+  const tipo = document.getElementById('addHwTipo').value;
+  document.getElementById('addHwModelo').innerHTML = HW_TYPES[tipo].modelos.map(mo => `<option>${mo}</option>`).join('');
+}
+function submitAddHw(e) {
+  e.preventDefault();
+  const machineId = document.getElementById('addHwMachine').value;
+  const tipo = document.getElementById('addHwTipo').value;
+  const modelo = document.getElementById('addHwModelo').value;
+  const sn = document.getElementById('addHwSn').value.trim() || 'SN-' + Math.floor(100000 + Math.random() * 899999);
+  const fabricante = document.getElementById('addHwFab').value.trim() || '—';
+  const m = findMachine(machineId);
+  const hw = { id: 'HW-' + String(hwSeq++).padStart(4, '0'), tipo, modelo, sn, fabricante, instaladoEm: localDateStr() };
+  m.hardware.push(hw);
+  closeModal('addHwModal');
+  if (currentDetailMachineId === machineId) renderMachineDetail();
+  renderFrota(); renderHardwares(document.getElementById('globalSearch').value);
+  addHistorico('install', `${modelo} instalado — ${m.nome}`, 'Você · agora mesmo');
+  showToast('✅', 'Hardware instalado', `${modelo} adicionado em ${m.nome}`);
+}
+
+// =========================================
+// ADICIONAR MÁQUINA
+// =========================================
+function openAddMachine() {
+  document.getElementById('amTipo').innerHTML = Object.entries(MACHINE_TYPES).map(([t, c]) => `<option value="${t}">${c.icon} ${c.label}</option>`).join('');
+  document.getElementById('amUnidade').innerHTML = UNIDADES.map(u => `<option>${u}</option>`).join('');
+  document.getElementById('amNome').value = '';
+  document.getElementById('amAno').value = '';
+  document.getElementById('amChassi').value = '';
+  document.getElementById('amPatrimonio').value = '';
+  openModal('addMachineModal');
+}
+function submitAddMachine(e) {
+  e.preventDefault();
+  const nome = document.getElementById('amNome').value.trim();
+  if (!nome) return;
+  const m = {
+    id: 'M' + String(machineSeq++).padStart(3, '0'),
+    nome,
+    tipo: document.getElementById('amTipo').value,
+    unidade: document.getElementById('amUnidade').value,
+    ano: document.getElementById('amAno').value,
+    chassi: document.getElementById('amChassi').value.trim(),
+    patrimonio: document.getElementById('amPatrimonio').value.trim(),
+    hardware: [],
+  };
+  machines.splice(machines.length - 2, 0, m);
+  closeModal('addMachineModal');
+  renderFrota('todos');
+  renderDashboard();
+  document.getElementById('frotaBadge').textContent = machines.filter(x => TIPOS_LIST.includes(x.tipo)).length;
+  showToast('🚜', 'Máquina cadastrada', `${nome} adicionada à frota`);
+}
+
+// =========================================
+// BUSCA GLOBAL
+// =========================================
+document.getElementById('globalSearch').addEventListener('input', (e) => {
+  const term = e.target.value;
+  const activeView = document.querySelector('.view.active').id;
+  if (activeView === 'view-frota') renderFrota(currentFrotaChip, term);
+  else if (activeView === 'view-hardwares') renderHardwares(term);
+});
+
+// =========================================
+// INIT
+// =========================================
+renderFrota('todos');
+renderHardwares();
+renderTecnicos();
+renderHistoricoList();
+renderDashboard();
+document.getElementById('frotaBadge').textContent = machines.filter(m => TIPOS_LIST.includes(m.tipo)).length;
 </script>
 </body>
 </html>
