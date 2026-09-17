@@ -27,6 +27,7 @@
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html, body { height: 100%; }
+html { color-scheme: dark; }
 body {
   background: var(--bg);
   color: var(--text);
@@ -34,6 +35,14 @@ body {
   overflow: hidden;
   transition: background 0.25s ease, color 0.25s ease;
 }
+
+/* scrollbar fina e discreta — só aparece quando o conteúdo realmente rola */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+
+select option { background: var(--surface); color: var(--text); }
 .material-symbols-outlined { font-variation-settings: 'opsz' 24, 'wght' 500, 'FILL' 0, 'GRAD' 0; font-size: 20px; line-height: 1; }
 
 /* ── LAYOUT ── */
@@ -259,15 +268,16 @@ h1.page-title { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
 .modal-body { padding: 20px 24px; display: flex; flex-direction: column; gap: 16px; }
 .modal-footer { display: flex; justify-content: flex-end; gap: 10px; padding: 16px 24px; border-top: 1px solid rgba(255,255,255,0.05); }
 
-.field { display: flex; flex-direction: column; gap: 6px; }
+.field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .field label { font-size: 10.5px; color: var(--text2); font-weight: 700; letter-spacing: 0.4px; }
 .field input, .field select {
+  width: 100%; min-width: 0;
   background: rgba(255,255,255,0.04); border: 1px solid var(--card-border); border-radius: 10px;
   padding: 10px 12px; color: var(--text); font-family: inherit; font-size: 13px;
 }
 .field input:focus, .field select:focus { outline: none; border-color: #f5a623; }
-.field-row { display: flex; gap: 12px; }
-.field-row .field { flex: 1; }
+.field-row { display: flex; gap: 12px; min-width: 0; }
+.field-row .field { flex: 1; min-width: 0; }
 
 .detail-hero { display: flex; align-items: center; gap: 16px; }
 .detail-hero .ic-icon { width: 54px; height: 54px; font-size: 26px; border-radius: 14px; flex-shrink: 0; }
@@ -295,13 +305,24 @@ h1.page-title { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
 
 .target-search { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.04); border: 1px solid var(--card-border); border-radius: 10px; padding: 9px 12px; }
 .target-search input { flex: 1; background: none; border: none; outline: none; color: var(--text); font-family: inherit; font-size: 13px; }
-.target-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; max-height: 260px; overflow-y: auto; }
+.target-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; max-height: 260px; overflow-y: auto; padding-right: 6px; margin-right: -6px; }
 .target-item { background: rgba(255,255,255,0.03); border: 1px solid var(--card-border); border-radius: 12px; padding: 12px 8px; text-align: center; cursor: pointer; font-size: 11.5px; font-weight: 600; }
 .target-item:hover { border-color: rgba(245,166,35,0.45); }
 .target-item.selected { background: var(--gradient); color: #171923; border-color: transparent; }
 .target-item.disabled { opacity: 0.3; pointer-events: none; }
 .target-item .ti-icon { font-size: 18px; margin-bottom: 4px; }
 .target-item .ti-id { font-size: 9.5px; opacity: 0.7; margin-top: 2px; font-weight: 400; }
+
+.settings-section h3 { font-size: 13.5px; font-weight: 700; margin-bottom: 10px; }
+.settings-list { display: flex; flex-direction: column; gap: 10px; }
+.settings-row { display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.03); border: 1px solid var(--card-border); border-radius: 12px; padding: 10px 12px; }
+.settings-row .icon { font-size: 20px; width: 26px; text-align: center; flex-shrink: 0; }
+.mini-input {
+  background: rgba(255,255,255,0.04); border: 1px solid var(--card-border); border-radius: 8px;
+  padding: 7px 10px; color: var(--text); font-family: inherit; font-size: 12.5px; min-width: 0;
+}
+.mini-input:focus { outline: none; border-color: #f5a623; }
+.mini-color { width: 32px; height: 32px; padding: 2px; border-radius: 8px; border: 1px solid var(--card-border); background: none; cursor: pointer; flex-shrink: 0; }
 
 .toast-wrap { position: fixed; bottom: 24px; right: 24px; display: flex; flex-direction: column; gap: 10px; z-index: 200; }
 .toast {
@@ -364,7 +385,7 @@ h1.page-title { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
       </button>
     </nav>
     <div class="sidebar-bottom">
-      <button class="nav-item">
+      <button class="nav-item" onclick="openSettings()">
         <span class="material-symbols-outlined">settings</span><span class="nav-label">Configurações</span>
       </button>
     </div>
@@ -378,7 +399,7 @@ h1.page-title { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
       </div>
       <div class="tb-actions">
         <button class="icon-btn"><span class="material-symbols-outlined">notifications</span><span class="dot"></span></button>
-        <div class="avatar">LC</div>
+        <div class="avatar" id="avatarInitials">LC</div>
       </div>
     </header>
 
@@ -491,7 +512,10 @@ h1.page-title { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
           <div class="meta" id="mdMeta">—</div>
         </div>
       </div>
-      <button class="modal-close" onclick="closeModal('machineModal')">✕</button>
+      <div style="display:flex; gap:8px; flex-shrink:0">
+        <button class="modal-close" id="mdEditBtn" title="Editar máquina" onclick="openEditMachine(currentDetailMachineId)"><span class="material-symbols-outlined" style="font-size:16px">edit</span></button>
+        <button class="modal-close" onclick="closeModal('machineModal')">✕</button>
+      </div>
     </div>
     <div class="modal-body">
       <div class="detail-info-grid" id="mdInfoGrid"></div>
@@ -538,8 +562,8 @@ h1.page-title { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
     <form onsubmit="submitAddHw(event)">
       <div class="modal-header">
         <div>
-          <div class="modal-title">Novo Hardware</div>
-          <div class="modal-sub">Instalar em uma máquina da frota</div>
+          <div class="modal-title" id="addHwModalTitle">Novo Hardware</div>
+          <div class="modal-sub" id="addHwModalSub">Instalar em uma máquina da frota</div>
         </div>
         <button type="button" class="modal-close" onclick="closeModal('addHwModal')">✕</button>
       </div>
@@ -571,7 +595,7 @@ h1.page-title { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-ghost" onclick="closeModal('addHwModal')">Cancelar</button>
-        <button type="submit" class="btn btn-primary">Salvar</button>
+        <button type="submit" class="btn btn-primary" id="addHwSubmitBtn">Salvar</button>
       </div>
     </form>
   </div>
@@ -583,8 +607,8 @@ h1.page-title { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
     <form onsubmit="submitAddMachine(event)">
       <div class="modal-header">
         <div>
-          <div class="modal-title">Nova Máquina</div>
-          <div class="modal-sub">Cadastrar máquina na frota</div>
+          <div class="modal-title" id="addMachineModalTitle">Nova Máquina</div>
+          <div class="modal-sub" id="addMachineModalSub">Cadastrar máquina na frota</div>
         </div>
         <button type="button" class="modal-close" onclick="closeModal('addMachineModal')">✕</button>
       </div>
@@ -620,9 +644,40 @@ h1.page-title { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-ghost" onclick="closeModal('addMachineModal')">Cancelar</button>
-        <button type="submit" class="btn btn-primary">Salvar</button>
+        <button type="submit" class="btn btn-primary" id="addMachineSubmitBtn">Salvar</button>
       </div>
     </form>
+  </div>
+</div>
+
+<!-- MODAL: CONFIGURAÇÕES -->
+<div class="modal-overlay" id="settingsModal" onclick="if(event.target===this) closeModal('settingsModal')">
+  <div class="modal wide">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">⚙️ Configurações</div>
+        <div class="modal-sub">Perfil, tipos de hardware e de máquina</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('settingsModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label>NOME DO ANALISTA</label>
+        <input id="stAnalystName" placeholder="Seu nome">
+      </div>
+      <div class="settings-section">
+        <h3>Tipos de Hardware</h3>
+        <div class="settings-list" id="stHwTypesList"></div>
+      </div>
+      <div class="settings-section">
+        <h3>Tipos de Máquina</h3>
+        <div class="settings-list" id="stMachineTypesList"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-ghost" onclick="closeModal('settingsModal')">Cancelar</button>
+      <button type="button" class="btn btn-primary" onclick="saveSettings()">Salvar Configurações</button>
+    </div>
   </div>
 </div>
 
@@ -870,6 +925,7 @@ function renderMachineDetail() {
     ['UNIDADE', m.unidade], ['ANO', m.ano || '—'], ['CHASSI', m.chassi || '—'], ['PATRIMÔNIO', m.patrimonio || '—'],
   ].map(([l, v]) => `<div class="fld"><div class="l">${l}</div><div class="v">${v}</div></div>`).join('');
   document.getElementById('mdHwCount').textContent = m.hardware.length;
+  document.getElementById('mdEditBtn').style.display = TIPOS_LIST.includes(m.tipo) ? 'flex' : 'none';
 
   const hwGrid = document.getElementById('mdHwGrid');
   if (m.hardware.length === 0) {
@@ -885,6 +941,7 @@ function renderMachineDetail() {
         <div class="hw-mini-top">
           <span class="hw-mini-badge" style="background:${hcfg.color}22;color:${hcfg.color}">${hcfg.label}</span>
           <div class="hw-mini-actions">
+            <button class="hw-mini-btn" title="Editar" onclick="openEditHw('${m.id}','${hw.id}')"><span class="material-symbols-outlined" style="font-size:14px">edit</span></button>
             <button class="hw-mini-btn" title="Transferir" onclick="openTransfer('${m.id}','${hw.id}')"><span class="material-symbols-outlined" style="font-size:14px">sync_alt</span></button>
             <button class="hw-mini-btn" title="Remover" onclick="removeHardware('${m.id}','${hw.id}')"><span class="material-symbols-outlined" style="font-size:14px">delete</span></button>
           </div>
@@ -953,7 +1010,13 @@ function confirmTransfer() {
 // =========================================
 // ADICIONAR HARDWARE
 // =========================================
+let editingHwCtx = null; // { machineId, hwId } quando editando, null quando cadastrando
 function openAddHw(machineId) {
+  editingHwCtx = null;
+  document.getElementById('addHwModalTitle').textContent = 'Novo Hardware';
+  document.getElementById('addHwModalSub').textContent = 'Instalar em uma máquina da frota';
+  document.getElementById('addHwSubmitBtn').textContent = 'Salvar';
+  document.getElementById('addHwMachine').disabled = false;
   document.getElementById('addHwMachine').innerHTML = machines.map(m => `<option value="${m.id}">${m.nome}</option>`).join('');
   if (machineId) document.getElementById('addHwMachine').value = machineId;
   document.getElementById('addHwTipo').innerHTML = Object.entries(HW_TYPES).map(([t, c]) => `<option value="${t}">${c.icon} ${c.label}</option>`).join('');
@@ -962,17 +1025,48 @@ function openAddHw(machineId) {
   document.getElementById('addHwFab').value = '';
   openModal('addHwModal');
 }
+function openEditHw(machineId, hwId) {
+  const m = findMachine(machineId);
+  const hw = m.hardware.find(h => h.id === hwId);
+  if (!hw) return;
+  editingHwCtx = { machineId, hwId };
+  document.getElementById('addHwModalTitle').textContent = 'Editar Hardware';
+  document.getElementById('addHwModalSub').textContent = `${hw.id} · atualmente em ${m.nome}`;
+  document.getElementById('addHwSubmitBtn').textContent = 'Salvar alterações';
+  document.getElementById('addHwMachine').innerHTML = `<option value="${m.id}">${m.nome}</option>`;
+  document.getElementById('addHwMachine').value = m.id;
+  document.getElementById('addHwMachine').disabled = true;
+  document.getElementById('addHwTipo').innerHTML = Object.entries(HW_TYPES).map(([t, c]) => `<option value="${t}">${c.icon} ${c.label}</option>`).join('');
+  document.getElementById('addHwTipo').value = hw.tipo;
+  updateHwModelos();
+  document.getElementById('addHwModelo').value = hw.modelo;
+  document.getElementById('addHwSn').value = hw.sn;
+  document.getElementById('addHwFab').value = hw.fabricante;
+  openModal('addHwModal');
+}
 function updateHwModelos() {
   const tipo = document.getElementById('addHwTipo').value;
   document.getElementById('addHwModelo').innerHTML = HW_TYPES[tipo].modelos.map(mo => `<option>${mo}</option>`).join('');
 }
 function submitAddHw(e) {
   e.preventDefault();
-  const machineId = document.getElementById('addHwMachine').value;
   const tipo = document.getElementById('addHwTipo').value;
   const modelo = document.getElementById('addHwModelo').value;
   const sn = document.getElementById('addHwSn').value.trim() || 'SN-' + Math.floor(100000 + Math.random() * 899999);
   const fabricante = document.getElementById('addHwFab').value.trim() || '—';
+
+  if (editingHwCtx) {
+    const m = findMachine(editingHwCtx.machineId);
+    const hw = m.hardware.find(h => h.id === editingHwCtx.hwId);
+    Object.assign(hw, { tipo, modelo, sn, fabricante });
+    closeModal('addHwModal');
+    if (currentDetailMachineId === m.id) renderMachineDetail();
+    renderHardwares(document.getElementById('globalSearch').value);
+    showToast('✏️', 'Hardware atualizado', `${modelo} atualizado em ${m.nome}`);
+    return;
+  }
+
+  const machineId = document.getElementById('addHwMachine').value;
   const m = findMachine(machineId);
   const hw = { id: 'HW-' + String(hwSeq++).padStart(4, '0'), tipo, modelo, sn, fabricante, instaladoEm: localDateStr() };
   m.hardware.push(hw);
@@ -984,9 +1078,14 @@ function submitAddHw(e) {
 }
 
 // =========================================
-// ADICIONAR MÁQUINA
+// ADICIONAR / EDITAR MÁQUINA
 // =========================================
+let editingMachineId = null;
 function openAddMachine() {
+  editingMachineId = null;
+  document.getElementById('addMachineModalTitle').textContent = 'Nova Máquina';
+  document.getElementById('addMachineModalSub').textContent = 'Cadastrar máquina na frota';
+  document.getElementById('addMachineSubmitBtn').textContent = 'Salvar';
   document.getElementById('amTipo').innerHTML = Object.entries(MACHINE_TYPES).map(([t, c]) => `<option value="${t}">${c.icon} ${c.label}</option>`).join('');
   document.getElementById('amUnidade').innerHTML = UNIDADES.map(u => `<option>${u}</option>`).join('');
   document.getElementById('amNome').value = '';
@@ -995,26 +1094,100 @@ function openAddMachine() {
   document.getElementById('amPatrimonio').value = '';
   openModal('addMachineModal');
 }
+function openEditMachine(id) {
+  const m = findMachine(id);
+  if (!m || !TIPOS_LIST.includes(m.tipo)) return;
+  editingMachineId = id;
+  closeModal('machineModal');
+  document.getElementById('addMachineModalTitle').textContent = 'Editar Máquina';
+  document.getElementById('addMachineModalSub').textContent = `${m.id} · ${m.nome}`;
+  document.getElementById('addMachineSubmitBtn').textContent = 'Salvar alterações';
+  document.getElementById('amTipo').innerHTML = Object.entries(MACHINE_TYPES).map(([t, c]) => `<option value="${t}">${c.icon} ${c.label}</option>`).join('');
+  document.getElementById('amUnidade').innerHTML = UNIDADES.map(u => `<option>${u}</option>`).join('');
+  document.getElementById('amNome').value = m.nome;
+  document.getElementById('amTipo').value = m.tipo;
+  document.getElementById('amUnidade').value = m.unidade;
+  document.getElementById('amAno').value = m.ano || '';
+  document.getElementById('amChassi').value = m.chassi || '';
+  document.getElementById('amPatrimonio').value = m.patrimonio || '';
+  openModal('addMachineModal');
+}
 function submitAddMachine(e) {
   e.preventDefault();
   const nome = document.getElementById('amNome').value.trim();
   if (!nome) return;
-  const m = {
-    id: 'M' + String(machineSeq++).padStart(3, '0'),
+  const dados = {
     nome,
     tipo: document.getElementById('amTipo').value,
     unidade: document.getElementById('amUnidade').value,
     ano: document.getElementById('amAno').value,
     chassi: document.getElementById('amChassi').value.trim(),
     patrimonio: document.getElementById('amPatrimonio').value.trim(),
-    hardware: [],
   };
+
+  if (editingMachineId) {
+    const m = findMachine(editingMachineId);
+    Object.assign(m, dados);
+    closeModal('addMachineModal');
+    renderFrota(currentFrotaChip, document.getElementById('globalSearch').value);
+    showToast('✏️', 'Máquina atualizada', `${nome} atualizada`);
+    return;
+  }
+
+  const m = { id: 'M' + String(machineSeq++).padStart(3, '0'), ...dados, hardware: [] };
   machines.splice(machines.length - 2, 0, m);
   closeModal('addMachineModal');
   renderFrota('todos');
   renderDashboard();
   document.getElementById('frotaBadge').textContent = machines.filter(x => TIPOS_LIST.includes(x.tipo)).length;
   showToast('🚜', 'Máquina cadastrada', `${nome} adicionada à frota`);
+}
+
+// =========================================
+// CONFIGURAÇÕES
+// =========================================
+let analystName = 'Leonardo Cardoso';
+function updateAvatar() {
+  const initials = analystName.trim().split(/\s+/).map(p => p[0]).slice(0, 2).join('').toUpperCase() || 'LC';
+  document.getElementById('avatarInitials').textContent = initials;
+}
+function openSettings() {
+  document.getElementById('stAnalystName').value = analystName;
+  document.getElementById('stHwTypesList').innerHTML = Object.entries(HW_TYPES).map(([tipo, cfg]) => `
+    <div class="settings-row" data-tipo="${tipo}">
+      <span class="icon">${cfg.icon}</span>
+      <input class="mini-input st-label" style="flex:1" value="${cfg.label}">
+      <input type="color" class="mini-color st-color" value="${cfg.color}" title="Cor do tipo">
+      <input class="mini-input st-modelos" style="flex:2" value="${cfg.modelos.join(', ')}" placeholder="Modelos separados por vírgula">
+    </div>
+  `).join('');
+  document.getElementById('stMachineTypesList').innerHTML = Object.entries(MACHINE_TYPES).map(([tipo, cfg]) => `
+    <div class="settings-row" data-tipo="${tipo}">
+      <input class="mini-input st-icon" style="width:48px;text-align:center" value="${cfg.icon}">
+      <input class="mini-input st-label" style="flex:1" value="${cfg.label}">
+    </div>
+  `).join('');
+  openModal('settingsModal');
+}
+function saveSettings() {
+  analystName = document.getElementById('stAnalystName').value.trim() || analystName;
+  updateAvatar();
+  document.querySelectorAll('#stHwTypesList .settings-row').forEach(row => {
+    const cfg = HW_TYPES[row.dataset.tipo];
+    cfg.label = row.querySelector('.st-label').value.trim() || cfg.label;
+    cfg.color = row.querySelector('.st-color').value;
+    const modelos = row.querySelector('.st-modelos').value.split(',').map(s => s.trim()).filter(Boolean);
+    if (modelos.length) cfg.modelos = modelos;
+  });
+  document.querySelectorAll('#stMachineTypesList .settings-row').forEach(row => {
+    const cfg = MACHINE_TYPES[row.dataset.tipo];
+    cfg.icon = row.querySelector('.st-icon').value.trim() || cfg.icon;
+    cfg.label = row.querySelector('.st-label').value.trim() || cfg.label;
+  });
+  closeModal('settingsModal');
+  renderFrota(currentFrotaChip, document.getElementById('globalSearch').value);
+  renderHardwares(document.getElementById('globalSearch').value);
+  showToast('⚙️', 'Configurações salvas', 'Perfil e catálogos atualizados');
 }
 
 // =========================================
@@ -1035,6 +1208,7 @@ renderHardwares();
 renderTecnicos();
 renderHistoricoList();
 renderDashboard();
+updateAvatar();
 document.getElementById('frotaBadge').textContent = machines.filter(m => TIPOS_LIST.includes(m.tipo)).length;
 </script>
 </body>
