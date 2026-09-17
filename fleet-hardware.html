@@ -467,16 +467,7 @@ h1.page-title { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
           </div>
           <button class="btn btn-primary" onclick="openAddMachine()"><span class="material-symbols-outlined">add</span>Máquina</button>
         </div>
-        <div class="filters">
-          <button class="chip active" onclick="filterFrota('todos', this)">Todos</button>
-          <button class="chip" onclick="filterFrota('trator', this)">Trator</button>
-          <button class="chip" onclick="filterFrota('colhedora', this)">Colhedora</button>
-          <button class="chip" onclick="filterFrota('motoniveladora', this)">Motoniveladora</button>
-          <select class="select-unit">
-            <option>Todas as unidades</option>
-            <option>PEDRA</option><option>CEDRO</option><option>BURITI</option><option>IPÊ</option><option>PEDRA/LOCAÇÃO</option>
-          </select>
-        </div>
+        <div class="filters" id="frotaFilters"></div>
         <div class="grid-cards" id="frotaGrid"></div>
       </section>
 
@@ -562,6 +553,33 @@ h1.page-title { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
       </section>
 
     </main>
+  </div>
+</div>
+
+<!-- MODAL: DETALHE DO TIPO DE MÁQUINA -->
+<div class="modal-overlay" id="machineTypeModal" onclick="if(event.target===this) closeModal('machineTypeModal')">
+  <div class="modal wide">
+    <div class="modal-header">
+      <div class="detail-hero">
+        <div class="detail-hero-info">
+          <span class="ic-type" id="mtName">—</span>
+          <h2 id="mtCount">—</h2>
+          <div class="meta" id="mtMeta">—</div>
+        </div>
+      </div>
+      <button class="modal-close" onclick="closeModal('machineTypeModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="target-search">
+        <span class="material-symbols-outlined" style="font-size:16px;color:var(--text3)">search</span>
+        <input id="mtSearch" placeholder="Buscar por nome, ID, chassi, patrimônio, unidade..." oninput="renderMachineTypeDetailGrid()">
+      </div>
+      <div class="detail-hw-grid" id="mtGrid"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('machineTypeModal')">Fechar</button>
+      <button class="btn btn-primary" onclick="closeModal('machineTypeModal'); openAddMachine();"><span class="material-symbols-outlined">add</span>Nova Máquina</button>
+    </div>
   </div>
 </div>
 
@@ -1067,7 +1085,7 @@ async function loadTecnicos() {
 }
 function renderAllViews() {
   document.getElementById('frotaBadge').textContent = machines.filter(m => TIPOS_LIST.includes(m.tipo)).length;
-  renderFrota(currentFrotaChip, document.getElementById('globalSearch').value);
+  renderFrota(document.getElementById('globalSearch').value);
   renderHardwares(document.getElementById('globalSearch').value);
   renderTecnicos();
   renderHistoricoList();
@@ -1075,6 +1093,7 @@ function renderAllViews() {
   renderSettingsLists();
   if (currentDetailMachineId) renderMachineDetail();
   if (currentHwTypeDetail) renderHwTypeDetailGrid();
+  if (currentMachineTypeDetail) renderMachineTypeDetailGrid();
 }
 function renderTecnicos() {
   const stats = {};
@@ -1360,59 +1379,95 @@ function exportReport() {
 // =========================================
 // FROTA
 // =========================================
-let currentFrotaChip = 'todos';
-function renderFrota(filter, term) {
-  currentFrotaChip = filter || currentFrotaChip;
-  term = (term ?? '').toLowerCase().trim();
-  let list = machines.filter(m => TIPOS_LIST.includes(m.tipo));
-  if (currentFrotaChip !== 'todos') list = list.filter(m => m.tipo === currentFrotaChip);
-  if (term) list = list.filter(m => m.nome.toLowerCase().includes(term) || m.chassi.toLowerCase().includes(term) || m.patrimonio.includes(term) || m.id.toLowerCase().includes(term));
-
-  document.getElementById('frotaSub').textContent = `${list.length} de ${machines.filter(m => TIPOS_LIST.includes(m.tipo)).length} máquinas`;
-  document.getElementById('frotaGrid').innerHTML = list.map(m => `
-    <div class="item-card" onclick="openMachineDetail('${m.id}')">
-      <div class="ic-top">
-        <span class="ic-type" style="color:${MACHINE_TYPES[m.tipo].color}">${MACHINE_TYPES[m.tipo].label}</span>
-        <span class="ic-tag">${m.unidade}</span>
-      </div>
-      <div class="ic-name">${m.nome}</div>
-      <div class="ic-meta">${m.id}</div>
-      <div class="ic-foot">
-        <div class="ic-hw-count"><span class="material-symbols-outlined" style="font-size:14px">memory</span>${m.hardware.length} hardwares</div>
-        ${m.hardware.length === 0 ? '<span style="color:#e05252;font-weight:700">sem hw</span>' : ''}
-      </div>
-    </div>
-  `).join('') || '<p style="color:var(--text3);font-size:13px">Nenhuma máquina encontrada.</p>';
+let currentFrotaSort = 'nome';
+function setFrotaSort(value) {
+  currentFrotaSort = value;
+  renderFrota(document.getElementById('globalSearch').value);
 }
-function filterFrota(tipo, el) {
-  document.querySelectorAll('#view-frota .chip').forEach(c => c.classList.remove('active'));
-  el.classList.add('active');
-  renderFrota(tipo, document.getElementById('globalSearch').value);
+function renderFrotaFilters() {
+  document.getElementById('frotaFilters').innerHTML = `
+    <select class="select-unit" onchange="setFrotaSort(this.value)">
+      <option value="nome"${currentFrotaSort === 'nome' ? ' selected' : ''}>Nome (A-Z)</option>
+      <option value="qtd_desc"${currentFrotaSort === 'qtd_desc' ? ' selected' : ''}>Mais máquinas</option>
+      <option value="qtd_asc"${currentFrotaSort === 'qtd_asc' ? ' selected' : ''}>Menos máquinas</option>
+    </select>`;
+}
+function renderFrota(term) {
+  term = (term ?? '').toLowerCase().trim();
+  renderFrotaFilters();
+
+  let entries = TIPOS_LIST.map(tipo => {
+    const cfg = MACHINE_TYPES[tipo];
+    const daFrota = machines.filter(m => m.tipo === tipo);
+    return { tipo, cfg, total: daFrota.length, semHw: daFrota.filter(m => m.hardware.length === 0).length };
+  });
+  if (term) entries = entries.filter(e => e.cfg.label.toLowerCase().includes(term));
+  if (currentFrotaSort === 'qtd_desc') entries.sort((a, b) => b.total - a.total);
+  else if (currentFrotaSort === 'qtd_asc') entries.sort((a, b) => a.total - b.total);
+  else entries.sort((a, b) => a.cfg.label.localeCompare(b.cfg.label));
+
+  document.getElementById('frotaSub').textContent = `${machines.filter(m => TIPOS_LIST.includes(m.tipo)).length} máquinas em ${TIPOS_LIST.length} tipos`;
+  document.getElementById('frotaGrid').innerHTML = entries.map(e => `
+    <div class="item-card" onclick="openMachineTypeDetail('${e.tipo}')">
+      <div class="ic-top" style="justify-content:flex-end">
+        ${e.semHw > 0 ? `<span class="ic-tag" style="color:#e05252">${e.semHw} sem hw</span>` : ''}
+      </div>
+      <div class="ic-name" style="color:${e.cfg.color}">${e.cfg.label}</div>
+      <div class="ic-meta">${e.total} máquina${e.total === 1 ? '' : 's'} na frota</div>
+      <div class="ic-foot"><div class="ic-hw-count"><b style="color:var(--text);font-size:16px">${e.total}</b>&nbsp;unidades</div></div>
+    </div>
+  `).join('') || '<p style="color:var(--text3);font-size:13px">Nenhum tipo encontrado.</p>';
+}
+
+// =========================================
+// DETALHE DO TIPO DE MÁQUINA (lista de máquinas, editar/ver detalhe)
+// =========================================
+let currentMachineTypeDetail = null;
+function openMachineTypeDetail(tipo) {
+  currentMachineTypeDetail = tipo;
+  document.getElementById('mtSearch').value = '';
+  const cfg = MACHINE_TYPES[tipo];
+  const nameEl = document.getElementById('mtName');
+  nameEl.textContent = cfg.label;
+  nameEl.style.color = cfg.color;
+  renderMachineTypeDetailGrid();
+  openModal('machineTypeModal');
+}
+function renderMachineTypeDetailGrid() {
+  if (!currentMachineTypeDetail) return;
+  const term = document.getElementById('mtSearch').value.toLowerCase().trim();
+  let list = machines.filter(m => m.tipo === currentMachineTypeDetail);
+  if (term) list = list.filter(m =>
+    m.nome.toLowerCase().includes(term) || m.id.toLowerCase().includes(term) ||
+    (m.chassi || '').toLowerCase().includes(term) || (m.patrimonio || '').toLowerCase().includes(term) ||
+    (m.unidade || '').toLowerCase().includes(term));
+  document.getElementById('mtCount').textContent = `${list.length} máquina${list.length === 1 ? '' : 's'}`;
+  document.getElementById('mtMeta').textContent = `${list.filter(m => m.hardware.length === 0).length} sem hardware instalado`;
+  document.getElementById('mtGrid').innerHTML = list.map(m => `
+    <div class="hw-mini-card" style="cursor:pointer" onclick="closeModal('machineTypeModal'); openMachineDetail('${m.id}');">
+      <div class="hw-mini-top">
+        <span class="hw-mini-badge" style="background:rgba(255,255,255,0.06);color:var(--text2)">${m.unidade || '—'}</span>
+        <div class="hw-mini-actions">
+          <button class="hw-mini-btn" title="Editar" onclick="event.stopPropagation(); openEditMachine('${m.id}')"><span class="material-symbols-outlined" style="font-size:14px">edit</span></button>
+        </div>
+      </div>
+      <div class="hw-mini-name">${m.nome}</div>
+      <div class="hw-mini-meta">${m.id} · ${m.hardware.length} hardware${m.hardware.length === 1 ? '' : 's'}${m.hardware.length === 0 ? ' · sem hw' : ''}</div>
+    </div>
+  `).join('') || `<div class="hw-empty-state"><span class="material-symbols-outlined" style="font-size:30px">agriculture</span><div>Nenhuma máquina encontrada</div></div>`;
 }
 
 // =========================================
 // HARDWARES
 // =========================================
-let currentHwTipoFilter = 'todos';
 let currentHwSort = 'nome';
 function renderHwFilters() {
-  const chips = ['todos', ...Object.keys(HW_TYPES)].map(tipo => {
-    const label = tipo === 'todos' ? 'Todos' : HW_TYPES[tipo].label;
-    const active = currentHwTipoFilter === tipo ? ' active' : '';
-    return `<button class="chip${active}" onclick="filterHwTipo('${tipo}', this)">${label}</button>`;
-  }).join('');
-  document.getElementById('hwFilters').innerHTML = chips + `
+  document.getElementById('hwFilters').innerHTML = `
     <select class="select-unit" onchange="setHwSort(this.value)">
       <option value="nome"${currentHwSort === 'nome' ? ' selected' : ''}>Nome (A-Z)</option>
       <option value="qtd_desc"${currentHwSort === 'qtd_desc' ? ' selected' : ''}>Mais unidades</option>
       <option value="qtd_asc"${currentHwSort === 'qtd_asc' ? ' selected' : ''}>Menos unidades</option>
     </select>`;
-}
-function filterHwTipo(tipo, el) {
-  currentHwTipoFilter = tipo;
-  document.querySelectorAll('#hwFilters .chip').forEach(c => c.classList.remove('active'));
-  el.classList.add('active');
-  renderHardwares(document.getElementById('globalSearch').value);
 }
 function setHwSort(value) {
   currentHwSort = value;
@@ -1428,7 +1483,6 @@ function renderHardwares(term) {
   let entries = Object.entries(HW_TYPES).map(([tipo, cfg]) => ({
     tipo, cfg, total: machines.reduce((s, m) => s + m.hardware.filter(h => h.tipo === tipo).length, 0),
   }));
-  if (currentHwTipoFilter !== 'todos') entries = entries.filter(e => e.tipo === currentHwTipoFilter);
   if (term) entries = entries.filter(e => e.cfg.label.toLowerCase().includes(term) || e.cfg.modelos.join(' ').toLowerCase().includes(term));
   if (currentHwSort === 'qtd_desc') entries.sort((a, b) => b.total - a.total);
   else if (currentHwSort === 'qtd_asc') entries.sort((a, b) => a.total - b.total);
@@ -1952,7 +2006,7 @@ async function saveMachineType(id) {
       body: JSON.stringify({ label: cfg.label, emoji: cfg.icon, cor: cfg.color }),
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    renderFrota(currentFrotaChip, document.getElementById('globalSearch').value);
+    renderFrota(document.getElementById('globalSearch').value);
     showToast('✅', 'Tipo atualizado', cfg.label);
   } catch (e) {
     console.error('saveMachineType:', e);
@@ -1994,7 +2048,7 @@ async function deleteMachineType(id) {
     const idx = TIPOS_LIST.indexOf(id);
     if (idx > -1) TIPOS_LIST.splice(idx, 1);
     renderSettingsLists();
-    renderFrota(currentFrotaChip, document.getElementById('globalSearch').value);
+    renderFrota(document.getElementById('globalSearch').value);
     showToast('🗑️', 'Tipo excluído', cfg.label);
   } catch (e) {
     console.error('deleteMachineType:', e);
@@ -2076,7 +2130,7 @@ async function deleteFabricante(nome) {
 document.getElementById('globalSearch').addEventListener('input', (e) => {
   const term = e.target.value;
   const activeView = document.querySelector('.view.active').id;
-  if (activeView === 'view-frota') renderFrota(currentFrotaChip, term);
+  if (activeView === 'view-frota') renderFrota(term);
   else if (activeView === 'view-hardwares') renderHardwares(term);
 });
 
