@@ -875,31 +875,22 @@ function exportReport() {
   wsFrota['!cols'] = [{ wch: 6 }, { wch: 8 }, { wch: 14 }, { wch: 14 }, { wch: 6 }, { wch: 12 }, { wch: 14 }, { wch: 12 }];
   XLSX.utils.book_append_sheet(wb, wsFrota, 'Frotas');
 
-  // ── Aba: Frotas + Hardwares (agrupado, com célula mesclada por máquina) ──
+  // ── Aba: Frotas + Hardwares (Frota/Tipo repetidos em cada linha — sem merge, pra não quebrar o AutoFilter) ──
   const combRows = [['Frota', 'Tipo', 'Hardware', 'Modelo', 'Numero de Série', 'Patrimônio', 'Fabricante']];
-  const merges = [];
   frotaReal.forEach(m => {
-    const startRow = combRows.length;
     if (m.hardware.length === 0) {
       combRows.push([m.id, MACHINE_TYPES[m.tipo].label, '-', '-', '-', '-', '-']);
     } else {
-      m.hardware.forEach((hw, idx) => {
+      m.hardware.forEach(hw => {
         combRows.push([
-          idx === 0 ? m.id : '',
-          idx === 0 ? MACHINE_TYPES[m.tipo].label : '',
+          m.id, MACHINE_TYPES[m.tipo].label,
           HW_TYPES[hw.tipo]?.label || hw.tipo,
           hw.modelo, hw.sn, hw.patrimonio || '-', hw.fabricante,
         ]);
       });
-      if (m.hardware.length > 1) {
-        const endRow = combRows.length - 1;
-        merges.push({ s: { r: startRow, c: 0 }, e: { r: endRow, c: 0 } });
-        merges.push({ s: { r: startRow, c: 1 }, e: { r: endRow, c: 1 } });
-      }
     }
   });
   const wsComb = XLSX.utils.aoa_to_sheet(combRows);
-  wsComb['!merges'] = merges;
   wsComb['!cols'] = [{ wch: 8 }, { wch: 14 }, { wch: 12 }, { wch: 14 }, { wch: 16 }, { wch: 12 }, { wch: 14 }];
   XLSX.utils.book_append_sheet(wb, wsComb, 'Frotas+Hardwares');
 
