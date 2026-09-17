@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,500,0,0">
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 :root {
   /* paleta única, mesclando os 3 tons testados como níveis de profundidade */
@@ -283,7 +284,7 @@ h1.page-title { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
 .detail-hero-info .ic-type { display: block; margin-bottom: 4px; }
 .detail-hero-info h2 { font-size: 17px; font-weight: 700; }
 .detail-hero-info .meta { font-size: 11.5px; color: var(--text2); margin-top: 2px; }
-.detail-info-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.detail-info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 10px; }
 .detail-info-grid .fld { background: rgba(255,255,255,0.03); border-radius: 10px; padding: 8px 10px; }
 .detail-info-grid .fld .l { font-size: 9px; color: var(--text3); letter-spacing: 0.5px; }
 .detail-info-grid .fld .v { font-size: 12.5px; font-weight: 700; margin-top: 2px; }
@@ -408,8 +409,13 @@ h1.page-title { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
 
       <!-- DASHBOARD -->
       <section id="view-dashboard" class="view active">
-        <h1 class="page-title">Dashboard</h1>
-        <p class="page-sub">Visão geral da frota e dos hardwares instalados</p>
+        <div class="view-header">
+          <div>
+            <h1 class="page-title">Dashboard</h1>
+            <p class="page-sub">Visão geral da frota e dos hardwares instalados</p>
+          </div>
+          <button class="btn btn-ghost" onclick="exportReport()"><span class="material-symbols-outlined">file_download</span>Exportar Relatório</button>
+        </div>
 
         <div class="kpi-grid">
           <div class="kpi-card primary">
@@ -593,6 +599,10 @@ h1.page-title { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
             <select id="addHwFab"></select>
           </div>
         </div>
+        <div class="field">
+          <label>PATRIMÔNIO</label>
+          <input id="addHwPatrimonio" placeholder="Opcional">
+        </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-ghost" onclick="closeModal('addHwModal')">Cancelar</button>
@@ -621,18 +631,24 @@ h1.page-title { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
         <div class="field-row">
           <div class="field">
             <label>TIPO</label>
-            <select id="amTipo" required></select>
+            <select id="amTipo" onchange="updateAmModelos()" required></select>
           </div>
           <div class="field">
-            <label>UNIDADE</label>
-            <select id="amUnidade" required></select>
+            <label>MODELO</label>
+            <select id="amModelo" required></select>
           </div>
         </div>
         <div class="field-row">
           <div class="field">
+            <label>UNIDADE</label>
+            <select id="amUnidade" required></select>
+          </div>
+          <div class="field">
             <label>ANO</label>
             <input id="amAno" type="number" placeholder="2024">
           </div>
+        </div>
+        <div class="field-row">
           <div class="field">
             <label>CHASSI</label>
             <input id="amChassi" placeholder="Opcional">
@@ -747,6 +763,11 @@ const HW_TYPES = {
   bordo:    { icon: 'bordo',    label: 'Bordo',    sistema: 'Solinftec',        color: '#e05252', modelos: ['MAG 100', 'MAG X'] },
 };
 const FABRICANTES = ['John Deere', 'Case IH', 'Trimble', 'Solinftec'];
+const MACHINE_MODELS = {
+  trator: ['7230J', '8320R', 'Magnum 340', 'Puma 185'],
+  colhedora: ['S770', 'S780', 'Axial-Flow 8250'],
+  motoniveladora: ['620G', '670G', 'Champion 720'],
+};
 
 function localDateStr() {
   return new Date().toISOString().slice(0, 10);
@@ -761,6 +782,7 @@ function makeHw(tipo) {
     modelo: cfg.modelos[Math.floor(Math.random() * cfg.modelos.length)],
     sn: 'SN-' + Math.floor(100000 + Math.random() * 899999),
     fabricante: FABRICANTES[Math.floor(Math.random() * FABRICANTES.length)],
+    patrimonio: Math.random() < 0.5 ? String(Math.floor(10000 + Math.random() * 89999)) : '',
     instaladoEm: localDateStr(),
   };
 }
@@ -772,10 +794,12 @@ const machines = Array.from({ length: 24 }, (_, i) => {
   const hwCount = tipo === 'motoniveladora' ? 0 : (i % 4);
   const hwTiposList = Object.keys(HW_TYPES);
   const hardware = Array.from({ length: hwCount }, (_, j) => makeHw(hwTiposList[j % hwTiposList.length]));
+  const modelosDoTipo = MACHINE_MODELS[tipo];
   return {
     id: 'M' + String(machineSeq++).padStart(3, '0'),
     nome: (i % 2 === 0 ? 'JD' : 'CASE') + ' (' + (7000 + i * 13) + ')',
     tipo, unidade,
+    modelo: modelosDoTipo[i % modelosDoTipo.length],
     ano: 2018 + (i % 7),
     chassi: 'CHS-' + (100000 + i * 37),
     patrimonio: String(50000 + i * 11),
@@ -820,6 +844,67 @@ function renderDashboardTimeline() {
       <div class="tl-time">${h.tempo}</div>
     </div>
   `).join('');
+}
+
+// =========================================
+// EXPORTAR RELATÓRIO (.xlsx — 3 abas)
+// =========================================
+function exportReport() {
+  const wb = XLSX.utils.book_new();
+  const frotaReal = machines.filter(m => TIPOS_LIST.includes(m.tipo));
+
+  // ── Aba: Hardwares ──
+  const hwRows = [['ID', 'TIPO', 'MODELO', 'NÚMERO DE SÉRIE', 'FABRICANTE', 'PATRIMÔNIO']];
+  let hwRowSeq = 1;
+  machines.forEach(m => {
+    m.hardware.forEach(hw => {
+      hwRows.push([hwRowSeq++, HW_TYPES[hw.tipo]?.label || hw.tipo, hw.modelo, hw.sn, hw.fabricante, hw.patrimonio || '-']);
+    });
+  });
+  const wsHw = XLSX.utils.aoa_to_sheet(hwRows);
+  wsHw['!cols'] = [{ wch: 6 }, { wch: 12 }, { wch: 16 }, { wch: 16 }, { wch: 14 }, { wch: 12 }];
+  XLSX.utils.book_append_sheet(wb, wsHw, 'Hardwares');
+
+  // ── Aba: Frotas ──
+  const frotaRows = [['ID', 'FROTA', 'TIPO', 'MODELO', 'ANO', 'UNIDADE', 'CHASSI', 'PATRIMÔNIO']];
+  let frotaRowSeq = 1;
+  frotaReal.forEach(m => {
+    frotaRows.push([frotaRowSeq++, m.id, MACHINE_TYPES[m.tipo].label, m.modelo || '-', m.ano || '-', m.unidade, m.chassi || '-', m.patrimonio || '-']);
+  });
+  const wsFrota = XLSX.utils.aoa_to_sheet(frotaRows);
+  wsFrota['!cols'] = [{ wch: 6 }, { wch: 8 }, { wch: 14 }, { wch: 14 }, { wch: 6 }, { wch: 12 }, { wch: 14 }, { wch: 12 }];
+  XLSX.utils.book_append_sheet(wb, wsFrota, 'Frotas');
+
+  // ── Aba: Frotas + Hardwares (agrupado, com célula mesclada por máquina) ──
+  const combRows = [['Frota', 'Tipo', 'Hardware', 'Modelo', 'Numero de Série', 'Patrimônio', 'Fabricante']];
+  const merges = [];
+  frotaReal.forEach(m => {
+    const startRow = combRows.length;
+    if (m.hardware.length === 0) {
+      combRows.push([m.id, MACHINE_TYPES[m.tipo].label, '-', '-', '-', '-', '-']);
+    } else {
+      m.hardware.forEach((hw, idx) => {
+        combRows.push([
+          idx === 0 ? m.id : '',
+          idx === 0 ? MACHINE_TYPES[m.tipo].label : '',
+          HW_TYPES[hw.tipo]?.label || hw.tipo,
+          hw.modelo, hw.sn, hw.patrimonio || '-', hw.fabricante,
+        ]);
+      });
+      if (m.hardware.length > 1) {
+        const endRow = combRows.length - 1;
+        merges.push({ s: { r: startRow, c: 0 }, e: { r: endRow, c: 0 } });
+        merges.push({ s: { r: startRow, c: 1 }, e: { r: endRow, c: 1 } });
+      }
+    }
+  });
+  const wsComb = XLSX.utils.aoa_to_sheet(combRows);
+  wsComb['!merges'] = merges;
+  wsComb['!cols'] = [{ wch: 8 }, { wch: 14 }, { wch: 12 }, { wch: 14 }, { wch: 16 }, { wch: 12 }, { wch: 14 }];
+  XLSX.utils.book_append_sheet(wb, wsComb, 'Frotas+Hardwares');
+
+  XLSX.writeFile(wb, `kronos-relatorio-${localDateStr()}.xlsx`);
+  showToast('📊', 'Relatório exportado', 'Arquivo .xlsx gerado com 3 abas');
 }
 
 // =========================================
@@ -947,7 +1032,7 @@ function renderMachineDetail() {
   document.getElementById('mdName').textContent = m.nome;
   document.getElementById('mdMeta').textContent = m.id;
   document.getElementById('mdInfoGrid').innerHTML = [
-    ['UNIDADE', m.unidade], ['ANO', m.ano || '—'], ['CHASSI', m.chassi || '—'], ['PATRIMÔNIO', m.patrimonio || '—'],
+    ['MODELO', m.modelo || '—'], ['UNIDADE', m.unidade], ['ANO', m.ano || '—'], ['CHASSI', m.chassi || '—'], ['PATRIMÔNIO', m.patrimonio || '—'],
   ].map(([l, v]) => `<div class="fld"><div class="l">${l}</div><div class="v">${v}</div></div>`).join('');
   document.getElementById('mdHwCount').textContent = m.hardware.length;
   document.getElementById('mdEditBtn').style.display = TIPOS_LIST.includes(m.tipo) ? 'flex' : 'none';
@@ -1048,6 +1133,7 @@ function openAddHw(machineId) {
   updateHwModelos();
   document.getElementById('addHwSn').value = '';
   document.getElementById('addHwFab').innerHTML = FABRICANTES.map(f => `<option>${f}</option>`).join('');
+  document.getElementById('addHwPatrimonio').value = '';
   openModal('addHwModal');
 }
 function openEditHw(machineId, hwId) {
@@ -1068,6 +1154,7 @@ function openEditHw(machineId, hwId) {
   document.getElementById('addHwSn').value = hw.sn;
   document.getElementById('addHwFab').innerHTML = FABRICANTES.map(f => `<option>${f}</option>`).join('');
   document.getElementById('addHwFab').value = hw.fabricante;
+  document.getElementById('addHwPatrimonio').value = hw.patrimonio || '';
   openModal('addHwModal');
 }
 function updateHwModelos() {
@@ -1080,11 +1167,12 @@ function submitAddHw(e) {
   const modelo = document.getElementById('addHwModelo').value;
   const sn = document.getElementById('addHwSn').value.trim() || 'SN-' + Math.floor(100000 + Math.random() * 899999);
   const fabricante = document.getElementById('addHwFab').value.trim() || '—';
+  const patrimonio = document.getElementById('addHwPatrimonio').value.trim();
 
   if (editingHwCtx) {
     const m = findMachine(editingHwCtx.machineId);
     const hw = m.hardware.find(h => h.id === editingHwCtx.hwId);
-    Object.assign(hw, { tipo, modelo, sn, fabricante });
+    Object.assign(hw, { tipo, modelo, sn, fabricante, patrimonio });
     closeModal('addHwModal');
     if (currentDetailMachineId === m.id) renderMachineDetail();
     renderHardwares(document.getElementById('globalSearch').value);
@@ -1094,7 +1182,7 @@ function submitAddHw(e) {
 
   const machineId = document.getElementById('addHwMachine').value;
   const m = findMachine(machineId);
-  const hw = { id: 'HW-' + String(hwSeq++).padStart(4, '0'), tipo, modelo, sn, fabricante, instaladoEm: localDateStr() };
+  const hw = { id: 'HW-' + String(hwSeq++).padStart(4, '0'), tipo, modelo, sn, fabricante, patrimonio, instaladoEm: localDateStr() };
   m.hardware.push(hw);
   closeModal('addHwModal');
   if (currentDetailMachineId === machineId) renderMachineDetail();
@@ -1114,6 +1202,7 @@ function openAddMachine() {
   document.getElementById('addMachineSubmitBtn').textContent = 'Salvar';
   document.getElementById('amTipo').innerHTML = Object.entries(MACHINE_TYPES).map(([t, c]) => `<option value="${t}">${c.label}</option>`).join('');
   document.getElementById('amUnidade').innerHTML = UNIDADES.map(u => `<option>${u}</option>`).join('');
+  updateAmModelos();
   document.getElementById('amNome').value = '';
   document.getElementById('amAno').value = '';
   document.getElementById('amChassi').value = '';
@@ -1132,11 +1221,17 @@ function openEditMachine(id) {
   document.getElementById('amUnidade').innerHTML = UNIDADES.map(u => `<option>${u}</option>`).join('');
   document.getElementById('amNome').value = m.nome;
   document.getElementById('amTipo').value = m.tipo;
+  updateAmModelos();
+  document.getElementById('amModelo').value = m.modelo || '';
   document.getElementById('amUnidade').value = m.unidade;
   document.getElementById('amAno').value = m.ano || '';
   document.getElementById('amChassi').value = m.chassi || '';
   document.getElementById('amPatrimonio').value = m.patrimonio || '';
   openModal('addMachineModal');
+}
+function updateAmModelos() {
+  const tipo = document.getElementById('amTipo').value;
+  document.getElementById('amModelo').innerHTML = MACHINE_MODELS[tipo].map(mo => `<option>${mo}</option>`).join('');
 }
 function submitAddMachine(e) {
   e.preventDefault();
@@ -1145,6 +1240,7 @@ function submitAddMachine(e) {
   const dados = {
     nome,
     tipo: document.getElementById('amTipo').value,
+    modelo: document.getElementById('amModelo').value,
     unidade: document.getElementById('amUnidade').value,
     ano: document.getElementById('amAno').value,
     chassi: document.getElementById('amChassi').value.trim(),
