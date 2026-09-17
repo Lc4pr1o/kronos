@@ -1025,7 +1025,7 @@ function sheetsToMachines(rawMachines, rawHardwares) {
       ano: m.ano || '',
       chassi: m.chassi || '',
       patrimonio: String(m.patrimonio || ''),
-      modelo: '', // não existe na tabela `maquinas` ainda — só cosmético em máquinas criadas nesta sessão
+      modelo: m.modelo || '',
       hardware: rawHardwares.filter(h => String(h.maquinaAtual ?? '') === id).map(mapRawHw),
     };
   });
@@ -1880,13 +1880,12 @@ async function submitAddMachine(e) {
   const dados = {
     nome,
     tipo: document.getElementById('amTipo').value,
+    modelo: document.getElementById('amModelo').value,
     unidade: document.getElementById('amUnidade').value,
     ano: document.getElementById('amAno').value.trim(),
     chassi: document.getElementById('amChassi').value.trim(),
     patrimonio: document.getElementById('amPatrimonio').value.trim(),
   };
-  // modelo é só cosmético local — a tabela `maquinas` do Supabase não tem essa coluna ainda
-  const modeloLocal = document.getElementById('amModelo').value;
 
   if (editingMachineId) {
     try {
@@ -1899,9 +1898,6 @@ async function submitAddMachine(e) {
       closeModal('addMachineModal');
       showToast('✏️', 'Máquina atualizada', `${nome} atualizada`);
       await loadData();
-      const m = findMachine(editingMachineId);
-      if (m) m.modelo = modeloLocal;
-      if (currentDetailMachineId === editingMachineId) renderMachineDetail();
     } catch (err) {
       console.error('submitAddMachine (edit):', err);
       showToast('⚠️', 'Falha ao salvar', 'Verifique a conexão e tente novamente');
@@ -1923,8 +1919,6 @@ async function submitAddMachine(e) {
     closeModal('addMachineModal');
     showToast('🚜', 'Máquina cadastrada', `${nome} adicionada à frota`);
     await loadData();
-    const novaMaquina = findMachine(id);
-    if (novaMaquina && modeloLocal) novaMaquina.modelo = modeloLocal;
   } catch (err) {
     console.error('submitAddMachine (novo):', err);
     showToast('⚠️', 'Falha ao salvar', 'Verifique a conexão e tente novamente');
