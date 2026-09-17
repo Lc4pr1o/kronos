@@ -271,14 +271,17 @@ h1.page-title { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
 
 .field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .field label { font-size: 10.5px; color: var(--text2); font-weight: 700; letter-spacing: 0.4px; }
-.field input, .field select {
+.field input, .field select, .field textarea {
   width: 100%; min-width: 0;
   background: rgba(255,255,255,0.04); border: 1px solid var(--card-border); border-radius: 10px;
   padding: 10px 12px; color: var(--text); font-family: inherit; font-size: 13px;
 }
-.field input:focus, .field select:focus { outline: none; border-color: #f5a623; }
+.field textarea { resize: vertical; min-height: 70px; }
+.field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: #f5a623; }
+.field-hint { font-size: 10.5px; color: var(--text3); }
 .field-row { display: flex; gap: 12px; min-width: 0; }
 .field-row .field { flex: 1; min-width: 0; }
+.field input[type="color"] { padding: 4px; height: 40px; cursor: pointer; }
 
 .detail-hero { display: flex; align-items: center; gap: 16px; }
 .detail-hero-info .ic-type { display: block; margin-bottom: 4px; }
@@ -519,14 +522,14 @@ h1.page-title { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
           <div class="panel">
             <div class="detail-hw-header" style="margin-bottom:14px">
               <h3 style="margin:0">Tipos de Hardware</h3>
-              <button class="btn btn-ghost" style="padding:6px 12px;font-size:11.5px" onclick="addHwTypeRow()"><span class="material-symbols-outlined" style="font-size:14px">add</span>Novo tipo</button>
+              <button class="btn btn-ghost" style="padding:6px 12px;font-size:11.5px" onclick="openAddHwType()"><span class="material-symbols-outlined" style="font-size:14px">add</span>Novo tipo</button>
             </div>
             <div class="settings-list" id="stHwTypesList"></div>
           </div>
           <div class="panel">
             <div class="detail-hw-header" style="margin-bottom:14px">
               <h3 style="margin:0">Tipos de Máquina</h3>
-              <button class="btn btn-ghost" style="padding:6px 12px;font-size:11.5px" onclick="addMachineTypeRow()"><span class="material-symbols-outlined" style="font-size:14px">add</span>Novo tipo</button>
+              <button class="btn btn-ghost" style="padding:6px 12px;font-size:11.5px" onclick="openAddMachineType()"><span class="material-symbols-outlined" style="font-size:14px">add</span>Novo tipo</button>
             </div>
             <div class="settings-list" id="stMachineTypesList"></div>
           </div>
@@ -771,6 +774,85 @@ h1.page-title { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
   </div>
 </div>
 
+<!-- MODAL: TIPO DE HARDWARE -->
+<div class="modal-overlay" id="hwTypeEditModal" onclick="if(event.target===this) closeModal('hwTypeEditModal')">
+  <div class="modal">
+    <form onsubmit="submitHwType(event)">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title" id="hwTypeEditTitle">Novo Tipo de Hardware</div>
+          <div class="modal-sub" id="hwTypeEditSub">Cadastrar no catálogo</div>
+        </div>
+        <button type="button" class="modal-close" onclick="closeModal('hwTypeEditModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="field-row">
+          <div class="field" style="flex:2">
+            <label>ID INTERNO</label>
+            <input id="htId" placeholder="ex: sensor_solo" required>
+          </div>
+          <div class="field" style="flex:1">
+            <label>COR</label>
+            <input type="color" id="htColor" value="#888888">
+          </div>
+        </div>
+        <div class="field">
+          <label>NOME (RÓTULO)</label>
+          <input id="htLabel" placeholder="Ex: Sensor de Solo" required>
+        </div>
+        <div class="field">
+          <label>MODELOS</label>
+          <textarea id="htModelos" rows="4" placeholder="Um modelo por linha&#10;Ex:&#10;GS3&#10;GS4"></textarea>
+          <span class="field-hint">Um modelo por linha (ou separados por vírgula)</span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" id="htDeleteBtn" onclick="deleteHwTypeFromModal()" style="color:#e05252">Excluir</button>
+        <div style="flex:1"></div>
+        <button type="button" class="btn btn-ghost" onclick="closeModal('hwTypeEditModal')">Cancelar</button>
+        <button type="submit" class="btn btn-primary" id="htSubmitBtn">Salvar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: TIPO DE MÁQUINA -->
+<div class="modal-overlay" id="machineTypeEditModal" onclick="if(event.target===this) closeModal('machineTypeEditModal')">
+  <div class="modal">
+    <form onsubmit="submitMachineType(event)">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title" id="machineTypeEditTitle">Novo Tipo de Máquina</div>
+          <div class="modal-sub" id="machineTypeEditSub">Cadastrar no catálogo</div>
+        </div>
+        <button type="button" class="modal-close" onclick="closeModal('machineTypeEditModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="field-row">
+          <div class="field" style="flex:2">
+            <label>ID INTERNO</label>
+            <input id="mtypeId" placeholder="ex: caminhao_pipa" required>
+          </div>
+          <div class="field" style="flex:1">
+            <label>COR</label>
+            <input type="color" id="mtypeColor" value="#888888">
+          </div>
+        </div>
+        <div class="field">
+          <label>NOME (RÓTULO)</label>
+          <input id="mtypeLabel" placeholder="Ex: Caminhão Pipa" required>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" id="mtypeDeleteBtn" onclick="deleteMachineTypeFromModal()" style="color:#e05252">Excluir</button>
+        <div style="flex:1"></div>
+        <button type="button" class="btn btn-ghost" onclick="closeModal('machineTypeEditModal')">Cancelar</button>
+        <button type="submit" class="btn btn-primary" id="mtypeSubmitBtn">Salvar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <!-- MODAL: TÉCNICO -->
 <div class="modal-overlay" id="tecnicoModal" onclick="if(event.target===this) closeModal('tecnicoModal')">
   <div class="modal">
@@ -828,43 +910,6 @@ function navigate(view, el) {
 }
 
 // =========================================
-// ÍCONES CUSTOMIZADOS DO KRONOS (mesmo conjunto do fleet-hardware.html)
-// =========================================
-const KRONOS_ICONS = {
-  trator:        `<circle cx="8" cy="17" r="4"/><circle cx="20" cy="18" r="2"/><rect x="6" y="9" width="7" height="5"/><rect x="7" y="10" width="3" height="3"/><path d="M13 14h8v4"/><path d="M4 14Q8 10 12 14"/>`,
-  colhedora:     `<path d="M12 22V2"/><path d="M10 18h4M10 13h4M10 8h4"/><path d="M12 18Q7 16 4 12"/><path d="M12 13Q17 11 20 7"/><path d="M12 8Q7 6 4 2"/>`,
-  motoniveladora:`<circle cx="3" cy="19" r="2"/><circle cx="18" cy="19" r="2"/><circle cx="22" cy="19" r="2"/><path d="M5 14h18v5H5z"/><path d="M16 14V9h7v5"/><path d="M2 17l20-4"/>`,
-  monitor:       `<rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4M7 7h10M7 11h7"/>`,
-  receptor:      `<path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/>`,
-  radio:         `<path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5"/><circle cx="12" cy="12" r="2"/><path d="M16.2 16.2c2.3-2.3 2.3-6.1 0-8.5M19.1 19.1C23 15.2 23 8.8 19.1 4.9"/>`,
-  tela:          `<rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>`,
-  bordo:         `<rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M1 9h3M1 15h3M20 9h3M20 15h3"/>`,
-  escavadeira:  `<rect x="1" y="17" width="15" height="4" rx="2"/><rect x="3" y="12" width="11" height="5"/><rect x="4" y="13" width="4" height="3" rx="1"/><path d="M13 13L19 7L22 12"/><path d="M22 12l-2 3-3-2 2-3z"/>`,
-  retroescavadeira:`<circle cx="5" cy="18" r="2.5"/><circle cx="19" cy="18" r="2.5"/><path d="M8 18V11h8v7"/><rect x="9" y="8" width="5" height="4" rx="1"/><path d="M8 15L4 12L1 15L4 18"/><path d="M16 14L20 8L23 12"/><path d="M23 12l-2 3-2-2 2-3z"/>`,
-  transbordo:   `<circle cx="6" cy="17" r="2"/><circle cx="18" cy="17" r="2"/><path d="M2 17h2M8 17h8M20 17h2M1 9l3-4h16l3 4v6H1z"/>`,
-  caminhao:     `<path d="M1 3h15v13H1zM16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>`,
-  pulverizador: `<path d="M7 16.3c2.2 0 4-1.83 4-4.05 0-1.16-.57-2.26-1.71-3.19S7.29 7.5 7 5.28C6.71 7.5 5.53 8.1 4.34 9.06 3.16 10 2.5 11.11 2.5 12.25c0 2.22 1.8 4.05 4 4.05z"/><path d="M20 9l-3 10M17 9l3 10M12 7V4M14 7V4M10 4h6"/>`,
-  plantadeira:  `<path d="M12 22V12M12 12C12 7 17 2 22 2c0 5-5 10-10 10M12 12C12 7 7 2 2 2c0 5 5 10 10 10"/>`,
-  sensor:       `<circle cx="12" cy="12" r="4"/><path d="M2 12h3M19 12h3M12 2v3M12 19v3M4.93 4.93l2.12 2.12M16.95 16.95l2.12 2.12M16.95 7.05l2.12-2.12M4.93 19.07l2.12-2.12"/>`,
-  antena:       `<path d="M2 17l10-5 10 5M6 15V8l6-3 6 3v7M12 12v10M8 19h8"/>`,
-  estoque:       `<path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/>`,
-  manutencao:    `<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>`,
-  inativo:      `<circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>`,
-  gauge:        `<path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M19.07 4.93A10 10 0 1 1 4.93 4.93"/><path d="M7 12l3 3"/>`,
-  mapa:         `<path d="M1 6l7-4 8 4 7-4v16l-7 4-8-4-7 4V6z"/><path d="M8 2v16M16 6v16"/>`,
-  engrenagem:   `<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>`,
-  sinal:        `<path d="M2 20h.01M7 20v-4M12 20v-8M17 20V8M22 4v16"/>`,
-  localizacao:  `<circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 6.9 8 11.7z"/>`,
-};
-function renderIcon(name, size = 20, color = 'currentColor') {
-  const body = KRONOS_ICONS[name];
-  if (body) {
-    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="${size}" height="${size}" stroke="${color}" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0">${body}</svg>`;
-  }
-  return `<span style="font-size:${Math.round(size * 0.85)}px;line-height:1;display:inline-block;vertical-align:middle">${name || '?'}</span>`;
-}
-
-// =========================================
 // CONEXÃO — Supabase (mesmo banco do fleet-hardware.html)
 // =========================================
 const SUPABASE_URL = 'https://fevzqjeybsnjznespplr.supabase.co';
@@ -885,20 +930,20 @@ function localDateStr() {
 // TIPOS (padrão local — sobrescrito pelos catálogos hw_tipos/maq_tipos do Supabase quando disponíveis)
 // =========================================
 const MACHINE_TYPES = {
-  trator: { icon: 'trator', label: 'Trator', color: '#f5a623' },
-  colhedora: { icon: 'colhedora', label: 'Colhedora', color: '#2ecc8a' },
-  motoniveladora: { icon: 'motoniveladora', label: 'Motoniveladora', color: '#4a9eff' },
+  trator: { label: 'Trator', color: '#f5a623' },
+  colhedora: { label: 'Colhedora', color: '#2ecc8a' },
+  motoniveladora: { label: 'Motoniveladora', color: '#4a9eff' },
 };
 const TIPOS_LIST = Object.keys(MACHINE_TYPES);
 let UNIDADES = ['PEDRA', 'CEDRO', 'BURITI', 'IPÊ', 'PEDRA/LOCAÇÃO']; // fallback — sobrescrito pela tabela `unidades` do Supabase
 const VIRTUAL_LABELS = { estoque: 'Estoque', manutencao: 'Manutenção', inativo: 'Inativo' };
 
 const HW_TYPES = {
-  monitor:  { icon: 'monitor',  label: 'Monitor',  sistema: 'Piloto Automático', color: '#f5a623', modelos: ['RAVEN', 'CFX 750', 'EZ GUIDE', 'OMNI', 'PRO 700', 'GS3', 'GS4', 'XCN 1050', 'XCN 1060'] },
-  receptor: { icon: 'receptor', label: 'Receptor', sistema: 'Piloto Automático', color: '#4fd1ff', modelos: ['StarFire 3000', 'StarFire 6000', 'StarFire 7000'] },
-  radio:    { icon: 'radio',    label: 'Rádio',    sistema: 'Piloto Automático', color: '#8b9dff', modelos: ['450'] },
-  tela:     { icon: 'tela',     label: 'Tela',     sistema: 'Solinftec',        color: '#2ecc8a', modelos: ['S7', 'SOL7'] },
-  bordo:    { icon: 'bordo',    label: 'Bordo',    sistema: 'Solinftec',        color: '#e05252', modelos: ['MAG 100', 'MAG X'] },
+  monitor:  { label: 'Monitor',  sistema: 'Piloto Automático', color: '#f5a623', modelos: ['RAVEN', 'CFX 750', 'EZ GUIDE', 'OMNI', 'PRO 700', 'GS3', 'GS4', 'XCN 1050', 'XCN 1060'] },
+  receptor: { label: 'Receptor', sistema: 'Piloto Automático', color: '#4fd1ff', modelos: ['StarFire 3000', 'StarFire 6000', 'StarFire 7000'] },
+  radio:    { label: 'Rádio',    sistema: 'Piloto Automático', color: '#8b9dff', modelos: ['450'] },
+  tela:     { label: 'Tela',     sistema: 'Solinftec',        color: '#2ecc8a', modelos: ['S7', 'SOL7'] },
+  bordo:    { label: 'Bordo',    sistema: 'Solinftec',        color: '#e05252', modelos: ['MAG 100', 'MAG X'] },
 };
 let FABRICANTES = ['John Deere', 'Case IH', 'Trimble', 'Solinftec']; // fallback — sobrescrito pela tabela `fabricantes` do Supabase
 // MACHINE_MODELS: campo "modelo" de máquina é só local — a tabela `maquinas` do
@@ -913,7 +958,6 @@ function buildHwConfig(rawTipos) {
   rawTipos.forEach(t => {
     if (!t.id) return;
     HW_TYPES[t.id] = {
-      icon: t.emoji || HW_TYPES[t.id]?.icon || t.id,
       label: t.label || t.id.toUpperCase(),
       sistema: HW_TYPES[t.id]?.sistema || '',
       color: t.cor || HW_TYPES[t.id]?.color || '#888888',
@@ -925,7 +969,6 @@ function buildMachineConfig(rawTipos) {
   rawTipos.forEach(t => {
     if (!t.id) return;
     MACHINE_TYPES[t.id] = {
-      icon: t.emoji || MACHINE_TYPES[t.id]?.icon || t.id,
       label: t.label || t.id.toUpperCase(),
       color: t.cor || MACHINE_TYPES[t.id]?.color || '#888888',
     };
@@ -1900,25 +1943,18 @@ function saveAnalystNameField() {
 function renderSettingsLists() {
   document.getElementById('stAnalystName').value = analystName;
   document.getElementById('stHwTypesList').innerHTML = Object.entries(HW_TYPES).map(([tipo, cfg]) => `
-    <div class="settings-row" data-tipo="${tipo}">
-      <span class="icon">${renderIcon(cfg.icon, 20, cfg.color)}</span>
-      <input class="mini-input st-label" style="flex:1" value="${cfg.label}" onchange="saveHwType('${tipo}')">
-      <input type="color" class="mini-color st-color" value="${cfg.color}" title="Cor do tipo" onchange="saveHwType('${tipo}')">
-      <input class="mini-input st-modelos" style="flex:2" value="${cfg.modelos.join(', ')}" placeholder="Modelos separados por vírgula" onchange="saveHwType('${tipo}')">
-      <button class="hw-mini-btn remove-btn" title="Excluir tipo" onclick="deleteHwType('${tipo}')"><span class="material-symbols-outlined" style="font-size:14px">delete</span></button>
+    <div class="settings-row" style="cursor:pointer" onclick="openEditHwType('${tipo}')">
+      <span class="ic-type" style="flex:1;color:${cfg.color}">${cfg.label}</span>
+      <span class="ic-tag">${cfg.modelos.length} modelo${cfg.modelos.length === 1 ? '' : 's'}</span>
+      <span class="material-symbols-outlined" style="color:var(--text3)">chevron_right</span>
     </div>
-  `).join('');
+  `).join('') || '<p style="color:var(--text3);font-size:12.5px">Nenhum tipo cadastrado.</p>';
   document.getElementById('stMachineTypesList').innerHTML = Object.entries(MACHINE_TYPES).map(([tipo, cfg]) => `
-    <div class="settings-row" data-tipo="${tipo}">
-      <span class="icon st-icon-preview">${renderIcon(cfg.icon, 20, cfg.color)}</span>
-      <input class="mini-input st-icon" style="width:110px" value="${cfg.icon}" placeholder="nome do ícone"
-        oninput="this.parentElement.querySelector('.st-icon-preview').innerHTML = renderIcon(this.value.trim(), 20, this.parentElement.querySelector('.st-color').value)"
-        onchange="saveMachineType('${tipo}')">
-      <input class="mini-input st-label" style="flex:1" value="${cfg.label}" onchange="saveMachineType('${tipo}')">
-      <input type="color" class="mini-color st-color" value="${cfg.color}" title="Cor do tipo" onchange="saveMachineType('${tipo}')">
-      <button class="hw-mini-btn remove-btn" title="Excluir tipo" onclick="deleteMachineType('${tipo}')"><span class="material-symbols-outlined" style="font-size:14px">delete</span></button>
+    <div class="settings-row" style="cursor:pointer" onclick="openEditMachineType('${tipo}')">
+      <span class="ic-type" style="flex:1;color:${cfg.color}">${cfg.label}</span>
+      <span class="material-symbols-outlined" style="color:var(--text3)">chevron_right</span>
     </div>
-  `).join('');
+  `).join('') || '<p style="color:var(--text3);font-size:12.5px">Nenhum tipo cadastrado.</p>';
   document.getElementById('stUnidadesList').innerHTML = UNIDADES.map(nome => `
     <div class="settings-row">
       <span style="flex:1;font-size:12.5px;font-weight:600">${nome}</span>
@@ -1933,125 +1969,182 @@ function renderSettingsLists() {
   `).join('') || '<p style="color:var(--text3);font-size:12.5px">Nenhum fabricante cadastrado.</p>';
 }
 
-async function saveHwType(id) {
+// ── Tipo de Hardware: modal de cadastro/edição ──
+let editingHwTypeId = null;
+function openAddHwType() {
+  editingHwTypeId = null;
+  document.getElementById('hwTypeEditTitle').textContent = 'Novo Tipo de Hardware';
+  document.getElementById('hwTypeEditSub').textContent = 'Cadastrar no catálogo';
+  document.getElementById('htId').value = '';
+  document.getElementById('htId').disabled = false;
+  document.getElementById('htLabel').value = '';
+  document.getElementById('htColor').value = '#888888';
+  document.getElementById('htModelos').value = '';
+  document.getElementById('htDeleteBtn').style.display = 'none';
+  openModal('hwTypeEditModal');
+}
+function openEditHwType(id) {
   const cfg = HW_TYPES[id];
-  const row = document.querySelector(`#stHwTypesList .settings-row[data-tipo="${id}"]`);
-  cfg.label = row.querySelector('.st-label').value.trim() || cfg.label;
-  cfg.color = row.querySelector('.st-color').value;
-  const modelos = row.querySelector('.st-modelos').value.split(',').map(s => s.trim()).filter(Boolean);
-  cfg.modelos = modelos;
-  row.querySelector('.icon').innerHTML = renderIcon(cfg.icon, 20, cfg.color);
-  try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/hw_tipos?id=eq.${encodeURIComponent(id)}`, {
-      method: 'PATCH', headers: { ...sbHeaders, 'Prefer': 'return=minimal' },
-      body: JSON.stringify({ label: cfg.label, cor: cfg.color, modelos: cfg.modelos }),
-    });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    renderHardwares(document.getElementById('globalSearch').value);
-    showToast('✅', 'Tipo atualizado', cfg.label);
-  } catch (e) {
-    console.error('saveHwType:', e);
-    showToast('⚠️', 'Falha ao salvar', 'Verifique a conexão e tente novamente');
+  editingHwTypeId = id;
+  document.getElementById('hwTypeEditTitle').textContent = 'Editar Tipo de Hardware';
+  document.getElementById('hwTypeEditSub').textContent = id;
+  document.getElementById('htId').value = id;
+  document.getElementById('htId').disabled = true;
+  document.getElementById('htLabel').value = cfg.label;
+  document.getElementById('htColor').value = cfg.color;
+  document.getElementById('htModelos').value = cfg.modelos.join('\n');
+  document.getElementById('htDeleteBtn').style.display = 'inline-flex';
+  openModal('hwTypeEditModal');
+}
+async function submitHwType(e) {
+  e.preventDefault();
+  const label = document.getElementById('htLabel').value.trim();
+  const color = document.getElementById('htColor').value;
+  const modelos = document.getElementById('htModelos').value.split(/[\n,]/).map(s => s.trim()).filter(Boolean);
+  if (!label) return;
+
+  if (editingHwTypeId) {
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/hw_tipos?id=eq.${encodeURIComponent(editingHwTypeId)}`, {
+        method: 'PATCH', headers: { ...sbHeaders, 'Prefer': 'return=minimal' },
+        body: JSON.stringify({ label, cor: color, modelos }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      Object.assign(HW_TYPES[editingHwTypeId], { label, color, modelos });
+      closeModal('hwTypeEditModal');
+      renderSettingsLists();
+      renderHardwares(document.getElementById('globalSearch').value);
+      showToast('✅', 'Tipo atualizado', label);
+    } catch (err) {
+      console.error('submitHwType (edit):', err);
+      showToast('⚠️', 'Falha ao salvar', 'Verifique a conexão e tente novamente');
+    }
+    return;
   }
-}
-function addHwTypeRow() {
-  const id = prompt('ID interno do novo tipo (sem espaços/acentos, ex: sensor_solo):');
+
+  const id = document.getElementById('htId').value.trim().toLowerCase().replace(/\s+/g, '_');
   if (!id) return;
-  const slug = id.trim().toLowerCase().replace(/\s+/g, '_');
-  if (HW_TYPES[slug]) { showToast('⚠️', 'Já existe', `O tipo "${slug}" já está cadastrado`); return; }
-  HW_TYPES[slug] = { icon: slug, label: slug.toUpperCase(), sistema: '', color: '#888888', modelos: [] };
-  saveNewHwType(slug);
-}
-async function saveNewHwType(id) {
-  const cfg = HW_TYPES[id];
+  if (HW_TYPES[id]) { showToast('⚠️', 'Já existe', `O tipo "${id}" já está cadastrado`); return; }
   try {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/hw_tipos`, {
       method: 'POST', headers: { ...sbHeaders, 'Prefer': 'return=minimal' },
-      body: JSON.stringify({ id, label: cfg.label, emoji: cfg.icon, cor: cfg.color, modelos: cfg.modelos, fabricantes: [] }),
+      body: JSON.stringify({ id, label, cor: color, modelos, fabricantes: [] }),
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    HW_TYPES[id] = { label, color, sistema: '', modelos };
+    closeModal('hwTypeEditModal');
     renderSettingsLists();
-    showToast('✅', 'Tipo criado', cfg.label);
-  } catch (e) {
-    console.error('saveNewHwType:', e);
-    delete HW_TYPES[id];
+    renderHardwares(document.getElementById('globalSearch').value);
+    showToast('✅', 'Tipo criado', label);
+  } catch (err) {
+    console.error('submitHwType (novo):', err);
     showToast('⚠️', 'Falha ao criar', 'Verifique a conexão e tente novamente');
   }
 }
-async function deleteHwType(id) {
-  const cfg = HW_TYPES[id];
+async function deleteHwTypeFromModal() {
+  if (!editingHwTypeId) return;
+  const cfg = HW_TYPES[editingHwTypeId];
   if (!confirm(`Excluir o tipo de hardware "${cfg.label}"?\n\nHardwares já cadastrados com esse tipo não são apagados.`)) return;
   try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/hw_tipos?id=eq.${encodeURIComponent(id)}`, { method: 'DELETE', headers: sbHeaders });
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/hw_tipos?id=eq.${encodeURIComponent(editingHwTypeId)}`, { method: 'DELETE', headers: sbHeaders });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    delete HW_TYPES[id];
+    delete HW_TYPES[editingHwTypeId];
+    closeModal('hwTypeEditModal');
     renderSettingsLists();
     renderHardwares(document.getElementById('globalSearch').value);
     showToast('🗑️', 'Tipo excluído', cfg.label);
   } catch (e) {
-    console.error('deleteHwType:', e);
+    console.error('deleteHwTypeFromModal:', e);
     showToast('⚠️', 'Falha ao excluir', 'Verifique a conexão e tente novamente');
   }
 }
 
-async function saveMachineType(id) {
+// ── Tipo de Máquina: modal de cadastro/edição ──
+let editingMachineTypeId = null;
+function openAddMachineType() {
+  editingMachineTypeId = null;
+  document.getElementById('machineTypeEditTitle').textContent = 'Novo Tipo de Máquina';
+  document.getElementById('machineTypeEditSub').textContent = 'Cadastrar no catálogo';
+  document.getElementById('mtypeId').value = '';
+  document.getElementById('mtypeId').disabled = false;
+  document.getElementById('mtypeLabel').value = '';
+  document.getElementById('mtypeColor').value = '#888888';
+  document.getElementById('mtypeDeleteBtn').style.display = 'none';
+  openModal('machineTypeEditModal');
+}
+function openEditMachineType(id) {
   const cfg = MACHINE_TYPES[id];
-  const row = document.querySelector(`#stMachineTypesList .settings-row[data-tipo="${id}"]`);
-  cfg.icon = row.querySelector('.st-icon').value.trim() || cfg.icon;
-  cfg.label = row.querySelector('.st-label').value.trim() || cfg.label;
-  cfg.color = row.querySelector('.st-color').value;
-  try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/maq_tipos?id=eq.${encodeURIComponent(id)}`, {
-      method: 'PATCH', headers: { ...sbHeaders, 'Prefer': 'return=minimal' },
-      body: JSON.stringify({ label: cfg.label, emoji: cfg.icon, cor: cfg.color }),
-    });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    renderFrota(document.getElementById('globalSearch').value);
-    showToast('✅', 'Tipo atualizado', cfg.label);
-  } catch (e) {
-    console.error('saveMachineType:', e);
-    showToast('⚠️', 'Falha ao salvar', 'Verifique a conexão e tente novamente');
+  editingMachineTypeId = id;
+  document.getElementById('machineTypeEditTitle').textContent = 'Editar Tipo de Máquina';
+  document.getElementById('machineTypeEditSub').textContent = id;
+  document.getElementById('mtypeId').value = id;
+  document.getElementById('mtypeId').disabled = true;
+  document.getElementById('mtypeLabel').value = cfg.label;
+  document.getElementById('mtypeColor').value = cfg.color;
+  document.getElementById('mtypeDeleteBtn').style.display = 'inline-flex';
+  openModal('machineTypeEditModal');
+}
+async function submitMachineType(e) {
+  e.preventDefault();
+  const label = document.getElementById('mtypeLabel').value.trim();
+  const color = document.getElementById('mtypeColor').value;
+  if (!label) return;
+
+  if (editingMachineTypeId) {
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/maq_tipos?id=eq.${encodeURIComponent(editingMachineTypeId)}`, {
+        method: 'PATCH', headers: { ...sbHeaders, 'Prefer': 'return=minimal' },
+        body: JSON.stringify({ label, cor: color }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      Object.assign(MACHINE_TYPES[editingMachineTypeId], { label, color });
+      closeModal('machineTypeEditModal');
+      renderSettingsLists();
+      renderFrota(document.getElementById('globalSearch').value);
+      showToast('✅', 'Tipo atualizado', label);
+    } catch (err) {
+      console.error('submitMachineType (edit):', err);
+      showToast('⚠️', 'Falha ao salvar', 'Verifique a conexão e tente novamente');
+    }
+    return;
   }
-}
-function addMachineTypeRow() {
-  const id = prompt('ID interno do novo tipo de máquina (sem espaços/acentos, ex: caminhao_pipa):');
+
+  const id = document.getElementById('mtypeId').value.trim().toLowerCase().replace(/\s+/g, '_');
   if (!id) return;
-  const slug = id.trim().toLowerCase().replace(/\s+/g, '_');
-  if (MACHINE_TYPES[slug]) { showToast('⚠️', 'Já existe', `O tipo "${slug}" já está cadastrado`); return; }
-  MACHINE_TYPES[slug] = { icon: slug, label: slug.toUpperCase(), color: '#888888' };
-  saveNewMachineType(slug);
-}
-async function saveNewMachineType(id) {
-  const cfg = MACHINE_TYPES[id];
+  if (MACHINE_TYPES[id]) { showToast('⚠️', 'Já existe', `O tipo "${id}" já está cadastrado`); return; }
   try {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/maq_tipos`, {
       method: 'POST', headers: { ...sbHeaders, 'Prefer': 'return=minimal' },
-      body: JSON.stringify({ id, label: cfg.label, emoji: cfg.icon, cor: cfg.color }),
+      body: JSON.stringify({ id, label, cor: color }),
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    MACHINE_TYPES[id] = { label, color };
     if (!TIPOS_LIST.includes(id)) TIPOS_LIST.push(id);
+    closeModal('machineTypeEditModal');
     renderSettingsLists();
-    showToast('✅', 'Tipo criado', cfg.label);
-  } catch (e) {
-    console.error('saveNewMachineType:', e);
-    delete MACHINE_TYPES[id];
+    renderFrota(document.getElementById('globalSearch').value);
+    showToast('✅', 'Tipo criado', label);
+  } catch (err) {
+    console.error('submitMachineType (novo):', err);
     showToast('⚠️', 'Falha ao criar', 'Verifique a conexão e tente novamente');
   }
 }
-async function deleteMachineType(id) {
-  const cfg = MACHINE_TYPES[id];
+async function deleteMachineTypeFromModal() {
+  if (!editingMachineTypeId) return;
+  const cfg = MACHINE_TYPES[editingMachineTypeId];
   if (!confirm(`Excluir o tipo de máquina "${cfg.label}"?\n\nMáquinas já cadastradas com esse tipo não são apagadas.`)) return;
   try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/maq_tipos?id=eq.${encodeURIComponent(id)}`, { method: 'DELETE', headers: sbHeaders });
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/maq_tipos?id=eq.${encodeURIComponent(editingMachineTypeId)}`, { method: 'DELETE', headers: sbHeaders });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    delete MACHINE_TYPES[id];
-    const idx = TIPOS_LIST.indexOf(id);
+    delete MACHINE_TYPES[editingMachineTypeId];
+    const idx = TIPOS_LIST.indexOf(editingMachineTypeId);
     if (idx > -1) TIPOS_LIST.splice(idx, 1);
+    closeModal('machineTypeEditModal');
     renderSettingsLists();
     renderFrota(document.getElementById('globalSearch').value);
     showToast('🗑️', 'Tipo excluído', cfg.label);
   } catch (e) {
-    console.error('deleteMachineType:', e);
+    console.error('deleteMachineTypeFromModal:', e);
     showToast('⚠️', 'Falha ao excluir', 'Verifique a conexão e tente novamente');
   }
 }
