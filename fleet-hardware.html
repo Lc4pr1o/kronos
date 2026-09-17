@@ -747,19 +747,25 @@ h1.page-title { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
         </div>
         <div class="field-row">
           <div class="field">
-            <label>UNIDADE</label>
-            <select id="amUnidade" required></select>
+            <label>FABRICANTE</label>
+            <select id="amFabricante"></select>
           </div>
           <div class="field">
-            <label>ANO</label>
-            <input id="amAno" type="number" placeholder="2024">
+            <label>UNIDADE</label>
+            <select id="amUnidade" required></select>
           </div>
         </div>
         <div class="field-row">
           <div class="field">
+            <label>ANO</label>
+            <input id="amAno" type="number" placeholder="2024">
+          </div>
+          <div class="field">
             <label>CHASSI</label>
             <input id="amChassi" placeholder="Opcional">
           </div>
+        </div>
+        <div class="field-row">
           <div class="field">
             <label>PATRIMÔNIO</label>
             <input id="amPatrimonio" placeholder="Opcional">
@@ -1026,6 +1032,7 @@ function sheetsToMachines(rawMachines, rawHardwares) {
       chassi: m.chassi || '',
       patrimonio: String(m.patrimonio || ''),
       modelo: m.modelo || '',
+      fabricante: m.fabricante || '',
       hardware: rawHardwares.filter(h => String(h.maquinaAtual ?? '') === id).map(mapRawHw),
     };
   });
@@ -1633,7 +1640,7 @@ function renderMachineDetail() {
   document.getElementById('mdName').textContent = m.nome;
   document.getElementById('mdMeta').textContent = m.id;
   document.getElementById('mdInfoGrid').innerHTML = [
-    ['MODELO', m.modelo || '—'], ['UNIDADE', m.unidade], ['ANO', m.ano || '—'], ['CHASSI', m.chassi || '—'], ['PATRIMÔNIO', m.patrimonio || '—'],
+    ['MODELO', m.modelo || '—'], ['FABRICANTE', m.fabricante || '—'], ['UNIDADE', m.unidade], ['ANO', m.ano || '—'], ['CHASSI', m.chassi || '—'], ['PATRIMÔNIO', m.patrimonio || '—'],
   ].map(([l, v]) => `<div class="fld"><div class="l">${l}</div><div class="v">${v}</div></div>`).join('');
   document.getElementById('mdHwCount').textContent = m.hardware.length;
   document.getElementById('mdEditBtn').style.display = TIPOS_LIST.includes(m.tipo) ? 'flex' : 'none';
@@ -1839,6 +1846,7 @@ function openAddMachine() {
   document.getElementById('amId').disabled = false;
   document.getElementById('amId').value = '';
   document.getElementById('amTipo').innerHTML = Object.entries(MACHINE_TYPES).map(([t, c]) => `<option value="${t}">${c.label}</option>`).join('');
+  document.getElementById('amFabricante').innerHTML = '<option value="">— Selecione —</option>' + FABRICANTES.map(f => `<option>${f}</option>`).join('');
   document.getElementById('amUnidade').innerHTML = UNIDADES.map(u => `<option>${u}</option>`).join('');
   updateAmModelos();
   document.getElementById('amNome').value = '';
@@ -1858,11 +1866,13 @@ function openEditMachine(id) {
   document.getElementById('amId').value = m.id;
   document.getElementById('amId').disabled = true;
   document.getElementById('amTipo').innerHTML = Object.entries(MACHINE_TYPES).map(([t, c]) => `<option value="${t}">${c.label}</option>`).join('');
+  document.getElementById('amFabricante').innerHTML = '<option value="">— Selecione —</option>' + FABRICANTES.map(f => `<option>${f}</option>`).join('');
   document.getElementById('amUnidade').innerHTML = UNIDADES.map(u => `<option>${u}</option>`).join('');
   document.getElementById('amNome').value = m.nome;
   document.getElementById('amTipo').value = m.tipo;
   updateAmModelos();
   document.getElementById('amModelo').value = m.modelo || '';
+  document.getElementById('amFabricante').value = m.fabricante || '';
   document.getElementById('amUnidade').value = m.unidade;
   document.getElementById('amAno').value = m.ano || '';
   document.getElementById('amChassi').value = m.chassi || '';
@@ -1881,6 +1891,7 @@ async function submitAddMachine(e) {
     nome,
     tipo: document.getElementById('amTipo').value,
     modelo: document.getElementById('amModelo').value,
+    fabricante: document.getElementById('amFabricante').value,
     unidade: document.getElementById('amUnidade').value,
     ano: document.getElementById('amAno').value.trim(),
     chassi: document.getElementById('amChassi').value.trim(),
