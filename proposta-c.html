@@ -877,24 +877,32 @@ function exportReport() {
 
   // ── Aba: Frotas + Hardwares (Frota/Tipo repetidos em cada linha — sem merge, pra não quebrar o AutoFilter) ──
   const combRows = [['Frota', 'Tipo', 'Hardware', 'Modelo', 'Numero de Série', 'Patrimônio', 'Fabricante']];
+  const repeatRows = []; // linhas onde Frota/Tipo repetem o valor da linha anterior (mesma máquina) — só estilo, não afeta o valor real
   frotaReal.forEach(m => {
     if (m.hardware.length === 0) {
       combRows.push([m.id, MACHINE_TYPES[m.tipo].label, '-', '-', '-', '-', '-']);
     } else {
-      m.hardware.forEach(hw => {
+      m.hardware.forEach((hw, idx) => {
         combRows.push([
           m.id, MACHINE_TYPES[m.tipo].label,
           HW_TYPES[hw.tipo]?.label || hw.tipo,
           hw.modelo, hw.sn, hw.patrimonio || '-', hw.fabricante,
         ]);
+        if (idx > 0) repeatRows.push(combRows.length - 1);
       });
     }
   });
   const wsComb = XLSX.utils.aoa_to_sheet(combRows);
+  repeatRows.forEach(rowIdx => {
+    ['A', 'B'].forEach(col => {
+      const addr = col + (rowIdx + 1);
+      if (wsComb[addr]) wsComb[addr].s = { font: { color: { rgb: '9599B3' }, italic: true } };
+    });
+  });
   wsComb['!cols'] = [{ wch: 8 }, { wch: 14 }, { wch: 12 }, { wch: 14 }, { wch: 16 }, { wch: 12 }, { wch: 14 }];
   XLSX.utils.book_append_sheet(wb, wsComb, 'Frotas+Hardwares');
 
-  XLSX.writeFile(wb, `kronos-relatorio-${localDateStr()}.xlsx`);
+  XLSX.writeFile(wb, `kronos-relatorio-${localDateStr()}.xlsx`, { cellStyles: true });
   showToast('📊', 'Relatório exportado', 'Arquivo .xlsx gerado com 3 abas');
 }
 
