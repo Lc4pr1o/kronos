@@ -705,22 +705,45 @@ function navigate(view, el) {
 }
 
 // =========================================
+// ÍCONES CUSTOMIZADOS DO KRONOS (mesmo conjunto do fleet-hardware.html)
+// =========================================
+const KRONOS_ICONS = {
+  trator:        `<circle cx="8" cy="17" r="4"/><circle cx="20" cy="18" r="2"/><rect x="6" y="9" width="7" height="5"/><rect x="7" y="10" width="3" height="3"/><path d="M13 14h8v4"/><path d="M4 14Q8 10 12 14"/>`,
+  colhedora:     `<path d="M12 22V2"/><path d="M10 18h4M10 13h4M10 8h4"/><path d="M12 18Q7 16 4 12"/><path d="M12 13Q17 11 20 7"/><path d="M12 8Q7 6 4 2"/>`,
+  motoniveladora:`<circle cx="3" cy="19" r="2"/><circle cx="18" cy="19" r="2"/><circle cx="22" cy="19" r="2"/><path d="M5 14h18v5H5z"/><path d="M16 14V9h7v5"/><path d="M2 17l20-4"/>`,
+  monitor:       `<rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4M7 7h10M7 11h7"/>`,
+  receptor:      `<path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/>`,
+  radio:         `<path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5"/><circle cx="12" cy="12" r="2"/><path d="M16.2 16.2c2.3-2.3 2.3-6.1 0-8.5M19.1 19.1C23 15.2 23 8.8 19.1 4.9"/>`,
+  tela:          `<rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>`,
+  bordo:         `<rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M1 9h3M1 15h3M20 9h3M20 15h3"/>`,
+  estoque:       `<path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/>`,
+  manutencao:    `<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>`,
+};
+function renderIcon(name, size = 20, color = 'currentColor') {
+  const body = KRONOS_ICONS[name];
+  if (body) {
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="${size}" height="${size}" stroke="${color}" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0">${body}</svg>`;
+  }
+  return `<span style="font-size:${Math.round(size * 0.85)}px;line-height:1;display:inline-block;vertical-align:middle">${name || '?'}</span>`;
+}
+
+// =========================================
 // DADOS (mock — sem conexão com o Apps Script ainda)
 // =========================================
 const MACHINE_TYPES = {
-  trator: { icon: '🚜', label: 'Trator' },
-  colhedora: { icon: '🌾', label: 'Colhedora' },
-  motoniveladora: { icon: '🛞', label: 'Motoniveladora' },
+  trator: { icon: 'trator', label: 'Trator' },
+  colhedora: { icon: 'colhedora', label: 'Colhedora' },
+  motoniveladora: { icon: 'motoniveladora', label: 'Motoniveladora' },
 };
 const TIPOS_LIST = Object.keys(MACHINE_TYPES);
 const UNIDADES = ['PEDRA', 'CEDRO', 'BURITI', 'IPÊ', 'PEDRA/LOCAÇÃO'];
 
 const HW_TYPES = {
-  monitor:  { icon: '🖥️', label: 'Monitor',  sistema: 'Piloto Automático', color: '#f5a623', modelos: ['RAVEN', 'CFX 750', 'EZ GUIDE', 'OMNI', 'PRO 700', 'GS3', 'GS4', 'XCN 1050', 'XCN 1060'] },
-  receptor: { icon: '📡', label: 'Receptor', sistema: 'Piloto Automático', color: '#4fd1ff', modelos: ['StarFire 3000', 'StarFire 6000', 'StarFire 7000'] },
-  radio:    { icon: '📻', label: 'Rádio',    sistema: 'Piloto Automático', color: '#8b9dff', modelos: ['450'] },
-  tela:     { icon: '📱', label: 'Tela',     sistema: 'Solinftec',        color: '#2ecc8a', modelos: ['S7', 'SOL7'] },
-  bordo:    { icon: '🔧', label: 'Bordo',    sistema: 'Solinftec',        color: '#e05252', modelos: ['MAG 100', 'MAG X'] },
+  monitor:  { icon: 'monitor',  label: 'Monitor',  sistema: 'Piloto Automático', color: '#f5a623', modelos: ['RAVEN', 'CFX 750', 'EZ GUIDE', 'OMNI', 'PRO 700', 'GS3', 'GS4', 'XCN 1050', 'XCN 1060'] },
+  receptor: { icon: 'receptor', label: 'Receptor', sistema: 'Piloto Automático', color: '#4fd1ff', modelos: ['StarFire 3000', 'StarFire 6000', 'StarFire 7000'] },
+  radio:    { icon: 'radio',    label: 'Rádio',    sistema: 'Piloto Automático', color: '#8b9dff', modelos: ['450'] },
+  tela:     { icon: 'tela',     label: 'Tela',     sistema: 'Solinftec',        color: '#2ecc8a', modelos: ['S7', 'SOL7'] },
+  bordo:    { icon: 'bordo',    label: 'Bordo',    sistema: 'Solinftec',        color: '#e05252', modelos: ['MAG 100', 'MAG X'] },
 };
 const FABRICANTES = ['John Deere', 'Case IH', 'Trimble', 'Solinftec'];
 
@@ -813,7 +836,7 @@ function renderFrota(filter, term) {
   document.getElementById('frotaGrid').innerHTML = list.map(m => `
     <div class="item-card" onclick="openMachineDetail('${m.id}')">
       <div class="ic-top">
-        <div class="ic-icon">${MACHINE_TYPES[m.tipo].icon}</div>
+        <div class="ic-icon">${renderIcon(MACHINE_TYPES[m.tipo].icon, 22)}</div>
         <span class="ic-tag">${m.unidade}</span>
       </div>
       <div class="ic-name">${m.nome}</div>
@@ -843,7 +866,7 @@ function renderHardwares(term) {
   document.getElementById('hwGrid').innerHTML = entries.map(e => `
     <div class="item-card" style="cursor:default">
       <div class="ic-top">
-        <div class="ic-icon">${e.cfg.icon}</div>
+        <div class="ic-icon">${renderIcon(e.cfg.icon, 22, e.cfg.color)}</div>
         <span class="ic-tag">${e.cfg.sistema}</span>
       </div>
       <div class="ic-name">${e.cfg.label}</div>
@@ -917,8 +940,8 @@ function openMachineDetail(id) {
 function renderMachineDetail() {
   const m = findMachine(currentDetailMachineId);
   if (!m) return;
-  const cfg = MACHINE_TYPES[m.tipo] || { icon: m.tipo === 'estoque' ? '📦' : '🔧', label: m.tipo };
-  document.getElementById('mdIcon').textContent = cfg.icon;
+  const cfg = MACHINE_TYPES[m.tipo] || { icon: m.tipo === 'estoque' ? 'estoque' : 'manutencao', label: m.tipo === 'estoque' ? 'Estoque' : 'Manutenção' };
+  document.getElementById('mdIcon').innerHTML = renderIcon(cfg.icon, 26);
   document.getElementById('mdName').textContent = m.nome;
   document.getElementById('mdMeta').textContent = `${cfg.label} · ${m.id}`;
   document.getElementById('mdInfoGrid').innerHTML = [
@@ -983,10 +1006,10 @@ function renderTransferTargets() {
   const term = document.getElementById('transferSearch').value.toLowerCase().trim();
   const list = machines.filter(m => m.id !== transferCtx.machineId && (!term || m.nome.toLowerCase().includes(term) || m.id.toLowerCase().includes(term)));
   document.getElementById('transferTargets').innerHTML = list.map(m => {
-    const cfg = MACHINE_TYPES[m.tipo] || { icon: m.tipo === 'estoque' ? '📦' : '🔧' };
+    const cfg = MACHINE_TYPES[m.tipo] || { icon: m.tipo === 'estoque' ? 'estoque' : 'manutencao' };
     const sel = transferCtx.targetId === m.id ? ' selected' : '';
     return `<div class="target-item${sel}" onclick="selectTransferTarget('${m.id}')">
-      <div class="ti-icon">${cfg.icon}</div>
+      <div class="ti-icon">${renderIcon(cfg.icon, 18)}</div>
       <div>${m.nome}</div>
       <div class="ti-id">${m.id}</div>
     </div>`;
@@ -1019,7 +1042,7 @@ function openAddHw(machineId) {
   document.getElementById('addHwMachine').disabled = false;
   document.getElementById('addHwMachine').innerHTML = machines.map(m => `<option value="${m.id}">${m.nome}</option>`).join('');
   if (machineId) document.getElementById('addHwMachine').value = machineId;
-  document.getElementById('addHwTipo').innerHTML = Object.entries(HW_TYPES).map(([t, c]) => `<option value="${t}">${c.icon} ${c.label}</option>`).join('');
+  document.getElementById('addHwTipo').innerHTML = Object.entries(HW_TYPES).map(([t, c]) => `<option value="${t}">${c.label}</option>`).join('');
   updateHwModelos();
   document.getElementById('addHwSn').value = '';
   document.getElementById('addHwFab').innerHTML = FABRICANTES.map(f => `<option>${f}</option>`).join('');
@@ -1036,7 +1059,7 @@ function openEditHw(machineId, hwId) {
   document.getElementById('addHwMachine').innerHTML = `<option value="${m.id}">${m.nome}</option>`;
   document.getElementById('addHwMachine').value = m.id;
   document.getElementById('addHwMachine').disabled = true;
-  document.getElementById('addHwTipo').innerHTML = Object.entries(HW_TYPES).map(([t, c]) => `<option value="${t}">${c.icon} ${c.label}</option>`).join('');
+  document.getElementById('addHwTipo').innerHTML = Object.entries(HW_TYPES).map(([t, c]) => `<option value="${t}">${c.label}</option>`).join('');
   document.getElementById('addHwTipo').value = hw.tipo;
   updateHwModelos();
   document.getElementById('addHwModelo').value = hw.modelo;
@@ -1087,7 +1110,7 @@ function openAddMachine() {
   document.getElementById('addMachineModalTitle').textContent = 'Nova Máquina';
   document.getElementById('addMachineModalSub').textContent = 'Cadastrar máquina na frota';
   document.getElementById('addMachineSubmitBtn').textContent = 'Salvar';
-  document.getElementById('amTipo').innerHTML = Object.entries(MACHINE_TYPES).map(([t, c]) => `<option value="${t}">${c.icon} ${c.label}</option>`).join('');
+  document.getElementById('amTipo').innerHTML = Object.entries(MACHINE_TYPES).map(([t, c]) => `<option value="${t}">${c.label}</option>`).join('');
   document.getElementById('amUnidade').innerHTML = UNIDADES.map(u => `<option>${u}</option>`).join('');
   document.getElementById('amNome').value = '';
   document.getElementById('amAno').value = '';
@@ -1103,7 +1126,7 @@ function openEditMachine(id) {
   document.getElementById('addMachineModalTitle').textContent = 'Editar Máquina';
   document.getElementById('addMachineModalSub').textContent = `${m.id} · ${m.nome}`;
   document.getElementById('addMachineSubmitBtn').textContent = 'Salvar alterações';
-  document.getElementById('amTipo').innerHTML = Object.entries(MACHINE_TYPES).map(([t, c]) => `<option value="${t}">${c.icon} ${c.label}</option>`).join('');
+  document.getElementById('amTipo').innerHTML = Object.entries(MACHINE_TYPES).map(([t, c]) => `<option value="${t}">${c.label}</option>`).join('');
   document.getElementById('amUnidade').innerHTML = UNIDADES.map(u => `<option>${u}</option>`).join('');
   document.getElementById('amNome').value = m.nome;
   document.getElementById('amTipo').value = m.tipo;
@@ -1156,7 +1179,7 @@ function openSettings() {
   document.getElementById('stAnalystName').value = analystName;
   document.getElementById('stHwTypesList').innerHTML = Object.entries(HW_TYPES).map(([tipo, cfg]) => `
     <div class="settings-row" data-tipo="${tipo}">
-      <span class="icon">${cfg.icon}</span>
+      <span class="icon">${renderIcon(cfg.icon, 20, cfg.color)}</span>
       <input class="mini-input st-label" style="flex:1" value="${cfg.label}">
       <input type="color" class="mini-color st-color" value="${cfg.color}" title="Cor do tipo">
       <input class="mini-input st-modelos" style="flex:2" value="${cfg.modelos.join(', ')}" placeholder="Modelos separados por vírgula">
@@ -1164,7 +1187,9 @@ function openSettings() {
   `).join('');
   document.getElementById('stMachineTypesList').innerHTML = Object.entries(MACHINE_TYPES).map(([tipo, cfg]) => `
     <div class="settings-row" data-tipo="${tipo}">
-      <input class="mini-input st-icon" style="width:48px;text-align:center" value="${cfg.icon}">
+      <span class="icon st-icon-preview">${renderIcon(cfg.icon, 20)}</span>
+      <input class="mini-input st-icon" style="width:110px" value="${cfg.icon}" placeholder="nome do ícone"
+        oninput="this.previousElementSibling.innerHTML = renderIcon(this.value.trim(), 20)">
       <input class="mini-input st-label" style="flex:1" value="${cfg.label}">
     </div>
   `).join('');
