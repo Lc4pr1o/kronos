@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KRONOS — Proposta C: Hub Estilo Joe</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,500,0,0">
+<style>
+:root {
+  /* paleta única, mesclando os 3 tons testados como níveis de profundidade */
+  --bg: #1e2130;          /* fundo principal — mais claro e menos "apagado" */
+  --sidebar-bg: #242739;  /* sidebar — tom intermediário, painel distinto */
+  --surface: #2b2f45;     /* cards/painéis — o mais claro, em destaque */
+  --text: #f3f5fb;
+  --text2: #9599b3;
+  --text3: #5c6280;
+  --gradient: linear-gradient(135deg, #f5a623, #e8870a 45%, #2ecc8a);
+  --gradient-blue: linear-gradient(135deg, #4fd1ff, #8b9dff);
+  --shadow: 0 8px 20px rgba(8, 9, 16, 0.4);
+  --card-border: rgba(255, 255, 255, 0.06);
+  --radius: 18px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Poppins', sans-serif;
+  overflow: hidden;
+  transition: background 0.25s ease, color 0.25s ease;
+}
+.material-symbols-outlined { font-variation-settings: 'opsz' 24, 'wght' 500, 'FILL' 0, 'GRAD' 0; font-size: 20px; line-height: 1; }
+
+/* ── LAYOUT ── */
+.app { display: flex; height: 100vh; }
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width: 76px;
+  flex-shrink: 0;
+  background: var(--sidebar-bg);
+  display: flex;
+  flex-direction: column;
+  padding: 24px 16px;
+  gap: 22px;
+  transition: width 0.32s cubic-bezier(.4,0,.2,1);
+  overflow: hidden;
+}
+.sidebar.expanded { width: 232px; }
+
+.sidebar-head { display: flex; align-items: center; justify-content: center; }
+.sidebar.expanded .sidebar-head { justify-content: flex-start; }
+
+.logo { display: flex; align-items: center; gap: 12px; padding: 0 8px; min-width: 0; justify-content: center; }
+.sidebar.expanded .logo { justify-content: flex-start; }
+.logo-text { display: none; font-size: 19px; font-weight: 800; letter-spacing: 1px; white-space: nowrap; }
+.logo-text .accent-text { background: var(--gradient); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.logo-compact {
+  font-size: 19px; font-weight: 800;
+  background: var(--gradient); -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.sidebar.expanded .logo-text { display: inline; }
+.sidebar.expanded .logo-compact { display: none; }
+
+.sidebar nav { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+.nav-item {
+  display: flex; align-items: center; justify-content: center; gap: 12px;
+  padding: 11px; border-radius: 12px;
+  background: transparent; border: none; cursor: pointer;
+  color: var(--text2); font-family: inherit; font-size: 13.5px; font-weight: 500;
+  text-align: left; width: 100%; transition: background 0.15s, color 0.15s;
+}
+.sidebar.expanded .nav-item { justify-content: flex-start; padding: 11px 14px; }
+.nav-item:hover { background: rgba(255,255,255,0.04); color: var(--text); }
+.nav-item.active {
+  background: var(--gradient);
+  color: #171923; font-weight: 700;
+  box-shadow: 0 6px 18px rgba(245,166,35,0.25);
+}
+.nav-item .material-symbols-outlined { font-size: 20px; flex-shrink: 0; }
+.nav-label { display: none; white-space: nowrap; opacity: 0; transition: opacity 0.15s ease; }
+.sidebar.expanded .nav-label { display: inline; opacity: 1; }
+.nav-item .badge {
+  display: none; margin-left: auto; background: rgba(255,255,255,0.08);
+  color: var(--text2); font-size: 10.5px; font-weight: 700;
+  padding: 2px 8px; border-radius: 20px; white-space: nowrap;
+}
+.sidebar.expanded .nav-item .badge { display: inline-block; }
+.nav-item.active .badge { background: rgba(23,25,35,0.2); color: #171923; }
+
+.sidebar-bottom .nav-item { color: var(--text3); }
+
+/* ── MAIN ── */
+.main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.topbar {
+  height: 68px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 28px; gap: 20px;
+}
+.search {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--surface); border-radius: 12px;
+  padding: 10px 16px; width: 340px; max-width: 40vw;
+  color: var(--text3);
+}
+.search input {
+  background: none; border: none; outline: none; color: var(--text);
+  font-family: inherit; font-size: 13px; width: 100%;
+}
+.search input::placeholder { color: var(--text3); }
+.tb-actions { display: flex; align-items: center; gap: 14px; }
+.icon-btn {
+  width: 40px; height: 40px; border-radius: 12px; background: var(--surface);
+  border: none; color: var(--text2); display: flex; align-items: center; justify-content: center;
+  cursor: pointer; position: relative;
+}
+.icon-btn .dot { position: absolute; top: 8px; right: 8px; width: 7px; height: 7px; border-radius: 50%; background: #e05252; }
+.avatar {
+  width: 40px; height: 40px; border-radius: 12px; background: var(--gradient-blue);
+  display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px;
+}
+
+.content { flex: 1; overflow-y: auto; padding: 4px 28px 40px; }
+.view { display: none; animation: fadeIn 0.2s ease; }
+.view.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+h1.page-title { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
+.page-sub { color: var(--text2); font-size: 13px; margin-bottom: 24px; }
+
+/* ── KPI CARDS ── */
+.kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-bottom: 28px; }
+@media (max-width: 1100px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+.kpi-card {
+  background: var(--surface); border-radius: var(--radius); padding: 20px;
+  display: flex; flex-direction: column; gap: 10px;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--card-border);
+  transition: background 0.25s ease, box-shadow 0.25s ease;
+}
+.kpi-card.primary { background: var(--gradient); color: #171923; }
+.kpi-card.warn { outline: 1px solid rgba(224,82,82,0.35); }
+.kpi-top { display: flex; align-items: center; justify-content: space-between; }
+.kpi-icon {
+  width: 34px; height: 34px; border-radius: 10px; background: rgba(255,255,255,0.06);
+  display: flex; align-items: center; justify-content: center;
+}
+.kpi-card.primary .kpi-icon { background: rgba(23,25,35,0.15); }
+.kpi-label { font-size: 12px; color: var(--text2); font-weight: 500; }
+.kpi-card.primary .kpi-label { color: rgba(23,25,35,0.7); }
+.kpi-value { font-size: 30px; font-weight: 800; }
+.kpi-delta { font-size: 11.5px; font-weight: 600; color: #2ecc8a; }
+.kpi-card.primary .kpi-delta { color: #17392a; }
+.kpi-card.warn .kpi-delta { color: #e05252; }
+
+/* ── PANELS ── */
+.panel-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 18px; }
+@media (max-width: 1100px) { .panel-grid { grid-template-columns: 1fr; } }
+.panel {
+  background: var(--surface); border-radius: var(--radius); padding: 22px;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--card-border);
+  transition: background 0.25s ease, box-shadow 0.25s ease;
+}
+.panel h3 { font-size: 15px; font-weight: 700; margin-bottom: 18px; }
+
+.bar-row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.bar-row .b-label { width: 120px; font-size: 12px; color: var(--text2); flex-shrink: 0; }
+.bar-track { flex: 1; height: 8px; border-radius: 10px; background: rgba(255,255,255,0.06); overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 10px; background: var(--gradient); }
+.bar-row .b-value { width: 34px; text-align: right; font-size: 12px; font-weight: 700; color: var(--text2); }
+
+.timeline-item { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.timeline-item:last-child { border-bottom: none; }
+.tl-dot { width: 30px; height: 30px; border-radius: 9px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 16px; }
+.tl-dot.install { background: rgba(46,204,138,0.15); color: #2ecc8a; }
+.tl-dot.remove { background: rgba(224,82,82,0.15); color: #e05252; }
+.tl-dot.transfer { background: rgba(74,158,255,0.15); color: #4a9eff; }
+.tl-body { flex: 1; min-width: 0; }
+.tl-title { font-size: 12.5px; font-weight: 600; }
+.tl-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+.tl-time { font-size: 10.5px; color: var(--text3); flex-shrink: 0; }
+
+/* ── FILTERS / CHIPS ── */
+.filters { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 22px; }
+.chip {
+  padding: 8px 16px; border-radius: 20px; background: var(--surface);
+  color: var(--text2); font-size: 12.5px; font-weight: 600; cursor: pointer; border: none; font-family: inherit;
+}
+.chip.active { background: var(--gradient); color: #171923; }
+.select-unit {
+  margin-left: auto; background: var(--surface); color: var(--text); border: none;
+  border-radius: 20px; padding: 8px 16px; font-family: inherit; font-size: 12.5px; font-weight: 600;
+}
+
+/* ── MACHINE / HARDWARE GRID ── */
+.grid-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 16px; }
+.item-card {
+  background: var(--surface); border-radius: 16px; padding: 18px;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--card-border);
+  display: flex; flex-direction: column; gap: 10px; cursor: pointer;
+  transition: transform 0.15s, background 0.25s ease, box-shadow 0.25s ease;
+}
+.item-card:hover { transform: translateY(-3px); }
+.ic-top { display: flex; align-items: center; justify-content: space-between; }
+.ic-icon { width: 40px; height: 40px; border-radius: 11px; display: flex; align-items: center; justify-content: center; font-size: 20px; background: rgba(255,255,255,0.05); }
+.ic-tag { font-size: 9.5px; font-weight: 700; letter-spacing: 0.5px; padding: 3px 9px; border-radius: 20px; background: rgba(255,255,255,0.06); color: var(--text2); }
+.ic-name { font-size: 14.5px; font-weight: 700; }
+.ic-meta { font-size: 11.5px; color: var(--text3); }
+.ic-foot { display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: var(--text2); margin-top: 4px; }
+.ic-hw-count { display: flex; align-items: center; gap: 5px; }
+
+/* ── TECNICOS ── */
+.tech-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
+.tech-card { background: var(--surface); border-radius: 16px; padding: 20px; text-align: center; box-shadow: var(--shadow); border: 1px solid var(--card-border); transition: background 0.25s ease, box-shadow 0.25s ease; }
+.tech-avatar { width: 56px; height: 56px; border-radius: 16px; background: var(--gradient-blue); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 18px; margin: 0 auto 12px; }
+.tech-name { font-weight: 700; font-size: 14px; }
+.tech-role { font-size: 11px; color: var(--text3); margin-bottom: 14px; }
+.tech-stats { display: flex; justify-content: center; gap: 18px; }
+.tech-stat b { display: block; font-size: 16px; }
+.tech-stat span { font-size: 10px; color: var(--text3); }
+
+.burger { display: none; }
+@media (max-width: 880px) {
+  .sidebar { position: fixed; z-index: 40; height: 100vh; width: 232px; transform: translateX(-100%); }
+  .logo-text { display: inline; }
+  .nav-label { display: inline; opacity: 1; }
+  .nav-item .badge { display: inline-block; }
+  .logo-compact { display: none; }
+  .nav-item, .logo { justify-content: flex-start; }
+  body.open .sidebar { transform: translateX(0); }
+  .burger {
+    display: flex; position: fixed; top: 16px; left: 16px; z-index: 50;
+    width: 40px; height: 40px; border-radius: 12px; background: var(--surface);
+    color: var(--text); border: none; align-items: center; justify-content: center;
+  }
+  .search { width: 100%; max-width: none; }
+  .topbar { padding-left: 64px; }
+  .kpi-grid { grid-template-columns: 1fr 1fr; }
+}
+</style>
+</head>
+<body>
+
+<button class="burger material-symbols-outlined" onclick="document.body.classList.toggle('open')">menu</button>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="sidebar-head">
+      <div class="logo">
+        <span class="logo-text">KRO<span class="accent-text">NOS</span></span>
+        <span class="logo-compact">K</span>
+      </div>
+    </div>
+    <nav>
+      <button class="nav-item active" onclick="navigate('dashboard', this)">
+        <span class="material-symbols-outlined">grid_view</span><span class="nav-label">Dashboard</span>
+      </button>
+      <button class="nav-item" onclick="navigate('frota', this)">
+        <span class="material-symbols-outlined">agriculture</span><span class="nav-label">Frota</span><span class="badge">111</span>
+      </button>
+      <button class="nav-item" onclick="navigate('hardwares', this)">
+        <span class="material-symbols-outlined">memory</span><span class="nav-label">Hardwares</span>
+      </button>
+      <button class="nav-item" onclick="navigate('historico', this)">
+        <span class="material-symbols-outlined">history</span><span class="nav-label">Histórico</span>
+      </button>
+      <button class="nav-item" onclick="navigate('tecnicos', this)">
+        <span class="material-symbols-outlined">engineering</span><span class="nav-label">Técnicos</span>
+      </button>
+    </nav>
+    <div class="sidebar-bottom">
+      <button class="nav-item">
+        <span class="material-symbols-outlined">settings</span><span class="nav-label">Configurações</span>
+      </button>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <div class="search">
+        <span class="material-symbols-outlined">search</span>
+        <input id="globalSearch" spellcheck="false" placeholder="Buscar máquina, hardware, S/N, chassi...">
+      </div>
+      <div class="tb-actions">
+        <button class="icon-btn"><span class="material-symbols-outlined">notifications</span><span class="dot"></span></button>
+        <div class="avatar">LC</div>
+      </div>
+    </header>
+
+    <main class="content">
+
+      <!-- DASHBOARD -->
+      <section id="view-dashboard" class="view active">
+        <h1 class="page-title">Dashboard</h1>
+        <p class="page-sub">Visão geral da frota e dos hardwares instalados</p>
+
+        <div class="kpi-grid">
+          <div class="kpi-card primary">
+            <div class="kpi-top"><span class="kpi-label">Máquinas na frota</span><div class="kpi-icon"><span class="material-symbols-outlined">agriculture</span></div></div>
+            <div class="kpi-value">111</div>
+            <div class="kpi-delta">5 unidades ativas</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-top"><span class="kpi-label">Hardwares instalados</span><div class="kpi-icon"><span class="material-symbols-outlined">memory</span></div></div>
+            <div class="kpi-value">284</div>
+            <div class="kpi-delta">↑ 12 este mês</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-top"><span class="kpi-label">Movimentações (mês)</span><div class="kpi-icon"><span class="material-symbols-outlined">sync_alt</span></div></div>
+            <div class="kpi-value">37</div>
+            <div class="kpi-delta">↑ 8% vs. mês anterior</div>
+          </div>
+          <div class="kpi-card warn">
+            <div class="kpi-top"><span class="kpi-label">Sem hardware</span><div class="kpi-icon"><span class="material-symbols-outlined">warning</span></div></div>
+            <div class="kpi-value">9</div>
+            <div class="kpi-delta">requer atenção</div>
+          </div>
+        </div>
+
+        <div class="panel-grid">
+          <div class="panel">
+            <h3>Hardwares por tipo</h3>
+            <div class="bar-row"><span class="b-label">🖥️ Monitor</span><div class="bar-track"><div class="bar-fill" style="width:82%"></div></div><span class="b-value">79</span></div>
+            <div class="bar-row"><span class="b-label">📡 Receptor</span><div class="bar-track"><div class="bar-fill" style="width:70%"></div></div><span class="b-value">68</span></div>
+            <div class="bar-row"><span class="b-label">📻 Rádio</span><div class="bar-track"><div class="bar-fill" style="width:55%"></div></div><span class="b-value">53</span></div>
+            <div class="bar-row"><span class="b-label">📱 Tela</span><div class="bar-track"><div class="bar-fill" style="width:44%"></div></div><span class="b-value">42</span></div>
+            <div class="bar-row"><span class="b-label">🔧 Bordo</span><div class="bar-track"><div class="bar-fill" style="width:43%"></div></div><span class="b-value">42</span></div>
+          </div>
+          <div class="panel">
+            <h3>Últimas movimentações</h3>
+            <div class="timeline-item">
+              <div class="tl-dot install">↓</div>
+              <div class="tl-body"><div class="tl-title">GS3 instalado — TRATOR JD (7230J)</div><div class="tl-sub">João Silva · Fazenda Pedra</div></div>
+              <div class="tl-time">14:32</div>
+            </div>
+            <div class="timeline-item">
+              <div class="tl-dot transfer">⇄</div>
+              <div class="tl-body"><div class="tl-title">StarFire 6000 transferido — Estoque → COLHEDORA CASE</div><div class="tl-sub">Marcos Lima · Fazenda Cedro</div></div>
+              <div class="tl-time">11:05</div>
+            </div>
+            <div class="timeline-item">
+              <div class="tl-dot remove">↑</div>
+              <div class="tl-body"><div class="tl-title">MAG 100 removido — MOTONIVELADORA JD (620G)</div><div class="tl-sub">João Silva · Fazenda Buriti</div></div>
+              <div class="tl-time">09:47</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- FROTA -->
+      <section id="view-frota" class="view">
+        <h1 class="page-title">Frota</h1>
+        <p class="page-sub">111 máquinas cadastradas</p>
+        <div class="filters">
+          <button class="chip active" onclick="filterFrota('todos', this)">Todos</button>
+          <button class="chip" onclick="filterFrota('trator', this)">🚜 Trator</button>
+          <button class="chip" onclick="filterFrota('colhedora', this)">🌾 Colhedora</button>
+          <button class="chip" onclick="filterFrota('motoniveladora', this)">🛞 Motoniveladora</button>
+          <select class="select-unit">
+            <option>Todas as unidades</option>
+            <option>PEDRA</option><option>CEDRO</option><option>BURITI</option><option>IPÊ</option><option>PEDRA/LOCAÇÃO</option>
+          </select>
+        </div>
+        <div class="grid-cards" id="frotaGrid"></div>
+      </section>
+
+      <!-- HARDWARES -->
+      <section id="view-hardwares" class="view">
+        <h1 class="page-title">Hardwares</h1>
+        <p class="page-sub">Piloto automático e Solinftec — por tipo</p>
+        <div class="grid-cards" id="hwGrid"></div>
+      </section>
+
+      <!-- HISTORICO -->
+      <section id="view-historico" class="view">
+        <h1 class="page-title">Histórico</h1>
+        <p class="page-sub">Registros de instalação, remoção e transferência</p>
+        <div class="panel" id="historicoList"></div>
+      </section>
+
+      <!-- TECNICOS -->
+      <section id="view-tecnicos" class="view">
+        <h1 class="page-title">Técnicos</h1>
+        <p class="page-sub">Atividade por técnico de campo</p>
+        <div class="tech-grid" id="tecnicosGrid"></div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<script>
+(function setupSidebarHover() {
+  const sidebar = document.querySelector('.sidebar');
+  let closeTimer;
+  sidebar.addEventListener('mouseenter', () => {
+    clearTimeout(closeTimer);
+    sidebar.classList.add('expanded');
+  });
+  sidebar.addEventListener('mouseleave', () => {
+    closeTimer = setTimeout(() => sidebar.classList.remove('expanded'), 250);
+  });
+})();
+
+function navigate(view, el) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + view).classList.add('active');
+  document.querySelectorAll('.sidebar > nav .nav-item').forEach(n => n.classList.remove('active'));
+  if (el) el.classList.add('active');
+  document.body.classList.remove('open');
+}
+
+const TIPO_ICON = { trator: '🚜', colhedora: '🌾', motoniveladora: '🛞' };
+const UNIDADES = ['PEDRA', 'CEDRO', 'BURITI', 'IPÊ', 'PEDRA/LOCAÇÃO'];
+const TIPOS = ['trator', 'colhedora', 'motoniveladora'];
+
+const maquinasDemo = Array.from({ length: 24 }, (_, i) => {
+  const tipo = TIPOS[i % 3];
+  const unidade = UNIDADES[i % UNIDADES.length];
+  const hwCount = tipo === 'motoniveladora' ? 0 : (i % 5);
+  return {
+    nome: tipo.toUpperCase() + ' ' + (i % 2 === 0 ? 'JD' : 'CASE') + ' (' + (7000 + i * 13) + ')',
+    tipo, unidade, hwCount
+  };
+});
+
+function renderFrota(filter) {
+  const grid = document.getElementById('frotaGrid');
+  const list = filter && filter !== 'todos' ? maquinasDemo.filter(m => m.tipo === filter) : maquinasDemo;
+  grid.innerHTML = list.map(m => `
+    <div class="item-card">
+      <div class="ic-top">
+        <div class="ic-icon">${TIPO_ICON[m.tipo]}</div>
+        <span class="ic-tag">${m.unidade}</span>
+      </div>
+      <div class="ic-name">${m.nome}</div>
+      <div class="ic-meta">${m.tipo.charAt(0).toUpperCase() + m.tipo.slice(1)}</div>
+      <div class="ic-foot">
+        <div class="ic-hw-count"><span class="material-symbols-outlined" style="font-size:14px">memory</span>${m.hwCount} hardwares</div>
+        ${m.hwCount === 0 ? '<span style="color:#e05252;font-weight:700">sem hw</span>' : ''}
+      </div>
+    </div>
+  `).join('');
+}
+function filterFrota(tipo, el) {
+  document.querySelectorAll('#view-frota .chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  renderFrota(tipo);
+}
+renderFrota('todos');
+
+const hwTipos = [
+  { icon: '🖥️', nome: 'Monitor', sistema: 'Piloto Automático', total: 79, modelos: 'RAVEN, CFX 750, GS3, GS4, XCN 1060' },
+  { icon: '📡', nome: 'Receptor', sistema: 'Piloto Automático', total: 68, modelos: 'StarFire 3000, 6000, 7000' },
+  { icon: '📻', nome: 'Rádio', sistema: 'Piloto Automático', total: 53, modelos: '450' },
+  { icon: '📱', nome: 'Tela', sistema: 'Solinftec', total: 42, modelos: 'S7, SOL7' },
+  { icon: '🔧', nome: 'Bordo', sistema: 'Solinftec', total: 42, modelos: 'MAG 100, MAG X' },
+];
+document.getElementById('hwGrid').innerHTML = hwTipos.map(h => `
+  <div class="item-card">
+    <div class="ic-top">
+      <div class="ic-icon">${h.icon}</div>
+      <span class="ic-tag">${h.sistema}</span>
+    </div>
+    <div class="ic-name">${h.nome}</div>
+    <div class="ic-meta">${h.modelos}</div>
+    <div class="ic-foot"><div class="ic-hw-count"><b style="color:var(--text);font-size:16px">${h.total}</b>&nbsp;unidades</div></div>
+  </div>
+`).join('');
+
+const historicoDemo = [
+  { tipo: 'install', titulo: 'GS3 instalado — TRATOR JD (7230J)', sub: 'João Silva · Fazenda Pedra', tempo: 'Hoje, 14:32' },
+  { tipo: 'transfer', titulo: 'StarFire 6000 transferido — Estoque → COLHEDORA CASE', sub: 'Marcos Lima · Fazenda Cedro', tempo: 'Hoje, 11:05' },
+  { tipo: 'remove', titulo: 'MAG 100 removido — MOTONIVELADORA JD (620G)', sub: 'João Silva · Fazenda Buriti', tempo: 'Hoje, 09:47' },
+  { tipo: 'install', titulo: 'SOL7 instalado — TRATOR VALTRA (A950)', sub: 'Ana Paula · Fazenda Ipê', tempo: 'Ontem, 17:20' },
+  { tipo: 'transfer', titulo: 'CFX 750 transferido — TRATOR FENDT → Manutenção', sub: 'Marcos Lima · Fazenda Pedra/Locação', tempo: 'Ontem, 10:12' },
+];
+const tlIcon = { install: '↓', remove: '↑', transfer: '⇄' };
+document.getElementById('historicoList').innerHTML = historicoDemo.map(h => `
+  <div class="timeline-item">
+    <div class="tl-dot ${h.tipo}">${tlIcon[h.tipo]}</div>
+    <div class="tl-body"><div class="tl-title">${h.titulo}</div><div class="tl-sub">${h.sub}</div></div>
+    <div class="tl-time">${h.tempo}</div>
+  </div>
+`).join('');
+
+const tecnicosDemo = [
+  { nome: 'João Silva', regs: 42, hoje: 5 },
+  { nome: 'Marcos Lima', regs: 37, hoje: 3 },
+  { nome: 'Ana Paula', regs: 29, hoje: 2 },
+];
+document.getElementById('tecnicosGrid').innerHTML = tecnicosDemo.map(t => `
+  <div class="tech-card">
+    <div class="tech-avatar">${t.nome.split(' ').map(n => n[0]).join('')}</div>
+    <div class="tech-name">${t.nome}</div>
+    <div class="tech-role">Técnico de campo</div>
+    <div class="tech-stats">
+      <div class="tech-stat"><b>${t.regs}</b><span>TOTAL</span></div>
+      <div class="tech-stat"><b>${t.hoje}</b><span>HOJE</span></div>
+    </div>
+  </div>
+`).join('');
+</script>
+</body>
+</html>
