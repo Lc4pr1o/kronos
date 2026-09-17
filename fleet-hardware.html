@@ -899,7 +899,7 @@ function setConnectionStatus(state) {
 }
 
 function mapHistoricoRow(r) {
-  const tipo = HIST_ACAO_NORM[r.acao] || r.acao;
+  const tipo = HIST_ACAO_NORM[r.acao] || r.acao || 'install';
   const hwLabel = HW_TYPES[r.hardwareTipo]?.label || r.hardwareTipo || 'Hardware';
   let titulo;
   if (tipo === 'transfer') titulo = `${r.hardwareModelo || hwLabel} transferido — ${r.maquinaNome || r.maquinaId || '—'} → ${r.maquinaDestinoNome || r.maquinaDestinoId || '—'}`;
@@ -1072,7 +1072,7 @@ function renderDashboard() {
 function renderDashboardTimeline() {
   document.getElementById('dashTimeline').innerHTML = historico.slice(0, 3).map(h => `
     <div class="timeline-item">
-      <div class="tl-dot ${h.tipo}">${TL_ICON[h.tipo]}</div>
+      <div class="tl-dot ${h.tipo || 'install'}">${TL_ICON[h.tipo] || '↓'}</div>
       <div class="tl-body"><div class="tl-title">${h.titulo}</div><div class="tl-sub">${h.sub}</div></div>
       <div class="tl-time">${h.tempo}</div>
     </div>
@@ -1199,7 +1199,7 @@ function renderHardwares(term) {
 function renderHistoricoList() {
   document.getElementById('historicoList').innerHTML = historico.map(h => `
     <div class="timeline-item">
-      <div class="tl-dot ${h.tipo}">${TL_ICON[h.tipo]}</div>
+      <div class="tl-dot ${h.tipo || 'install'}">${TL_ICON[h.tipo] || '↓'}</div>
       <div class="tl-body"><div class="tl-title">${h.titulo}</div><div class="tl-sub">${h.sub}</div></div>
       <div class="tl-time">${h.tempo}</div>
     </div>
