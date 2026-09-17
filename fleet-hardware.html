@@ -489,6 +489,7 @@ h1.page-title { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
           </div>
           <button class="btn btn-primary" onclick="openAddHw()"><span class="material-symbols-outlined">add</span>Hardware</button>
         </div>
+        <div class="filters" id="hwFilters"></div>
         <div class="grid-cards" id="hwGrid"></div>
       </section>
 
@@ -590,6 +591,29 @@ h1.page-title { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('machineModal')">Fechar</button>
       <button class="btn btn-primary" onclick="openAddHw(currentDetailMachineId)"><span class="material-symbols-outlined">add</span>Instalar Hardware</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: DETALHE DO TIPO DE HARDWARE -->
+<div class="modal-overlay" id="hwTypeModal" onclick="if(event.target===this) closeModal('hwTypeModal')">
+  <div class="modal wide">
+    <div class="modal-header">
+      <div class="detail-hero">
+        <div class="detail-hero-info">
+          <span class="ic-type" id="htName">—</span>
+          <h2 id="htSistema">—</h2>
+          <div class="meta" id="htMeta">—</div>
+        </div>
+      </div>
+      <button class="modal-close" onclick="closeModal('hwTypeModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="target-search">
+        <span class="material-symbols-outlined" style="font-size:16px;color:var(--text3)">search</span>
+        <input id="htSearch" placeholder="Buscar por modelo, S/N, patrimônio, máquina..." oninput="renderHwTypeDetailGrid()">
+      </div>
+      <div class="detail-hw-grid" id="htGrid"></div>
     </div>
   </div>
 </div>
@@ -1050,6 +1074,7 @@ function renderAllViews() {
   renderDashboard();
   renderSettingsLists();
   if (currentDetailMachineId) renderMachineDetail();
+  if (currentHwTypeDetail) renderHwTypeDetailGrid();
 }
 function renderTecnicos() {
   const stats = {};
@@ -1368,22 +1393,96 @@ function filterFrota(tipo, el) {
 // =========================================
 // HARDWARES
 // =========================================
+let currentHwTipoFilter = 'todos';
+let currentHwSort = 'nome';
+function renderHwFilters() {
+  const chips = ['todos', ...Object.keys(HW_TYPES)].map(tipo => {
+    const label = tipo === 'todos' ? 'Todos' : HW_TYPES[tipo].label;
+    const active = currentHwTipoFilter === tipo ? ' active' : '';
+    return `<button class="chip${active}" onclick="filterHwTipo('${tipo}', this)">${label}</button>`;
+  }).join('');
+  document.getElementById('hwFilters').innerHTML = chips + `
+    <select class="select-unit" onchange="setHwSort(this.value)">
+      <option value="nome"${currentHwSort === 'nome' ? ' selected' : ''}>Nome (A-Z)</option>
+      <option value="qtd_desc"${currentHwSort === 'qtd_desc' ? ' selected' : ''}>Mais unidades</option>
+      <option value="qtd_asc"${currentHwSort === 'qtd_asc' ? ' selected' : ''}>Menos unidades</option>
+    </select>`;
+}
+function filterHwTipo(tipo, el) {
+  currentHwTipoFilter = tipo;
+  document.querySelectorAll('#hwFilters .chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  renderHardwares(document.getElementById('globalSearch').value);
+}
+function setHwSort(value) {
+  currentHwSort = value;
+  renderHardwares(document.getElementById('globalSearch').value);
+}
+function getHwTypeInstances(tipo) {
+  return machines.flatMap(m => m.hardware.filter(h => h.tipo === tipo).map(h => ({ ...h, _machineId: m.id, _machineName: m.nome })));
+}
 function renderHardwares(term) {
   term = (term ?? '').toLowerCase().trim();
-  const entries = Object.entries(HW_TYPES).map(([tipo, cfg]) => ({
+  renderHwFilters();
+
+  let entries = Object.entries(HW_TYPES).map(([tipo, cfg]) => ({
     tipo, cfg, total: machines.reduce((s, m) => s + m.hardware.filter(h => h.tipo === tipo).length, 0),
-  })).filter(e => !term || e.cfg.label.toLowerCase().includes(term) || e.cfg.modelos.join(' ').toLowerCase().includes(term));
+  }));
+  if (currentHwTipoFilter !== 'todos') entries = entries.filter(e => e.tipo === currentHwTipoFilter);
+  if (term) entries = entries.filter(e => e.cfg.label.toLowerCase().includes(term) || e.cfg.modelos.join(' ').toLowerCase().includes(term));
+  if (currentHwSort === 'qtd_desc') entries.sort((a, b) => b.total - a.total);
+  else if (currentHwSort === 'qtd_asc') entries.sort((a, b) => a.total - b.total);
+  else entries.sort((a, b) => a.cfg.label.localeCompare(b.cfg.label));
 
   document.getElementById('hwGrid').innerHTML = entries.map(e => `
-    <div class="item-card" style="cursor:default">
+    <div class="item-card" onclick="openHwTypeDetail('${e.tipo}')">
       <div class="ic-top" style="justify-content:flex-end">
-        <span class="ic-tag">${e.cfg.sistema}</span>
+        <span class="ic-tag">${e.cfg.sistema || '—'}</span>
       </div>
       <div class="ic-name" style="color:${e.cfg.color}">${e.cfg.label}</div>
-      <div class="ic-meta">${e.cfg.modelos.join(', ')}</div>
+      <div class="ic-meta">${e.cfg.modelos.join(', ') || 'sem modelos cadastrados'}</div>
       <div class="ic-foot"><div class="ic-hw-count"><b style="color:var(--text);font-size:16px">${e.total}</b>&nbsp;unidades</div></div>
     </div>
   `).join('') || '<p style="color:var(--text3);font-size:13px">Nenhum tipo encontrado.</p>';
+}
+
+// =========================================
+// DETALHE DO TIPO DE HARDWARE (lista de unidades, editar/transferir)
+// =========================================
+let currentHwTypeDetail = null;
+function openHwTypeDetail(tipo) {
+  currentHwTypeDetail = tipo;
+  document.getElementById('htSearch').value = '';
+  const cfg = HW_TYPES[tipo];
+  const nameEl = document.getElementById('htName');
+  nameEl.textContent = cfg.label;
+  nameEl.style.color = cfg.color;
+  document.getElementById('htSistema').textContent = cfg.sistema || 'Catálogo de hardware';
+  renderHwTypeDetailGrid();
+  openModal('hwTypeModal');
+}
+function renderHwTypeDetailGrid() {
+  if (!currentHwTypeDetail) return;
+  const term = document.getElementById('htSearch').value.toLowerCase().trim();
+  let list = getHwTypeInstances(currentHwTypeDetail);
+  if (term) list = list.filter(h =>
+    h.modelo.toLowerCase().includes(term) || h.sn.toLowerCase().includes(term) ||
+    h.patrimonio.toLowerCase().includes(term) || h._machineName.toLowerCase().includes(term));
+  document.getElementById('htMeta').textContent = `${list.length} unidade${list.length === 1 ? '' : 's'}`;
+  const hcfg = HW_TYPES[currentHwTypeDetail];
+  document.getElementById('htGrid').innerHTML = list.map(hw => `
+    <div class="hw-mini-card">
+      <div class="hw-mini-top">
+        <span class="hw-mini-badge" style="background:${hcfg.color}22;color:${hcfg.color}">${hw._machineName}</span>
+        <div class="hw-mini-actions">
+          <button class="hw-mini-btn" title="Editar" onclick="openEditHw('${hw._machineId}','${hw.id}')"><span class="material-symbols-outlined" style="font-size:14px">edit</span></button>
+          <button class="hw-mini-btn" title="Transferir" onclick="openTransfer('${hw._machineId}','${hw.id}')"><span class="material-symbols-outlined" style="font-size:14px">sync_alt</span></button>
+        </div>
+      </div>
+      <div class="hw-mini-name">${hw.modelo}</div>
+      <div class="hw-mini-meta">S/N ${hw.sn || '—'} · ${hw.fabricante || '—'}</div>
+    </div>
+  `).join('') || `<div class="hw-empty-state"><span class="material-symbols-outlined" style="font-size:30px">inventory_2</span><div>Nenhuma unidade encontrada</div></div>`;
 }
 
 // =========================================
