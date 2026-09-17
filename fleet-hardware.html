@@ -1899,6 +1899,9 @@ async function submitAddMachine(e) {
       closeModal('addMachineModal');
       showToast('✏️', 'Máquina atualizada', `${nome} atualizada`);
       await loadData();
+      const m = findMachine(editingMachineId);
+      if (m) m.modelo = modeloLocal;
+      if (currentDetailMachineId === editingMachineId) renderMachineDetail();
     } catch (err) {
       console.error('submitAddMachine (edit):', err);
       showToast('⚠️', 'Falha ao salvar', 'Verifique a conexão e tente novamente');
