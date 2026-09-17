@@ -236,7 +236,7 @@ h1.page-title { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
 .tech-stat span { font-size: 10px; color: var(--text3); }
 
 /* ── VIEW HEADER / BOTÕES DE AÇÃO ── */
-.view-header { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
+.view-header { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin-bottom: 20px; }
 .btn {
   padding: 10px 18px; border-radius: 12px; border: none; font-family: inherit;
   font-size: 12.5px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
@@ -589,7 +589,7 @@ h1.page-title { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
           </div>
           <div class="field">
             <label>FABRICANTE</label>
-            <input id="addHwFab" placeholder="Ex: John Deere">
+            <select id="addHwFab"></select>
           </div>
         </div>
       </div>
@@ -1022,7 +1022,7 @@ function openAddHw(machineId) {
   document.getElementById('addHwTipo').innerHTML = Object.entries(HW_TYPES).map(([t, c]) => `<option value="${t}">${c.icon} ${c.label}</option>`).join('');
   updateHwModelos();
   document.getElementById('addHwSn').value = '';
-  document.getElementById('addHwFab').value = '';
+  document.getElementById('addHwFab').innerHTML = FABRICANTES.map(f => `<option>${f}</option>`).join('');
   openModal('addHwModal');
 }
 function openEditHw(machineId, hwId) {
@@ -1041,6 +1041,7 @@ function openEditHw(machineId, hwId) {
   updateHwModelos();
   document.getElementById('addHwModelo').value = hw.modelo;
   document.getElementById('addHwSn').value = hw.sn;
+  document.getElementById('addHwFab').innerHTML = FABRICANTES.map(f => `<option>${f}</option>`).join('');
   document.getElementById('addHwFab').value = hw.fabricante;
   openModal('addHwModal');
 }
