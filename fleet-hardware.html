@@ -472,8 +472,6 @@ h1.page-title { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
         </div>
         <div class="filters" id="frotaFilters"></div>
         <div class="grid-cards" id="frotaGrid"></div>
-        <h3 id="frotaDestTitle" style="font-size:12.5px;color:var(--text2);margin:24px 0 12px;letter-spacing:0.4px">DESTINOS (ESTOQUE / MANUTENÇÃO)</h3>
-        <div class="grid-cards" id="frotaDestGrid"></div>
       </section>
 
       <!-- HARDWARES -->
@@ -487,6 +485,8 @@ h1.page-title { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
         </div>
         <div class="filters" id="hwFilters"></div>
         <div class="grid-cards" id="hwGrid"></div>
+        <h3 id="hwDestTitle" style="font-size:12.5px;color:var(--text2);margin:24px 0 12px;letter-spacing:0.4px">DESTINOS (ESTOQUE / MANUTENÇÃO)</h3>
+        <div class="grid-cards" id="hwDestGrid"></div>
       </section>
 
       <!-- HISTORICO -->
@@ -1446,14 +1446,14 @@ function renderFrotaFilters() {
       <option value="qtd_asc"${currentFrotaSort === 'qtd_asc' ? ' selected' : ''}>Menos máquinas</option>
     </select>`;
 }
-function renderFrotaDestinos(term) {
+function renderHwDestinos(term) {
   term = (term ?? '').toLowerCase().trim();
   const dests = ['ESTOQUE', 'MANUTENCAO', 'INATIVO'].map(id => findMachine(id)).filter(Boolean);
   const list = term
     ? dests.filter(m => m.nome.toLowerCase().includes(term) || m.id.toLowerCase().includes(term))
     : dests;
-  document.getElementById('frotaDestTitle').style.display = list.length ? '' : 'none';
-  document.getElementById('frotaDestGrid').innerHTML = list.map(m => `
+  document.getElementById('hwDestTitle').style.display = list.length ? '' : 'none';
+  document.getElementById('hwDestGrid').innerHTML = list.map(m => `
     <div class="item-card" onclick="openMachineDetail('${m.id}')">
       <div class="ic-top" style="justify-content:flex-end">
         ${m.hardware.length === 0 ? '<span class="ic-tag">vazio</span>' : ''}
@@ -1467,7 +1467,6 @@ function renderFrotaDestinos(term) {
 function renderFrota(term) {
   term = (term ?? '').toLowerCase().trim();
   renderFrotaFilters();
-  renderFrotaDestinos(term);
 
   if (term) {
     const list = machines.filter(m => TIPOS_LIST.includes(m.tipo)).filter(m =>
@@ -1577,6 +1576,7 @@ function getHwTypeInstances(tipo) {
 function renderHardwares(term) {
   term = (term ?? '').toLowerCase().trim();
   renderHwFilters();
+  renderHwDestinos(term);
 
   if (term) {
     const all = Object.keys(HW_TYPES).flatMap(tipo => getHwTypeInstances(tipo));
