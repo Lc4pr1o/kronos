@@ -1069,13 +1069,19 @@ function setConnectionStatus(state) {
 function mapHistoricoRow(r) {
   const tipo = HIST_ACAO_NORM[r.acao] || r.acao || 'install';
   const hwLabel = HW_TYPES[r.hardwareTipo]?.label || r.hardwareTipo || 'Hardware';
+  const modelo = r.hardwareModelo || hwLabel;
+  const origemId = r.maquinaId || '—';
+  const destId = r.maquinaDestinoId || '—';
   let titulo;
-  if (tipo === 'transfer') titulo = `${r.hardwareModelo || hwLabel} transferido — ${r.maquinaNome || r.maquinaId || '—'} → ${r.maquinaDestinoNome || r.maquinaDestinoId || '—'}`;
-  else if (tipo === 'remove') titulo = `${r.hardwareModelo || hwLabel} removido — ${r.maquinaNome || r.maquinaId || '—'}`;
-  else titulo = `${r.hardwareModelo || hwLabel} instalado — ${r.maquinaDestinoNome || r.maquinaNome || '—'}`;
+  if (tipo === 'transfer') titulo = `${modelo} transferido — ${origemId} → ${destId}`;
+  else if (tipo === 'remove') titulo = `${modelo} removido — ${origemId}`;
+  else titulo = `${modelo} instalado — ${destId}`;
+  const idPart = r.hardwareId ? `HW ${r.hardwareId}` : '';
+  const snPart = r.hardwareSN ? `S/N ${r.hardwareSN}` : '';
+  const sub = [idPart, snPart, r.tecnico || 'Analista'].filter(Boolean).join(' · ');
   return {
     tipo, titulo,
-    sub: r.tecnico || 'Analista',
+    sub,
     tempo: formatHistTime(r.dataHora || r.sincronizadoEm),
   };
 }
