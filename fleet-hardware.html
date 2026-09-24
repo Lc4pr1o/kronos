@@ -1595,7 +1595,7 @@ function renderHardwares(term) {
           </div>
         </div>
         <div class="hw-mini-name">${hw.modelo}</div>
-        <div class="hw-mini-meta">${hw._machineName} · S/N ${hw.sn || '—'}</div>
+        <div class="hw-mini-meta">${hw._machineId} · S/N ${hw.sn || '—'}</div>
       </div>`;
     }).join('') || '<p style="color:var(--text3);font-size:13px">Nenhum hardware encontrado.</p>';
     return;
@@ -1647,7 +1647,7 @@ function renderHwTypeDetailGrid() {
   document.getElementById('htGrid').innerHTML = list.map(hw => `
     <div class="hw-mini-card">
       <div class="hw-mini-top">
-        <span class="hw-mini-badge" style="background:${hcfg.color}22;color:${hcfg.color}">${hw._machineName}</span>
+        <span class="hw-mini-badge" style="background:${hcfg.color}22;color:${hcfg.color}">${hw._machineId}</span>
         <div class="hw-mini-actions">
           <button class="hw-mini-btn" title="Editar" onclick="openEditHw('${hw._machineId}','${hw.id}')"><span class="material-symbols-outlined" style="font-size:14px">edit</span></button>
           <button class="hw-mini-btn" title="Transferir" onclick="openTransfer('${hw._machineId}','${hw.id}')"><span class="material-symbols-outlined" style="font-size:14px">sync_alt</span></button>
@@ -1771,7 +1771,7 @@ function openTransfer(machineId, hwId) {
   const hw = m.hardware.find(h => h.id === hwId);
   const hcfg = HW_TYPES[hw.tipo];
   document.getElementById('trHwName').textContent = `${hcfg.label} · ${hw.modelo}`;
-  document.getElementById('trHwMeta').textContent = `${hw.id} · S/N ${hw.sn} · atualmente em ${m.nome}`;
+  document.getElementById('trHwMeta').textContent = `${hw.id} · S/N ${hw.sn} · atualmente em ${m.id}`;
   document.getElementById('transferSearch').value = '';
   renderTransferTargets();
   openModal('transferModal');
@@ -1838,7 +1838,7 @@ function openEditHw(machineId, hwId) {
   if (!hw) return;
   editingHwCtx = { machineId, hwId };
   document.getElementById('addHwModalTitle').textContent = 'Editar Hardware';
-  document.getElementById('addHwModalSub').textContent = `${hw.id} · atualmente em ${m.nome}`;
+  document.getElementById('addHwModalSub').textContent = `${hw.id} · atualmente em ${m.id}`;
   document.getElementById('addHwSubmitBtn').textContent = 'Salvar alterações';
   document.getElementById('addHwMachine').innerHTML = `<option value="${m.id}">${m.nome}</option>`;
   document.getElementById('addHwMachine').value = m.id;
