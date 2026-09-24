@@ -1005,6 +1005,7 @@ const DEMO_HARDWARES = [];
 let machines = [];
 let historico = [];
 let tecnicosRoster = [];
+let _lastRegIds = null; // ids de registros vistos na ultima carga — usado pra detectar novidade do app de campo
 let analystName = localStorage.getItem('kronos_analyst_name') || '';
 const TL_ICON = { install: '↓', remove: '↑', transfer: '⇄' };
 const HIST_ACAO_NORM = { instalar: 'install', remover: 'remove', transferir: 'transfer' };
@@ -1123,6 +1124,14 @@ async function loadData(showToastOnSuccess = false) {
     historico = Array.isArray(rawReg) ? rawReg.map(mapHistoricoRow) : [];
     await loadTecnicos();
     setConnectionStatus('online');
+    if (Array.isArray(rawReg)) {
+      const idsAgora = new Set(rawReg.map(r => r.id));
+      if (_lastRegIds) {
+        const novos = [...idsAgora].filter(id => !_lastRegIds.has(id)).length;
+        if (novos > 0) showToast('📥', 'Novo registro do campo', `${novos} registro${novos === 1 ? '' : 's'} sincronizado${novos === 1 ? '' : 's'} recebido${novos === 1 ? '' : 's'}`);
+      }
+      _lastRegIds = idsAgora;
+    }
     if (showToastOnSuccess) showToast('☁️', 'Dados atualizados', `${machines.filter(m => TIPOS_LIST.includes(m.tipo)).length} máquinas carregadas`);
   } catch (e) {
     console.error('loadData:', e);
@@ -2393,10 +2402,29 @@ document.getElementById('globalSearch').addEventListener('input', (e) => {
 });
 
 // =========================================
+// ATUALIZAÇÃO AUTOMÁTICA
+// =========================================
+// Recarrega periodicamente pra pegar registros do app de campo sem
+// precisar de F5, e assim que a aba volta a ficar visível (troca de
+// aba/app) — cobre o caso comum de "sincronizei no celular, volto pro
+// site e já está lá".
+let _autoRefreshTimer = null;
+function startAutoRefresh() {
+  if (_autoRefreshTimer) clearInterval(_autoRefreshTimer);
+  _autoRefreshTimer = setInterval(() => {
+    if (document.visibilityState === 'visible') loadData();
+  }, 30000);
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') loadData();
+});
+
+// =========================================
 // INIT
 // =========================================
 updateAvatar();
 loadData();
+startAutoRefresh();
 </script>
 </body>
 </html>
