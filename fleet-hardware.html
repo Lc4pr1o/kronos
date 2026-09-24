@@ -1078,10 +1078,11 @@ function mapHistoricoRow(r) {
   else titulo = `${modelo} instalado — ${destId}`;
   const idPart = r.hardwareId ? `HW ${r.hardwareId}` : '';
   const snPart = r.hardwareSN ? `S/N ${r.hardwareSN}` : '';
-  const sub = [idPart, snPart, r.tecnico || 'Analista'].filter(Boolean).join(' · ');
+  const tecnico = r.tecnico || 'Analista';
+  const sub = [idPart, snPart, tecnico].filter(Boolean).join(' · ');
   return {
     tipo, titulo,
-    sub,
+    sub, tecnico,
     tempo: formatHistTime(r.dataHora || r.sincronizadoEm),
   };
 }
@@ -1158,7 +1159,7 @@ function renderAllViews() {
 function renderTecnicos() {
   const stats = {};
   historico.forEach(h => {
-    const nome = h.sub || 'Analista';
+    const nome = h.tecnico || 'Analista';
     if (!stats[nome]) stats[nome] = { regs: 0, hoje: 0 };
     stats[nome].regs++;
     if (h.tempo.startsWith(new Date().toLocaleDateString('pt-BR'))) stats[nome].hoje++;
