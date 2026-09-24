@@ -1122,7 +1122,7 @@ async function loadData(showToastOnSuccess = false) {
     historico = Array.isArray(rawReg) ? rawReg.map(mapHistoricoRow) : [];
     await loadTecnicos();
     setConnectionStatus('online');
-    if (showToastOnSuccess) showToast('☁️', 'Dados atualizados', `${machines.length} máquinas carregadas`);
+    if (showToastOnSuccess) showToast('☁️', 'Dados atualizados', `${machines.filter(m => TIPOS_LIST.includes(m.tipo)).length} máquinas carregadas`);
   } catch (e) {
     console.error('loadData:', e);
     machines = sheetsToMachines(DEMO_MACHINES, DEMO_HARDWARES);
