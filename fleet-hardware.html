@@ -513,11 +513,12 @@ h1.page-title { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
         <h1 class="page-title">Configurações</h1>
         <p class="page-sub">Perfil e catálogos — cada alteração é salva na hora, direto no banco</p>
 
-        <div class="panel" style="margin-bottom:18px">
-          <div class="field" style="max-width:320px">
-            <label>NOME DO ANALISTA</label>
-            <input id="stAnalystName" placeholder="Seu nome" onchange="saveAnalystNameField()">
+        <div class="panel" style="margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;gap:16px">
+          <div>
+            <label style="font-size:10.5px;color:var(--text2);font-weight:700;letter-spacing:0.4px">USUÁRIO ATUAL</label>
+            <div style="font-size:15px;font-weight:700;margin-top:4px" id="stAnalystNameDisplay">—</div>
           </div>
+          <button type="button" class="btn btn-ghost" onclick="logoutAnalista()">Trocar usuário</button>
         </div>
 
         <div class="panel-grid" style="margin-bottom:18px">
@@ -866,6 +867,35 @@ h1.page-title { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
   </div>
 </div>
 
+<!-- LOGIN DO ANALISTA (obrigatório, sem botão de fechar) -->
+<div class="modal-overlay active" id="analystLoginGate" style="z-index:1000;background:var(--bg)">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">Identifique-se</div>
+        <div class="modal-sub">Selecione seu nome e digite seu PIN pra continuar</div>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label>SEU NOME</label>
+        <select id="analystLoginSelect">
+          <option value="" disabled selected hidden>— Carregando... —</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>PIN (4 DÍGITOS)</label>
+        <input id="analystLoginPin" type="password" inputmode="numeric" maxlength="4" placeholder="••••"
+          onkeydown="if(event.key==='Enter'){event.preventDefault();attemptAnalystLogin();}">
+      </div>
+      <div id="analystLoginError" style="display:none;color:#e05252;font-size:12px"></div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-primary" id="analystLoginBtn" onclick="attemptAnalystLogin()">Entrar</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL: TÉCNICO -->
 <div class="modal-overlay" id="tecnicoModal" onclick="if(event.target===this) closeModal('tecnicoModal')">
   <div class="modal">
@@ -1129,6 +1159,7 @@ async function loadData(showToastOnSuccess = false) {
     injectVirtualMachines(rawHardwares);
     historico = Array.isArray(rawReg) ? rawReg.map(mapHistoricoRow) : [];
     await loadTecnicos();
+    resolveAnalystLogin();
     setConnectionStatus('online');
     if (Array.isArray(rawReg)) {
       const idsAgora = new Set(rawReg.map(r => r.id));
@@ -1145,6 +1176,7 @@ async function loadData(showToastOnSuccess = false) {
     injectVirtualMachines(DEMO_HARDWARES);
     historico = [];
     tecnicosRoster = [];
+    resolveAnalystLogin();
     setConnectionStatus('error');
     showToast('⚠️', 'Sem conexão', 'Exibindo dados demo');
   }
@@ -2034,18 +2066,66 @@ async function submitAddMachine(e) {
 // CONFIGURAÇÕES
 // =========================================
 function updateAvatar() {
-  const initials = analystName.trim().split(/\s+/).map(p => p[0]).slice(0, 2).join('').toUpperCase() || 'LC';
+  const initials = analystName.trim().split(/\s+/).map(p => p[0]).slice(0, 2).join('').toUpperCase() || '?';
   document.getElementById('avatarInitials').textContent = initials;
 }
-function saveAnalystNameField() {
-  analystName = document.getElementById('stAnalystName').value.trim() || analystName;
-  localStorage.setItem('kronos_analyst_name', analystName);
+
+// =========================================
+// LOGIN DO ANALISTA (mesmo cadastro/PIN dos técnicos — uma pessoa só,
+// seja ela quem grava um registro pelo app de campo ou pelo painel)
+// =========================================
+let currentAnalista = null;
+function resolveAnalystLogin() {
+  if (currentAnalista) { closeModal('analystLoginGate'); return; }
+  const saved = localStorage.getItem('kronos_analyst_name');
+  if (saved) { applyAnalystLogin(saved); return; }
+  const ativos = tecnicosRoster.filter(t => t.ativo !== false);
+  document.getElementById('analystLoginSelect').innerHTML = '<option value="" disabled selected hidden>— Selecione —</option>' +
+    ativos.map(t => `<option value="${t.nome}">${t.nome}</option>`).join('');
+  const btn = document.getElementById('analystLoginBtn');
+  const err = document.getElementById('analystLoginError');
+  if (ativos.length) {
+    btn.disabled = false;
+    err.style.display = 'none';
+  } else {
+    btn.disabled = true;
+    err.textContent = 'Sem conexão — é preciso internet no primeiro login.';
+    err.style.display = 'block';
+  }
+  openModal('analystLoginGate');
+}
+function attemptAnalystLogin() {
+  const nome = document.getElementById('analystLoginSelect').value;
+  const pin = document.getElementById('analystLoginPin').value.trim();
+  const err = document.getElementById('analystLoginError');
+  const pessoa = tecnicosRoster.find(t => t.nome === nome && t.ativo !== false);
+  if (!nome) { err.textContent = 'Selecione seu nome.'; err.style.display = 'block'; return; }
+  if (!pessoa || !pin || (pessoa.pin || '') !== pin) {
+    err.textContent = 'PIN incorreto.'; err.style.display = 'block';
+    document.getElementById('analystLoginPin').value = '';
+    document.getElementById('analystLoginPin').focus();
+    return;
+  }
+  localStorage.setItem('kronos_analyst_name', nome);
+  applyAnalystLogin(nome);
+}
+function applyAnalystLogin(nome) {
+  currentAnalista = nome;
+  analystName = nome;
   updateAvatar();
-  showToast('✅', 'Nome salvo', analystName);
+  const el = document.getElementById('stAnalystNameDisplay');
+  if (el) el.textContent = nome;
+  closeModal('analystLoginGate');
+}
+function logoutAnalista() {
+  if (!confirm('Sair e fazer login com outro usuário?')) return;
+  localStorage.removeItem('kronos_analyst_name');
+  location.reload();
 }
 
 function renderSettingsLists() {
-  document.getElementById('stAnalystName').value = analystName;
+  const nameEl = document.getElementById('stAnalystNameDisplay');
+  if (nameEl) nameEl.textContent = analystName || '—';
   document.getElementById('stHwTypesList').innerHTML = Object.entries(HW_TYPES).map(([tipo, cfg]) => `
     <div class="settings-row" style="cursor:pointer" onclick="openEditHwType('${tipo}')">
       <span class="ic-type" style="flex:1;color:${cfg.color}">${cfg.label}</span>
