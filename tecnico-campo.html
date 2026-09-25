@@ -887,9 +887,10 @@
     position: fixed; inset: 0;
     background: var(--bg);
     z-index: 500;
-    display: none; align-items: center; justify-content: center;
+    display: flex; align-items: center; justify-content: center;
     padding: 24px;
   }
+  .login-gate.hidden { display: none; }
   .login-box {
     width: 100%; max-width: 360px;
     background: var(--surface);
@@ -1727,7 +1728,7 @@ function resolveLoginGate() {
   const btn = document.getElementById('loginSubmitBtn');
   const err = document.getElementById('loginError');
   if (!gate) return;
-  gate.style.display = 'flex';
+  gate.classList.remove('hidden');
   if (_tecnicosFull.length) {
     btn.disabled = false;
     err.style.display = 'none';
@@ -1765,13 +1766,30 @@ function applyTecnicoLogin(nome) {
   const cfgNome = document.getElementById('cfgTecnicoNome');
   if (cfgNome) cfgNome.textContent = nome;
   const gate = document.getElementById('loginGate');
-  if (gate) gate.style.display = 'none';
+  if (gate) gate.classList.add('hidden');
 }
+
+// Restaura sessão salva IMEDIATAMENTE (antes de qualquer fetch de rede),
+// pra nunca deixar o formulário clicável sem identificação, nem por um instante.
+(function earlyLoginCheck() {
+  try {
+    const saved = localStorage.getItem('kronos_tecnico_logado');
+    if (saved) applyTecnicoLogin(saved);
+  } catch {}
+})();
 
 function logoutTecnico() {
   if (!confirm('Sair e fazer login com outro técnico?')) return;
   try { localStorage.removeItem('kronos_tecnico_logado'); } catch {}
   location.reload();
+}
+
+// Trava de segurança adicional (além do gate cobrir a tela): nenhuma
+// função que grava dado deve rodar sem um técnico identificado.
+function requireTecnicoLogin() {
+  if (currentTecnico) return true;
+  showToast('err', '⚠️', 'Faça login antes de continuar');
+  return false;
 }
 
 async function loadData() {
@@ -2371,6 +2389,7 @@ function getMachineName(id) {
 }
 
 function submitRecord() {
+  if (!requireTecnicoLogin()) return;
   const btn = document.getElementById('submitBtn');
   if (btn.disabled) return;
   if (!currentAction) { showToast('err','⚠️','Selecione o tipo de serviço'); return; }
@@ -3095,6 +3114,7 @@ function renderCadMachinePicker() {
 }
 
 async function submitCadastroEquip() {
+  if (!requireTecnicoLogin()) return;
   const type  = document.getElementById('cadHwType').value;
   const model = document.getElementById('cadHwModelo').value;
   const sn    = document.getElementById('cadHwSn').value.trim().toUpperCase();
@@ -3164,6 +3184,7 @@ async function openCadastroMaquina() {
 function closeCadastroMaquina() { document.getElementById('cadMaquinaOverlay').classList.remove('open'); }
 
 async function submitCadastroMaquina() {
+  if (!requireTecnicoLogin()) return;
   const id   = document.getElementById('cadMaqId').value.trim().toUpperCase();
   const nome = document.getElementById('cadMaqNome').value.trim();
   const tipo = document.getElementById('cadMaqTipo').value;

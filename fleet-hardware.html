@@ -1275,6 +1275,7 @@ function openEditTecnico(nome) {
 }
 async function submitTecnico(e) {
   e.preventDefault();
+  if (!requireAnalystLogin()) return;
   const nome = document.getElementById('tcNome').value.trim();
   const cargo = document.getElementById('tcCargo').value.trim();
   const pin = document.getElementById('tcPin').value.trim();
@@ -1306,6 +1307,7 @@ async function submitTecnico(e) {
   }
 }
 async function toggleTecnicoAtivo(nome, novoAtivo) {
+  if (!requireAnalystLogin()) return;
   try {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/tecnicos?nome=eq.${encodeURIComponent(nome)}`, {
       method: 'PATCH', headers: { ...sbHeaders, 'Prefer': 'return=minimal' },
@@ -1321,6 +1323,7 @@ async function toggleTecnicoAtivo(nome, novoAtivo) {
   }
 }
 async function deleteTecnico(nome) {
+  if (!requireAnalystLogin()) return;
   if (!confirm(`Remover ${nome} do cadastro de técnicos?\n\nO histórico de registros dele não é apagado.`)) return;
   try {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/tecnicos?nome=eq.${encodeURIComponent(nome)}`, { method: 'DELETE', headers: sbHeaders });
@@ -1797,6 +1800,7 @@ function renderMachineDetail() {
   }
 }
 async function removeHardware(machineId, hwId) {
+  if (!requireAnalystLogin()) return;
   const m = findMachine(machineId);
   const hw = m?.hardware.find(h => h.id === hwId);
   if (!hw) { showToast('⚠️', 'Erro', 'Hardware não encontrado'); return; }
@@ -1849,6 +1853,7 @@ function renderTransferTargets() {
 }
 function selectTransferTarget(id) { transferCtx.targetId = id; renderTransferTargets(); }
 async function confirmTransfer() {
+  if (!requireAnalystLogin()) return;
   if (!transferCtx.targetId) { showToast('⚠️', 'Selecione um destino', 'Escolha a máquina de destino'); return; }
   const source = findMachine(transferCtx.machineId);
   const target = findMachine(transferCtx.targetId);
@@ -1917,6 +1922,7 @@ function updateHwModelos() {
 }
 async function submitAddHw(e) {
   e.preventDefault();
+  if (!requireAnalystLogin()) return;
   const tipo = document.getElementById('addHwTipo').value;
   const modelo = document.getElementById('addHwModelo').value;
   const sn = document.getElementById('addHwSn').value.trim().toUpperCase();
@@ -2011,6 +2017,7 @@ function updateAmModelos() {
 }
 async function submitAddMachine(e) {
   e.preventDefault();
+  if (!requireAnalystLogin()) return;
   const nome = document.getElementById('amNome').value.trim();
   if (!nome) return;
   const dados = {
@@ -2122,6 +2129,13 @@ function logoutAnalista() {
   localStorage.removeItem('kronos_analyst_name');
   location.reload();
 }
+// Trava de segurança adicional (além do gate cobrir a tela): nenhuma
+// função que grava dado deve rodar sem um usuário identificado.
+function requireAnalystLogin() {
+  if (currentAnalista) return true;
+  showToast('⚠️', 'Faça login', 'Identifique-se antes de fazer alterações');
+  return false;
+}
 
 function renderSettingsLists() {
   const nameEl = document.getElementById('stAnalystNameDisplay');
@@ -2185,6 +2199,7 @@ function openEditHwType(id) {
 }
 async function submitHwType(e) {
   e.preventDefault();
+  if (!requireAnalystLogin()) return;
   const label = document.getElementById('htLabel').value.trim();
   const color = document.getElementById('htColor').value;
   const modelos = document.getElementById('htModelos').value.split(/[\n,]/).map(s => s.trim()).filter(Boolean);
@@ -2229,6 +2244,7 @@ async function submitHwType(e) {
   }
 }
 async function deleteHwTypeFromModal() {
+  if (!requireAnalystLogin()) return;
   if (!editingHwTypeId) return;
   const cfg = HW_TYPES[editingHwTypeId];
   if (!confirm(`Excluir o tipo de hardware "${cfg.label}"?\n\nHardwares já cadastrados com esse tipo não são apagados.`)) return;
@@ -2275,6 +2291,7 @@ function openEditMachineType(id) {
 }
 async function submitMachineType(e) {
   e.preventDefault();
+  if (!requireAnalystLogin()) return;
   const label = document.getElementById('mtypeLabel').value.trim();
   const color = document.getElementById('mtypeColor').value;
   const modelos = document.getElementById('mtypeModelos').value.split(/[\n,]/).map(s => s.trim()).filter(Boolean);
@@ -2320,6 +2337,7 @@ async function submitMachineType(e) {
   }
 }
 async function deleteMachineTypeFromModal() {
+  if (!requireAnalystLogin()) return;
   if (!editingMachineTypeId) return;
   const cfg = MACHINE_TYPES[editingMachineTypeId];
   if (!confirm(`Excluir o tipo de máquina "${cfg.label}"?\n\nMáquinas já cadastradas com esse tipo não são apagadas.`)) return;
@@ -2340,6 +2358,7 @@ async function deleteMachineTypeFromModal() {
 }
 
 async function addUnidade() {
+  if (!requireAnalystLogin()) return;
   const input = document.getElementById('stNovaUnidade');
   const nome = input.value.trim().toUpperCase();
   if (!nome) return;
@@ -2360,6 +2379,7 @@ async function addUnidade() {
   }
 }
 async function deleteUnidade(nome) {
+  if (!requireAnalystLogin()) return;
   if (!confirm(`Excluir a unidade "${nome}"?`)) return;
   try {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/unidades?nome=eq.${encodeURIComponent(nome)}`, { method: 'DELETE', headers: sbHeaders });
@@ -2392,6 +2412,7 @@ function startRenameUnidade(btn) {
   });
 }
 async function renameUnidade(oldNome, newNome) {
+  if (!requireAnalystLogin()) { renderSettingsLists(); return; }
   if (!newNome || newNome === oldNome) { renderSettingsLists(); return; }
   if (UNIDADES.includes(newNome)) { showToast('⚠️', 'Já existe', `A unidade "${newNome}" já está cadastrada`); renderSettingsLists(); return; }
   try {
@@ -2411,6 +2432,7 @@ async function renameUnidade(oldNome, newNome) {
 }
 
 async function addFabricante() {
+  if (!requireAnalystLogin()) return;
   const input = document.getElementById('stNovoFabricante');
   const nome = input.value.trim();
   if (!nome) return;
@@ -2431,6 +2453,7 @@ async function addFabricante() {
   }
 }
 async function deleteFabricante(nome) {
+  if (!requireAnalystLogin()) return;
   if (!confirm(`Excluir o fabricante "${nome}"?`)) return;
   try {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/fabricantes?nome=eq.${encodeURIComponent(nome)}`, { method: 'DELETE', headers: sbHeaders });
@@ -2463,6 +2486,7 @@ function startRenameFabricante(btn) {
   });
 }
 async function renameFabricante(oldNome, newNome) {
+  if (!requireAnalystLogin()) { renderSettingsLists(); return; }
   if (!newNome || newNome === oldNome) { renderSettingsLists(); return; }
   if (FABRICANTES.includes(newNome)) { showToast('⚠️', 'Já existe', `O fabricante "${newNome}" já está cadastrado`); renderSettingsLists(); return; }
   try {
