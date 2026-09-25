@@ -882,9 +882,15 @@ h1.page-title { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
           <label>NOME</label>
           <input id="tcNome" placeholder="Nome completo" required>
         </div>
-        <div class="field">
-          <label>CARGO</label>
-          <input id="tcCargo" placeholder="Ex: Técnico de Campo">
+        <div class="field-row">
+          <div class="field">
+            <label>CARGO</label>
+            <input id="tcCargo" placeholder="Ex: Técnico de Campo">
+          </div>
+          <div class="field">
+            <label>PIN (LOGIN NO APP DE CAMPO)</label>
+            <input id="tcPin" maxlength="4" inputmode="numeric" placeholder="4 dígitos">
+          </div>
         </div>
         <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text2);cursor:pointer">
           <input type="checkbox" id="tcAtivo" checked style="width:16px;height:16px;accent-color:#f5a623">
@@ -1213,6 +1219,7 @@ function openAddTecnico() {
   document.getElementById('tcNome').value = '';
   document.getElementById('tcNome').disabled = false;
   document.getElementById('tcCargo').value = '';
+  document.getElementById('tcPin').value = String(Math.floor(1000 + Math.random() * 9000));
   document.getElementById('tcAtivo').checked = true;
   openModal('tecnicoModal');
 }
@@ -1230,6 +1237,7 @@ function openEditTecnico(nome) {
   document.getElementById('tcNome').value = t.nome;
   document.getElementById('tcNome').disabled = true;
   document.getElementById('tcCargo').value = t.cargo || '';
+  document.getElementById('tcPin').value = t.pin || '';
   document.getElementById('tcAtivo').checked = t.ativo !== false;
   openModal('tecnicoModal');
 }
@@ -1237,20 +1245,22 @@ async function submitTecnico(e) {
   e.preventDefault();
   const nome = document.getElementById('tcNome').value.trim();
   const cargo = document.getElementById('tcCargo').value.trim();
+  const pin = document.getElementById('tcPin').value.trim();
   const ativo = document.getElementById('tcAtivo').checked;
   if (!nome) return;
+  if (pin && !/^\d{4}$/.test(pin)) { showToast('⚠️', 'PIN inválido', 'O PIN precisa ter exatamente 4 dígitos'); return; }
   try {
     if (editingTecnicoNome) {
       const res = await fetch(`${SUPABASE_URL}/rest/v1/tecnicos?nome=eq.${encodeURIComponent(editingTecnicoNome)}`, {
         method: 'PATCH', headers: { ...sbHeaders, 'Prefer': 'return=minimal' },
-        body: JSON.stringify({ cargo, ativo }),
+        body: JSON.stringify({ cargo, pin, ativo }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       showToast('✏️', 'Técnico atualizado', nome);
     } else {
       const res = await fetch(`${SUPABASE_URL}/rest/v1/tecnicos?on_conflict=nome`, {
         method: 'POST', headers: { ...sbHeaders, 'Prefer': 'return=minimal,resolution=merge-duplicates' },
-        body: JSON.stringify({ nome, cargo, ativo }),
+        body: JSON.stringify({ nome, cargo, pin, ativo }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       showToast('✅', 'Técnico cadastrado', nome);

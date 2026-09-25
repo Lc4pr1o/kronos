@@ -883,6 +883,27 @@
   .cfg-sheet-btn .csb-sub { font-size: 10px; color: var(--text3); font-weight: 400; letter-spacing: 0.5px; margin-top: 2px; }
 
   /* ── CADASTRO MODALS ── */
+  .login-gate {
+    position: fixed; inset: 0;
+    background: var(--bg);
+    z-index: 500;
+    display: none; align-items: center; justify-content: center;
+    padding: 24px;
+  }
+  .login-box {
+    width: 100%; max-width: 360px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 28px 24px;
+    text-align: center;
+  }
+  .login-title { font-size: 19px; font-weight: 700; color: var(--text); }
+  .login-sub { font-size: 12.5px; color: var(--text2); margin-top: 6px; line-height: 1.5; }
+  .login-box .field { text-align: left; }
+  .login-pin { text-align: center; letter-spacing: 10px; font-size: 20px; font-weight: 700; }
+  .login-error { color: var(--danger, #e05252); font-size: 12px; margin-top: 10px; }
+
   .cad-overlay {
     position: fixed; inset: 0;
     background: rgba(0,0,0,0.7);
@@ -958,6 +979,30 @@
 </head>
 <body>
 
+<!-- LOGIN DO TÉCNICO -->
+<div class="login-gate" id="loginGate">
+  <div class="login-box">
+    <div class="top-logo" style="justify-content:center;margin-bottom:18px">
+      <div class="top-logo-icon">⚙️</div>
+      <div class="top-logo-text">KRO<span>NOS</span></div>
+    </div>
+    <div class="login-title">Identifique-se</div>
+    <div class="login-sub">Selecione seu nome e digite seu PIN pra começar a registrar</div>
+    <div class="field" style="margin-top:18px">
+      <label class="field-label">SEU NOME</label>
+      <select class="field-select" id="loginTechSelect">
+        <option value="" disabled selected hidden>— Carregando... —</option>
+      </select>
+    </div>
+    <div class="field" style="margin-top:12px">
+      <label class="field-label">PIN (4 DÍGITOS)</label>
+      <input type="password" inputmode="numeric" maxlength="4" class="field-input login-pin" id="loginPin" placeholder="••••" onkeydown="if(event.key==='Enter'){event.preventDefault();attemptLogin();}">
+    </div>
+    <div class="login-error" id="loginError" style="display:none"></div>
+    <button class="cad-submit-btn" id="loginSubmitBtn" style="margin-top:16px" onclick="attemptLogin()">Entrar</button>
+  </div>
+</div>
+
 <!-- TOP BAR -->
 <div class="top-bar">
   <div class="top-logo">
@@ -989,6 +1034,13 @@
       <div>
         <div>Cadastrar Máquina</div>
         <div class="csb-sub">Adicionar máquina à frota</div>
+      </div>
+    </button>
+    <button class="cfg-sheet-btn" onclick="closeConfigMenu();logoutTecnico()">
+      <span class="csb-icon">🔓</span>
+      <div>
+        <div>Trocar Técnico</div>
+        <div class="csb-sub">Logado como <span id="cfgTecnicoNome">—</span></div>
       </div>
     </button>
   </div>
@@ -1639,6 +1691,8 @@ function mapHardwares(raw) {
 }
 
 const TECNICOS_FALLBACK = ['Anderson', 'Lucas', 'Kayky', 'Murilo', 'Isaac'];
+let _tecnicosFull = []; // [{nome, pin, ativo}] — só populado quando o Supabase responde de verdade (tem PIN)
+let currentTecnico = null;
 
 function populateTechSelect(nomes) {
   const sel = document.getElementById('techName');
@@ -1652,6 +1706,74 @@ function populateTechSelect(nomes) {
   });
 }
 
+// ══════════════════════════════════════════
+// LOGIN DO TÉCNICO (seleciona nome + PIN de 4 dígitos)
+// ══════════════════════════════════════════
+function populateLoginSelect(nomes) {
+  const sel = document.getElementById('loginTechSelect');
+  if (!sel) return;
+  sel.innerHTML = '<option value="" disabled selected hidden>— Selecione seu nome —</option>';
+  nomes.forEach(n => {
+    const opt = document.createElement('option');
+    opt.value = n; opt.textContent = n;
+    sel.appendChild(opt);
+  });
+}
+
+function resolveLoginGate() {
+  const saved = localStorage.getItem('kronos_tecnico_logado');
+  if (saved) { applyTecnicoLogin(saved); return; }
+  const gate = document.getElementById('loginGate');
+  const btn = document.getElementById('loginSubmitBtn');
+  const err = document.getElementById('loginError');
+  if (!gate) return;
+  gate.style.display = 'flex';
+  if (_tecnicosFull.length) {
+    btn.disabled = false;
+    err.style.display = 'none';
+  } else {
+    btn.disabled = true;
+    err.textContent = 'Sem conexão — é preciso internet no primeiro login.';
+    err.style.display = 'block';
+  }
+}
+
+function attemptLogin() {
+  const nome = document.getElementById('loginTechSelect').value;
+  const pin = document.getElementById('loginPin').value.trim();
+  const err = document.getElementById('loginError');
+  const tec = _tecnicosFull.find(t => t.nome === nome);
+  if (!nome) { err.textContent = 'Selecione seu nome.'; err.style.display = 'block'; return; }
+  if (!tec || (tec.pin || '') !== pin || !pin) {
+    err.textContent = 'PIN incorreto.'; err.style.display = 'block';
+    document.getElementById('loginPin').value = '';
+    document.getElementById('loginPin').focus();
+    return;
+  }
+  try { localStorage.setItem('kronos_tecnico_logado', nome); } catch {}
+  applyTecnicoLogin(nome);
+}
+
+function applyTecnicoLogin(nome) {
+  currentTecnico = nome;
+  try { localStorage.setItem('techName', nome); } catch {}
+  const sel = document.getElementById('techName');
+  if (sel) {
+    sel.innerHTML = `<option value="${nome}" selected>${nome}</option>`;
+    sel.disabled = true;
+  }
+  const cfgNome = document.getElementById('cfgTecnicoNome');
+  if (cfgNome) cfgNome.textContent = nome;
+  const gate = document.getElementById('loginGate');
+  if (gate) gate.style.display = 'none';
+}
+
+function logoutTecnico() {
+  if (!confirm('Sair e fazer login com outro técnico?')) return;
+  try { localStorage.removeItem('kronos_tecnico_logado'); } catch {}
+  location.reload();
+}
+
 async function loadData() {
   try {
     const [resMaq, resHw, resTipos, resMaqTipos, resTecs] = await Promise.all([
@@ -1659,7 +1781,7 @@ async function loadData() {
       fetch(`${SUPABASE_URL}/rest/v1/hardwares?select=*`, { headers: sbHeaders }),
       fetch(`${SUPABASE_URL}/rest/v1/hw_tipos?select=*&order=id`, { headers: sbHeaders }),
       fetch(`${SUPABASE_URL}/rest/v1/maq_tipos?select=*&order=id`, { headers: sbHeaders }).catch(() => null),
-      fetch(`${SUPABASE_URL}/rest/v1/tecnicos?select=nome&order=nome`, { headers: sbHeaders }).catch(() => null),
+      fetch(`${SUPABASE_URL}/rest/v1/tecnicos?select=nome,pin,ativo&order=nome`, { headers: sbHeaders }).catch(() => null),
     ]);
     if (!resMaq.ok || !resHw.ok) throw new Error(`Erro Supabase: maquinas=${resMaq.status} hardwares=${resHw.status}`);
     const [rawMachines, rawHardwares, rawTipos] = await Promise.all([resMaq.json(), resHw.json(), resTipos.json()]);
@@ -1681,11 +1803,15 @@ async function loadData() {
     // Carrega técnicos do Supabase se tabela existir, senão usa fallback
     if (resTecs?.ok) {
       const rawTecs = await resTecs.json();
-      const nomes = Array.isArray(rawTecs) && rawTecs.length ? rawTecs.map(t => t.nome).filter(Boolean) : TECNICOS_FALLBACK;
-      populateTechSelect(nomes);
+      const ativos = Array.isArray(rawTecs) ? rawTecs.filter(t => t.nome && t.ativo !== false) : [];
+      _tecnicosFull = ativos;
+      populateTechSelect(ativos.length ? ativos.map(t => t.nome) : TECNICOS_FALLBACK);
+      populateLoginSelect(ativos.map(t => t.nome));
     } else {
       populateTechSelect(TECNICOS_FALLBACK);
+      populateLoginSelect([]);
     }
+    resolveLoginGate();
   } catch(e) {
     console.error('loadData:', e);
     try {
@@ -1708,6 +1834,8 @@ async function loadData() {
       showToast('err', '⚠️', 'Sem conexão — usando dados demo');
     }
     populateTechSelect(TECNICOS_FALLBACK);
+    populateLoginSelect([]);
+    resolveLoginGate();
   }
 }
 
@@ -2281,7 +2409,8 @@ function submitRecord() {
     hwType = hw.type||''; hwModelo = hw.modelo || hw.name || ''; hwPatrimonio = hw.patrimonio||'';
   }
 
-  const techName = document.getElementById('techName').value.trim() || 'Técnico';
+  const techName = currentTecnico || document.getElementById('techName').value.trim();
+  if (!techName) { showToast('err', '⚠️', 'Faça login antes de registrar'); return; }
   localStorage.setItem('techName', techName);
   const dateTime = document.getElementById('serviceDateTime').value;
   const notes = document.getElementById('notes').value.trim();
