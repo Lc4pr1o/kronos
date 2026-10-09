@@ -1356,6 +1356,33 @@ const sbHeaders = {
   'Content-Type': 'application/json',
 };
 
+// Sessão do login (PIN conferido no banco por kronos_entrar). O token vai no
+// cabeçalho x-kronos-sessao de toda chamada; sem ele o banco não entrega nem
+// aceita dados. Vale 90 dias e renova a cada abertura do app com internet.
+const SESSAO_KEY = 'kronos_sessao';
+function sessaoAtual() { try { return localStorage.getItem(SESSAO_KEY) || ''; } catch { return ''; } }
+function aplicarSessao(token) {
+  if (token) sbHeaders['x-kronos-sessao'] = token; else delete sbHeaders['x-kronos-sessao'];
+}
+aplicarSessao(sessaoAtual());
+
+async function erroSupabase(res) {
+  let msg = `HTTP ${res.status}`;
+  try { const j = await res.json(); if (j && j.message) msg = j.message; } catch {}
+  const e = new Error(msg);
+  e.status = res.status;
+  if (res.status === 401 || res.status === 403) { e.sessao = true; sessaoRecusada(); }
+  return e;
+}
+async function sbRpc(nome, args) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${nome}`, {
+    method: 'POST', headers: sbHeaders, body: JSON.stringify(args || {}),
+  });
+  if (!res.ok) throw await erroSupabase(res);
+  const txt = await res.text();
+  return txt ? JSON.parse(txt) : null;
+}
+
 // ══════════════════════════════════════════
 // ESTADO
 // ══════════════════════════════════════════
@@ -1692,7 +1719,7 @@ function mapHardwares(raw) {
 }
 
 const TECNICOS_FALLBACK = ['Anderson', 'Lucas', 'Kayky', 'Murilo', 'Isaac'];
-let _tecnicosFull = []; // [{nome, pin, ativo}] — só populado quando o Supabase responde de verdade (tem PIN)
+let _tecnicosFull = []; // [{nome, ativo}] — só populado quando o Supabase responde de verdade
 let currentTecnico = null;
 
 function populateTechSelect(nomes) {
@@ -1723,7 +1750,7 @@ function populateLoginSelect(nomes) {
 
 function resolveLoginGate() {
   const saved = localStorage.getItem('kronos_tecnico_logado');
-  if (saved) { applyTecnicoLogin(saved); return; }
+  if (saved && sessaoAtual()) { applyTecnicoLogin(saved); return; }
   const gate = document.getElementById('loginGate');
   const btn = document.getElementById('loginSubmitBtn');
   const err = document.getElementById('loginError');
@@ -1739,20 +1766,65 @@ function resolveLoginGate() {
   }
 }
 
-function attemptLogin() {
+async function attemptLogin() {
   const nome = document.getElementById('loginTechSelect').value;
   const pin = document.getElementById('loginPin').value.trim();
   const err = document.getElementById('loginError');
-  const tec = _tecnicosFull.find(t => t.nome === nome);
+  const btn = document.getElementById('loginSubmitBtn');
   if (!nome) { err.textContent = 'Selecione seu nome.'; err.style.display = 'block'; return; }
-  if (!tec || (tec.pin || '') !== pin || !pin) {
-    err.textContent = 'PIN incorreto.'; err.style.display = 'block';
+  if (!/^\d{4}$/.test(pin)) { err.textContent = 'Digite os 4 dígitos do PIN.'; err.style.display = 'block'; return; }
+  btn.disabled = true;
+  let r;
+  try {
+    r = await sbRpc('kronos_entrar', { p_nome: nome, p_pin: pin, p_app: 'campo' });
+  } catch (e) {
+    err.textContent = e.status ? `Não foi possível entrar: ${e.message}` : 'Sem conexão — é preciso internet para entrar.';
+    err.style.display = 'block';
+    return;
+  } finally { btn.disabled = false; }
+  if (!r || !r.token) {
+    err.textContent = (r && r.erro) || 'PIN incorreto.'; err.style.display = 'block';
     document.getElementById('loginPin').value = '';
     document.getElementById('loginPin').focus();
     return;
   }
-  try { localStorage.setItem('kronos_tecnico_logado', nome); } catch {}
+  try { localStorage.setItem(SESSAO_KEY, r.token); localStorage.setItem('kronos_tecnico_logado', nome); } catch {}
+  aplicarSessao(r.token);
+  document.getElementById('loginPin').value = '';
+  err.style.display = 'none';
   applyTecnicoLogin(nome);
+  await loadData();
+  checkOnline();
+}
+
+// Sessão vencida, PIN trocado ou técnico desativado: volta pra tela de login.
+// Os registros que ainda não subiram ficam guardados no celular e sobem
+// depois do novo login.
+let _sessaoRecusadaAviso = false;
+function encerrarSessaoLocal() {
+  try { localStorage.removeItem(SESSAO_KEY); localStorage.removeItem('kronos_tecnico_logado'); } catch {}
+  aplicarSessao('');
+  currentTecnico = null;
+  const sel = document.getElementById('techName');
+  if (sel) sel.disabled = false;
+}
+function sessaoRecusada() {
+  if (!sessaoAtual()) return;
+  encerrarSessaoLocal();
+  if (!_sessaoRecusadaAviso) {
+    _sessaoRecusadaAviso = true;
+    showToast('err', '🔒', 'Sessão expirada — entre de novo com seu PIN (nada foi perdido)');
+  }
+  carregarSoTecnicos();
+}
+async function carregarSoTecnicos() {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/tecnicos?select=nome,ativo&order=nome`, { headers: sbHeaders });
+    const raw = res.ok ? await res.json() : [];
+    _tecnicosFull = Array.isArray(raw) ? raw.filter(t => t.nome && t.ativo !== false) : [];
+  } catch { _tecnicosFull = []; }
+  populateLoginSelect(_tecnicosFull.map(t => t.nome));
+  resolveLoginGate();
 }
 
 function applyTecnicoLogin(nome) {
@@ -1774,13 +1846,14 @@ function applyTecnicoLogin(nome) {
 (function earlyLoginCheck() {
   try {
     const saved = localStorage.getItem('kronos_tecnico_logado');
-    if (saved) applyTecnicoLogin(saved);
+    if (saved && localStorage.getItem(SESSAO_KEY)) applyTecnicoLogin(saved);
   } catch {}
 })();
 
-function logoutTecnico() {
+async function logoutTecnico() {
   if (!confirm('Sair e fazer login com outro técnico?')) return;
-  try { localStorage.removeItem('kronos_tecnico_logado'); } catch {}
+  try { await sbRpc('kronos_sair'); } catch {}
+  encerrarSessaoLocal();
   location.reload();
 }
 
@@ -1793,13 +1866,22 @@ function requireTecnicoLogin() {
 }
 
 async function loadData() {
+  // Confere a sessão (e renova). Sem internet segue com o cache, logado.
+  if (sessaoAtual()) {
+    try {
+      const quem = await sbRpc('kronos_validar');
+      if (!quem) sessaoRecusada();
+    } catch (e) { console.error('kronos_validar:', e); }
+  }
+  // Sem sessão o banco só entrega a lista de nomes: mostra o login e espera.
+  if (!sessaoAtual()) { await carregarSoTecnicos(); return; }
   try {
     const [resMaq, resHw, resTipos, resMaqTipos, resTecs] = await Promise.all([
       fetch(`${SUPABASE_URL}/rest/v1/maquinas?select=*&order=nome`, { headers: sbHeaders }),
       fetch(`${SUPABASE_URL}/rest/v1/hardwares?select=*`, { headers: sbHeaders }),
       fetch(`${SUPABASE_URL}/rest/v1/hw_tipos?select=*&order=id`, { headers: sbHeaders }),
       fetch(`${SUPABASE_URL}/rest/v1/maq_tipos?select=*&order=id`, { headers: sbHeaders }).catch(() => null),
-      fetch(`${SUPABASE_URL}/rest/v1/tecnicos?select=nome,pin,ativo&order=nome`, { headers: sbHeaders }).catch(() => null),
+      fetch(`${SUPABASE_URL}/rest/v1/tecnicos?select=nome,ativo&order=nome`, { headers: sbHeaders }).catch(() => null),
     ]);
     if (!resMaq.ok || !resHw.ok) throw new Error(`Erro Supabase: maquinas=${resMaq.status} hardwares=${resHw.status}`);
     const [rawMachines, rawHardwares, rawTipos] = await Promise.all([resMaq.json(), resHw.json(), resTipos.json()]);
@@ -1876,6 +1958,7 @@ async function sbFindHardware(record) {
   ].filter(Boolean);
   for (const q of checks) {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/hardwares?${q}&limit=1`, { headers: sbHeaders });
+    if (!res.ok) throw await erroSupabase(res);
     const rows = await res.json();
     if (Array.isArray(rows) && rows.length > 0) return rows[0];
   }
@@ -1883,7 +1966,8 @@ async function sbFindHardware(record) {
 }
 
 async function saveRecord(record) {
-  await fetch(`${SUPABASE_URL}/rest/v1/registros`, {
+  if (!sessaoAtual()) throw Object.assign(new Error('Sem sessão'), { sessao: true });
+  const resReg = await fetch(`${SUPABASE_URL}/rest/v1/registros`, {
     method: 'POST',
     headers: { ...sbHeaders, 'Prefer': 'return=minimal' },
     body: JSON.stringify({
@@ -1908,6 +1992,8 @@ async function saveRecord(record) {
       sincronizadoEm: new Date().toISOString(),
     }),
   });
+  // 409 = esse registro já subiu numa tentativa anterior (só faltou o resto).
+  if (!resReg.ok && resReg.status !== 409) throw await erroSupabase(resReg);
 
   const hasIdentifier = record.hwId || record.hwSn || record.hwPatrimonio;
   const destId = record.machineDestId || '';
@@ -1915,14 +2001,15 @@ async function saveRecord(record) {
 
   const existing = await sbFindHardware(record);
   if (existing) {
-    await fetch(`${SUPABASE_URL}/rest/v1/hardwares?id=eq.${encodeURIComponent(existing.id)}`, {
+    const resHw = await fetch(`${SUPABASE_URL}/rest/v1/hardwares?id=eq.${encodeURIComponent(existing.id)}`, {
       method: 'PATCH',
       headers: { ...sbHeaders, 'Prefer': 'return=minimal' },
       body: JSON.stringify({ maquinaAtual: destId, instaladoEm: record.dateTime || new Date().toISOString() }),
     });
+    if (!resHw.ok) throw await erroSupabase(resHw);
   } else {
     const newId = record.hwId || record.hwPatrimonio || record.hwSn;
-    await fetch(`${SUPABASE_URL}/rest/v1/hardwares`, {
+    const resHw = await fetch(`${SUPABASE_URL}/rest/v1/hardwares`, {
       method: 'POST',
       headers: { ...sbHeaders, 'Prefer': 'return=minimal' },
       body: JSON.stringify({
@@ -1938,6 +2025,7 @@ async function saveRecord(record) {
         instaladoEm: record.dateTime || new Date().toISOString(),
       }),
     });
+    if (!resHw.ok) throw await erroSupabase(resHw);
   }
   return { success: true };
 }
@@ -2579,6 +2667,7 @@ async function syncRecord(record, attempt = 1) {
     markSynced(record.id);
   } catch(e) {
     console.error(`syncRecord tentativa ${attempt}/${MAX_ATTEMPTS} para ${record.id}:`, e);
+    if (e.sessao) return;
     if (attempt < MAX_ATTEMPTS) {
       const delay = Math.min(2000 * attempt, 10000);
       setTimeout(() => { syncingIds.delete(record.id); syncRecord(record, attempt + 1); }, delay);
@@ -2607,6 +2696,7 @@ async function trySyncAll() {
       ok++;
     } catch(e) {
       console.error('trySyncAll falha em', r.id, e);
+      if (e.sessao) break;
     }
   }
   setSyncState(navigator.onLine ? 'online' : 'offline');
@@ -2618,7 +2708,7 @@ async function trySyncAll() {
 // ══════════════════════════════════════════
 function checkOnline() {
   setSyncState(navigator.onLine ? 'online' : 'offline');
-  if (navigator.onLine) {
+  if (navigator.onLine && sessaoAtual()) {
     // Auto-sincroniza sequencialmente do mais antigo — evita race condition
     const pending = pendingByAge().filter(r => !syncingIds.has(r.id));
     if (pending.length > 0) syncSequential(pending);
@@ -3149,7 +3239,7 @@ async function submitCadastroEquip() {
         instaladoEm: new Date().toISOString().slice(0, 16),
       }),
     });
-    if (!res.ok) showToast('err','⚠️','Erro ao salvar', `HTTP ${res.status}`);
+    if (!res.ok) { const e = await erroSupabase(res); showToast('err','⚠️','Erro ao salvar: ' + e.message); }
   } catch(e) {
     showToast('err','📡','Sem conexão', 'Equipamento salvo apenas localmente');
   }
@@ -3207,7 +3297,7 @@ async function submitCadastroMaquina() {
       headers: { ...sbHeaders, 'Prefer': 'return=minimal' },
       body: JSON.stringify({ id, nome, tipo }),
     });
-    if (!res.ok) showToast('err','⚠️','Erro ao salvar', `HTTP ${res.status}`);
+    if (!res.ok) { const e = await erroSupabase(res); showToast('err','⚠️','Erro ao salvar: ' + e.message); }
   } catch(e) {
     showToast('err','📡','Sem conexão', 'Máquina salva apenas localmente');
   }

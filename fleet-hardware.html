@@ -918,7 +918,7 @@ h1.page-title { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
             <input id="tcCargo" placeholder="Ex: Técnico de Campo">
           </div>
           <div class="field">
-            <label>PIN (LOGIN NO APP DE CAMPO)</label>
+            <label>PIN (LOGIN NO APP E NO PAINEL)</label>
             <input id="tcPin" maxlength="4" inputmode="numeric" placeholder="4 dígitos">
           </div>
         </div>
@@ -970,6 +970,34 @@ const sbHeaders = {
   'Authorization': `Bearer ${SUPABASE_KEY}`,
   'Content-Type': 'application/json',
 };
+
+// Sessão do login (PIN conferido no banco por kronos_entrar). O token vai no
+// cabeçalho x-kronos-sessao de toda chamada; sem ele o banco não entrega nem
+// aceita dados. Separada da sessão do app de campo (mesmo navegador).
+const SESSAO_KEY = 'kronos_sessao_painel';
+function sessaoAtual() { try { return localStorage.getItem(SESSAO_KEY) || ''; } catch { return ''; } }
+function aplicarSessao(token) {
+  if (token) sbHeaders['x-kronos-sessao'] = token; else delete sbHeaders['x-kronos-sessao'];
+}
+aplicarSessao(sessaoAtual());
+
+async function sbRpc(nome, args) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${nome}`, {
+    method: 'POST', headers: sbHeaders, body: JSON.stringify(args || {}),
+  });
+  if (!res.ok) {
+    let msg = `HTTP ${res.status}`;
+    try { const j = await res.json(); if (j && j.message) msg = j.message; } catch {}
+    const e = new Error(msg); e.status = res.status; throw e;
+  }
+  const txt = await res.text();
+  return txt ? JSON.parse(txt) : null;
+}
+function encerrarSessaoLocal() {
+  try { localStorage.removeItem(SESSAO_KEY); localStorage.removeItem('kronos_analyst_name'); } catch {}
+  aplicarSessao('');
+  currentAnalista = null;
+}
 
 function localDateStr() {
   return new Date().toISOString().slice(0, 10);
@@ -1135,6 +1163,23 @@ function formatHistTime(iso) {
 // =========================================
 async function loadData(showToastOnSuccess = false) {
   setConnectionStatus('loading');
+  // Confere a sessão (e renova). Vencida/PIN trocado/desativado: volta ao login.
+  if (sessaoAtual()) {
+    try {
+      const quem = await sbRpc('kronos_validar');
+      if (!quem) {
+        encerrarSessaoLocal();
+        showToast('🔒', 'Sessão encerrada', 'Entre de novo com seu PIN');
+      }
+    } catch (e) { console.error('kronos_validar:', e); }
+  }
+  // Sem sessão o banco só entrega a lista de nomes: mostra o login e espera.
+  if (!sessaoAtual()) {
+    await loadTecnicos();
+    resolveAnalystLogin();
+    setConnectionStatus(tecnicosRoster.length ? 'online' : 'error');
+    return;
+  }
   try {
     const [resMaq, resHw, resHwTipos, resMaqTipos, resReg, resUnidades, resFabricantes] = await Promise.all([
       fetch(`${SUPABASE_URL}/rest/v1/maquinas?select=*&order=nome`, { headers: sbHeaders }),
@@ -1184,7 +1229,7 @@ async function loadData(showToastOnSuccess = false) {
 }
 async function loadTecnicos() {
   try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/tecnicos?select=*&order=nome`, { headers: sbHeaders });
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/tecnicos?select=nome,cargo,ativo,tem_pin&order=nome`, { headers: sbHeaders });
     tecnicosRoster = res.ok ? await res.json() : [];
   } catch (e) {
     console.error('loadTecnicos:', e);
@@ -1252,6 +1297,7 @@ function openAddTecnico() {
   document.getElementById('tcNome').disabled = false;
   document.getElementById('tcCargo').value = '';
   document.getElementById('tcPin').value = String(Math.floor(1000 + Math.random() * 9000));
+  document.getElementById('tcPin').placeholder = '4 dígitos';
   document.getElementById('tcAtivo').checked = true;
   openModal('tecnicoModal');
 }
@@ -1269,7 +1315,8 @@ function openEditTecnico(nome) {
   document.getElementById('tcNome').value = t.nome;
   document.getElementById('tcNome').disabled = true;
   document.getElementById('tcCargo').value = t.cargo || '';
-  document.getElementById('tcPin').value = t.pin || '';
+  document.getElementById('tcPin').value = '';
+  document.getElementById('tcPin').placeholder = t.tem_pin ? 'Em branco = mantém o atual' : 'Sem PIN — defina 4 dígitos';
   document.getElementById('tcAtivo').checked = t.ativo !== false;
   openModal('tecnicoModal');
 }
@@ -1283,57 +1330,42 @@ async function submitTecnico(e) {
   if (!nome) return;
   if (pin && !/^\d{4}$/.test(pin)) { showToast('⚠️', 'PIN inválido', 'O PIN precisa ter exatamente 4 dígitos'); return; }
   try {
-    if (editingTecnicoNome) {
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/tecnicos?nome=eq.${encodeURIComponent(editingTecnicoNome)}`, {
-        method: 'PATCH', headers: { ...sbHeaders, 'Prefer': 'return=minimal' },
-        body: JSON.stringify({ cargo, pin, ativo }),
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      showToast('✏️', 'Técnico atualizado', nome);
-    } else {
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/tecnicos?on_conflict=nome`, {
-        method: 'POST', headers: { ...sbHeaders, 'Prefer': 'return=minimal,resolution=merge-duplicates' },
-        body: JSON.stringify({ nome, cargo, pin, ativo }),
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      showToast('✅', 'Técnico cadastrado', nome);
-    }
+    await sbRpc('kronos_tecnico_salvar', {
+      p_nome: editingTecnicoNome || nome, p_cargo: cargo, p_pin: pin || null, p_ativo: ativo, p_novo: !editingTecnicoNome,
+    });
+    showToast(editingTecnicoNome ? '✏️' : '✅', editingTecnicoNome ? 'Técnico atualizado' : 'Técnico cadastrado',
+      pin ? `${nome} — PIN ${editingTecnicoNome ? 'trocado' : 'definido'}; passe para a pessoa` : nome);
     closeModal('tecnicoModal');
     await loadTecnicos();
     renderTecnicos();
   } catch (err) {
     console.error('submitTecnico:', err);
-    showToast('⚠️', 'Falha ao salvar', 'Verifique a conexão e tente novamente');
+    showToast('⚠️', 'Falha ao salvar', err.status ? err.message : 'Verifique a conexão e tente novamente');
   }
 }
 async function toggleTecnicoAtivo(nome, novoAtivo) {
   if (!requireAnalystLogin()) return;
   try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/tecnicos?nome=eq.${encodeURIComponent(nome)}`, {
-      method: 'PATCH', headers: { ...sbHeaders, 'Prefer': 'return=minimal' },
-      body: JSON.stringify({ ativo: novoAtivo }),
-    });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    await sbRpc('kronos_tecnico_salvar', { p_nome: nome, p_ativo: novoAtivo });
     await loadTecnicos();
     renderTecnicos();
     showToast(novoAtivo ? '▶️' : '⏸️', novoAtivo ? 'Técnico ativado' : 'Técnico desativado', nome);
   } catch (e) {
     console.error('toggleTecnicoAtivo:', e);
-    showToast('⚠️', 'Falha ao salvar', 'Verifique a conexão e tente novamente');
+    showToast('⚠️', 'Falha ao salvar', e.status ? e.message : 'Verifique a conexão e tente novamente');
   }
 }
 async function deleteTecnico(nome) {
   if (!requireAnalystLogin()) return;
   if (!confirm(`Remover ${nome} do cadastro de técnicos?\n\nO histórico de registros dele não é apagado.`)) return;
   try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/tecnicos?nome=eq.${encodeURIComponent(nome)}`, { method: 'DELETE', headers: sbHeaders });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    await sbRpc('kronos_tecnico_remover', { p_nome: nome });
     await loadTecnicos();
     renderTecnicos();
     showToast('🗑️', 'Técnico removido', nome);
   } catch (e) {
     console.error('deleteTecnico:', e);
-    showToast('⚠️', 'Falha ao excluir', 'Verifique a conexão e tente novamente');
+    showToast('⚠️', 'Falha ao excluir', e.status ? e.message : 'Verifique a conexão e tente novamente');
   }
 }
 
@@ -2085,7 +2117,7 @@ let currentAnalista = null;
 function resolveAnalystLogin() {
   if (currentAnalista) { closeModal('analystLoginGate'); return; }
   const saved = localStorage.getItem('kronos_analyst_name');
-  if (saved) { applyAnalystLogin(saved); return; }
+  if (saved && sessaoAtual()) { applyAnalystLogin(saved); return; }
   const ativos = tecnicosRoster.filter(t => t.ativo !== false);
   document.getElementById('analystLoginSelect').innerHTML = '<option value="" disabled selected hidden>— Selecione —</option>' +
     ativos.map(t => `<option value="${t.nome}">${t.nome}</option>`).join('');
@@ -2101,20 +2133,35 @@ function resolveAnalystLogin() {
   }
   openModal('analystLoginGate');
 }
-function attemptAnalystLogin() {
+async function attemptAnalystLogin() {
   const nome = document.getElementById('analystLoginSelect').value;
   const pin = document.getElementById('analystLoginPin').value.trim();
   const err = document.getElementById('analystLoginError');
-  const pessoa = tecnicosRoster.find(t => t.nome === nome && t.ativo !== false);
+  const btn = document.getElementById('analystLoginBtn');
   if (!nome) { err.textContent = 'Selecione seu nome.'; err.style.display = 'block'; return; }
-  if (!pessoa || !pin || (pessoa.pin || '') !== pin) {
-    err.textContent = 'PIN incorreto.'; err.style.display = 'block';
+  if (!/^\d{4}$/.test(pin)) { err.textContent = 'Digite os 4 dígitos do PIN.'; err.style.display = 'block'; return; }
+  btn.disabled = true;
+  let r;
+  try {
+    r = await sbRpc('kronos_entrar', { p_nome: nome, p_pin: pin, p_app: 'painel' });
+  } catch (e) {
+    err.textContent = e.status ? `Não foi possível entrar: ${e.message}` : 'Sem conexão — é preciso internet para entrar.';
+    err.style.display = 'block';
+    return;
+  } finally { btn.disabled = false; }
+  if (!r || !r.token) {
+    err.textContent = (r && r.erro) || 'PIN incorreto.'; err.style.display = 'block';
     document.getElementById('analystLoginPin').value = '';
     document.getElementById('analystLoginPin').focus();
     return;
   }
+  localStorage.setItem(SESSAO_KEY, r.token);
   localStorage.setItem('kronos_analyst_name', nome);
+  aplicarSessao(r.token);
+  document.getElementById('analystLoginPin').value = '';
+  err.style.display = 'none';
   applyAnalystLogin(nome);
+  await loadData(true);
 }
 function applyAnalystLogin(nome) {
   currentAnalista = nome;
@@ -2124,9 +2171,10 @@ function applyAnalystLogin(nome) {
   if (el) el.textContent = nome;
   closeModal('analystLoginGate');
 }
-function logoutAnalista() {
+async function logoutAnalista() {
   if (!confirm('Sair e fazer login com outro usuário?')) return;
-  localStorage.removeItem('kronos_analyst_name');
+  try { await sbRpc('kronos_sair'); } catch {}
+  encerrarSessaoLocal();
   location.reload();
 }
 // Trava de segurança adicional (além do gate cobrir a tela): nenhuma
