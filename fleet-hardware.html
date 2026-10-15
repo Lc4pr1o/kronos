@@ -602,6 +602,7 @@ h1.page-title { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
       </div>
       <div style="display:flex; gap:8px; flex-shrink:0">
         <button class="modal-close" id="mdEditBtn" title="Editar máquina" onclick="openEditMachine(currentDetailMachineId)"><span class="material-symbols-outlined" style="font-size:16px">edit</span></button>
+        <button class="modal-close" id="mdDeleteBtn" title="Excluir máquina" onclick="deleteMachine(currentDetailMachineId)"><span class="material-symbols-outlined" style="font-size:16px">delete</span></button>
         <button class="modal-close" onclick="closeModal('machineModal')">✕</button>
       </div>
     </div>
@@ -1639,6 +1640,7 @@ function renderMachineTypeDetailGrid() {
         <span class="hw-mini-badge" style="background:rgba(255,255,255,0.06);color:var(--text2)">${m.unidade || '—'}</span>
         <div class="hw-mini-actions">
           <button class="hw-mini-btn" title="Editar" onclick="event.stopPropagation(); openEditMachine('${m.id}')"><span class="material-symbols-outlined" style="font-size:14px">edit</span></button>
+          <button class="hw-mini-btn" title="Excluir" onclick="event.stopPropagation(); deleteMachine('${m.id}')"><span class="material-symbols-outlined" style="font-size:14px">delete</span></button>
         </div>
       </div>
       <div class="hw-mini-name">${m.nome}</div>
@@ -1744,6 +1746,7 @@ function renderHwTypeDetailGrid() {
         <div class="hw-mini-actions">
           <button class="hw-mini-btn" title="Editar" onclick="openEditHw('${hw._machineId}','${hw.id}')"><span class="material-symbols-outlined" style="font-size:14px">edit</span></button>
           <button class="hw-mini-btn" title="Transferir" onclick="openTransfer('${hw._machineId}','${hw.id}')"><span class="material-symbols-outlined" style="font-size:14px">sync_alt</span></button>
+          <button class="hw-mini-btn" title="Excluir" onclick="removeHardware('${hw._machineId}','${hw.id}')"><span class="material-symbols-outlined" style="font-size:14px">delete</span></button>
         </div>
       </div>
       <div class="hw-mini-name">${hw.modelo}</div>
@@ -1805,6 +1808,7 @@ function renderMachineDetail() {
   ].map(([l, v]) => `<div class="fld"><div class="l">${l}</div><div class="v">${v}</div></div>`).join('');
   document.getElementById('mdHwCount').textContent = m.hardware.length;
   document.getElementById('mdEditBtn').style.display = TIPOS_LIST.includes(m.tipo) ? 'flex' : 'none';
+  document.getElementById('mdDeleteBtn').style.display = TIPOS_LIST.includes(m.tipo) ? 'flex' : 'none';
 
   const hwGrid = document.getElementById('mdHwGrid');
   if (m.hardware.length === 0) {
@@ -1850,6 +1854,34 @@ async function removeHardware(machineId, hwId) {
     await loadData();
   } catch (e) {
     console.error('removeHardware:', e);
+    const msg = String(e.message).includes('RLS') ? 'Sem permissão para excluir (RLS)' : 'Falha na conexão — nada foi removido';
+    showToast('⚠️', 'Não foi possível excluir', msg);
+  }
+}
+
+async function deleteMachine(id) {
+  if (!requireAnalystLogin()) return;
+  const m = findMachine(id);
+  if (!m) { showToast('⚠️', 'Erro', 'Máquina não encontrada'); return; }
+  if (m.hardware.length > 0) {
+    showToast('⚠️', 'Remova o hardware antes', `${m.nome} ainda tem ${m.hardware.length} hardware${m.hardware.length === 1 ? '' : 's'} instalado`);
+    return;
+  }
+  if (!confirm(`Excluir ${m.nome} (${m.id}) da frota?\n\nEsta ação é permanente.`)) return;
+
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/maquinas?id=eq.${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+      headers: { ...sbHeaders, 'Prefer': 'count=exact' },
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const range = res.headers.get('Content-Range') || '';
+    if (range.endsWith('/0')) throw new Error('RLS bloqueou a exclusão');
+    closeModal('machineModal');
+    showToast('🗑️', 'Máquina excluída', `${m.nome} removida da frota`);
+    await loadData();
+  } catch (e) {
+    console.error('deleteMachine:', e);
     const msg = String(e.message).includes('RLS') ? 'Sem permissão para excluir (RLS)' : 'Falha na conexão — nada foi removido';
     showToast('⚠️', 'Não foi possível excluir', msg);
   }
