@@ -1950,7 +1950,12 @@ function openAddHw(machineId) {
   document.getElementById('addHwModalSub').textContent = 'Instalar em uma máquina da frota';
   document.getElementById('addHwSubmitBtn').textContent = 'Salvar';
   document.getElementById('addHwMachine').disabled = false;
-  document.getElementById('addHwMachine').innerHTML = machines.map(m => `<option value="${m.id}">${m.nome}</option>`).join('');
+  const destinos = machines.filter(m => VIRTUAL_LABELS[m.tipo]);
+  const frota = machines.filter(m => TIPOS_LIST.includes(m.tipo))
+    .sort((a, b) => a.id.localeCompare(b.id, 'pt-BR', { numeric: true }));
+  document.getElementById('addHwMachine').innerHTML =
+    (destinos.length ? `<optgroup label="Destinos">${destinos.map(m => `<option value="${m.id}">${VIRTUAL_LABELS[m.tipo]}</option>`).join('')}</optgroup>` : '') +
+    `<optgroup label="Frota">${frota.map(m => `<option value="${m.id}">${m.id} — ${m.nome}</option>`).join('')}</optgroup>`;
   if (machineId) document.getElementById('addHwMachine').value = machineId;
   document.getElementById('addHwTipo').innerHTML = Object.entries(HW_TYPES).map(([t, c]) => `<option value="${t}">${c.label}</option>`).join('');
   updateHwModelos();
@@ -1967,7 +1972,7 @@ function openEditHw(machineId, hwId) {
   document.getElementById('addHwModalTitle').textContent = 'Editar Hardware';
   document.getElementById('addHwModalSub').textContent = `${hw.id} · atualmente em ${m.id}`;
   document.getElementById('addHwSubmitBtn').textContent = 'Salvar alterações';
-  document.getElementById('addHwMachine').innerHTML = `<option value="${m.id}">${m.nome}</option>`;
+  document.getElementById('addHwMachine').innerHTML = `<option value="${m.id}">${VIRTUAL_LABELS[m.tipo] || `${m.id} — ${m.nome}`}</option>`;
   document.getElementById('addHwMachine').value = m.id;
   document.getElementById('addHwMachine').disabled = true;
   document.getElementById('addHwTipo').innerHTML = Object.entries(HW_TYPES).map(([t, c]) => `<option value="${t}">${c.label}</option>`).join('');
